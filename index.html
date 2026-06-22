@@ -32,6 +32,7 @@
                 <button class="nav-tab plans-tab" data-page-target="plans"><span>View Plans</span></button>
                 <button class="nav-tab roadmap-tab" data-page-target="roadmap"><span>Build Path</span></button>
                 <button class="nav-tab faq-tab" data-page-target="faq"><span>Questions</span></button>
+                <button class="nav-tab logout-tab hidden" id="menu-logout" type="button"><span>Logout</span></button>
               </div>
             </div>
           </div>
@@ -688,8 +689,10 @@
               <div class="panel-title">Subscription</div>
               <h3 id="profile-subscription">Free</h3>
               <p id="profile-subscription-copy">Create a profile or start a trial to unlock more training.</p>
-              <button class="ghost-button hidden" id="manage-billing" type="button">Manage Billing</button>
+              <button class="ghost-button hidden" id="manage-billing" type="button">Manage Or Cancel Subscription</button>
+              <small class="profile-billing-note hidden" id="profile-billing-note">Cancellation, card changes, and invoices are handled securely through Stripe.</small>
               <button class="primary-button nav-tab" data-page-target="plans" type="button"><span>View Plans</span></button>
+              <button class="ghost-button hidden" id="logout-profile" type="button">Logout</button>
             </article>
           </div>
         </section>

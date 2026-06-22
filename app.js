@@ -503,6 +503,7 @@ function progress() {
 
 function saveProgress() {
   localStorage.setItem("tradePulseProgress", JSON.stringify(progress()));
+  updateLogoutButtons();
 }
 
 async function saveLead(type, payload) {
@@ -615,6 +616,34 @@ async function openBillingPortal() {
   } catch (error) {
     alert(`Billing portal needs attention: ${error.message}`);
   }
+}
+
+function hasProfileSession() {
+  const p = progress();
+  return Boolean(p.signup?.email || p.inviteEmail || p.subscriptionStatus?.active || p.attempts.length || p.freePlaysUsed);
+}
+
+function updateLogoutButtons() {
+  const shouldShow = hasProfileSession();
+  document.getElementById("menu-logout")?.classList.toggle("hidden", !shouldShow);
+  document.getElementById("logout-profile")?.classList.toggle("hidden", !shouldShow);
+}
+
+function logoutUser() {
+  const ok = confirm("Logout clears this browser's current TradePulse profile and training session. Your Stripe subscription is not cancelled. Continue?");
+  if (!ok) return;
+  localStorage.removeItem("tradePulseProgress");
+  sessionStorage.removeItem("tradePulseVisitStarted");
+  state.progress = defaultProgress();
+  state.scenarioIndex = 0;
+  state.selected = null;
+  state.revealed = false;
+  closeModals();
+  showPage("home");
+  renderScenario();
+  updateProgressUi();
+  applyModeUi();
+  updateLogoutButtons();
 }
 
 function rankFromXp(xp) {
@@ -1218,6 +1247,8 @@ function renderProfile() {
       ? "Start the 3-day trial or choose a plan to unlock unlimited training."
       : `Your current access is ${access.title}. ${access.detail}.`;
   document.getElementById("manage-billing").classList.toggle("hidden", !p.subscriptionStatus?.active);
+  document.getElementById("profile-billing-note").classList.toggle("hidden", !p.subscriptionStatus?.active);
+  updateLogoutButtons();
 
   document.getElementById("profile-modes").innerHTML = modes.map((mode) => {
     const attempts = p.attempts.filter((attempt) => attempt.mode === mode);
@@ -1352,6 +1383,7 @@ document.getElementById("reset-progress").addEventListener("click", () => {
   renderScenario();
   updateProgressUi();
   applyModeUi();
+  updateLogoutButtons();
 });
 
 document.querySelectorAll(".mode-start").forEach((button) => {
@@ -1428,6 +1460,12 @@ gate.signupForm.addEventListener("submit", (event) => {
 gate.closePaywall.addEventListener("click", closeModals);
 
 document.getElementById("manage-billing").addEventListener("click", openBillingPortal);
+document.getElementById("logout-profile").addEventListener("click", logoutUser);
+document.getElementById("menu-logout").addEventListener("click", () => {
+  document.getElementById("menu-dropdown").classList.remove("open");
+  document.getElementById("menu-dropdown").setAttribute("aria-hidden", "true");
+  logoutUser();
+});
 
 document.querySelectorAll(".plan-button").forEach((button) => {
   button.addEventListener("click", async () => {

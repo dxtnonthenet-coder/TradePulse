@@ -2106,6 +2106,25 @@ body.playing .trainer-section {
   color: var(--muted);
 }
 
+.profile-sub-card .ghost-button,
+.profile-sub-card .primary-button {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.profile-billing-note {
+  display: block;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.logout-tab::before {
+  content: "↪";
+}
+
 .futures-section {
   margin-top: 42px;
 }
