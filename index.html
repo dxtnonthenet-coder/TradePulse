@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TradePulse</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="hero">
+        <nav class="top-nav" aria-label="Primary navigation">
+          <button class="brand" id="brand-home" type="button" aria-label="Go to TradePulse home">
+            <div class="brand-icon">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <strong>TRADE<span>PULSE</span></strong>
+          </button>
+          <div class="nav-actions">
+            <button class="start-training-nav nav-tab" data-page-target="modes" type="button"><span>Start Training</span></button>
+            <button id="share-button">Share</button>
+            <button class="elite-nav-button" data-page-target="elite" type="button">Elite</button>
+            <div class="menu-wrap">
+              <button class="menu-button" id="menu-button" type="button" aria-label="Open navigation menu">
+                Menu
+              </button>
+              <div class="menu-dropdown" id="menu-dropdown" aria-hidden="true">
+                <button class="nav-tab futures-tab" data-page-target="futures"><span>Why Futures?</span></button>
+                <button class="nav-tab profile-tab" data-page-target="profile"><span>Profile</span></button>
+                <button class="nav-tab plans-tab" data-page-target="plans"><span>View Plans</span></button>
+                <button class="nav-tab roadmap-tab" data-page-target="roadmap"><span>Build Path</span></button>
+                <button class="nav-tab faq-tab" data-page-target="faq"><span>Questions</span></button>
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        <section class="hero-grid">
+          <div class="hero-copy">
+            <p class="signal">Futures replay trainer</p>
+            <h1>Train your market intuition. <span class="animated-headline">Master the replay.</span></h1>
+            <p class="lead">
+              Built to help entry-level futures traders close the experience gap faster, sharpen pattern recognition, and stop missing the kind of replay lessons that can lead to better money decisions.
+            </p>
+            <div class="feature-list">
+              <div><span class="mini-icon">A</span>Real market scenarios</div>
+              <div><span class="mini-icon">T</span>Multiple timeframes</div>
+              <div><span class="mini-icon">XP</span>XP, streaks, rewards</div>
+              <div><span class="mini-icon">#</span>Biggest Gainers board</div>
+              <div><span class="mini-icon">250K</span>Personalized scenario pool</div>
+            </div>
+            <p class="safe-copy">
+              Education and skill-building only. No trade alerts, no personalized recommendations, no financial advice.
+            </p>
+          </div>
+
+          <div class="phone-row" aria-label="App preview screens">
+            <article class="phone">
+              <div class="phone-bar"><span>9:31</span><span>Replay</span><span>Hard</span></div>
+              <div class="phone-meta">NQ · Jun 14, 2024 · 9:45 AM</div>
+              <div class="mini-tabs"><span class="active">1m</span><span>5m</span><span>15m</span><span>1h</span></div>
+              <canvas class="mini-chart" width="320" height="220" data-preview="0"></canvas>
+              <div class="context-box">
+                <strong>Context</strong>
+                <p>CPI just released. Price swept highs and returned below VWAP.</p>
+              </div>
+              <div class="phone-answer">A Breakout continuation</div>
+              <div class="phone-answer">B Rejection back into range</div>
+              <div class="phone-answer">C Sweep highs then reverse</div>
+            </article>
+
+            <article class="phone center-phone">
+              <div class="phone-bar"><span>9:21</span><span>Result</span><span></span></div>
+              <div class="correct">Correct!</div>
+              <p class="prediction">You predicted: Sweep highs then reverse</p>
+              <canvas class="mini-chart" width="320" height="245" data-preview="1"></canvas>
+              <div class="reward-card">
+                <strong>+120 XP</strong>
+                <div><span>Correct bias</span><span>+50 XP</span></div>
+                <div><span>Correct timing</span><span>+40 XP</span></div>
+                <div><span>Perfect analysis</span><span>+30 XP</span></div>
+              </div>
+              <button class="phone-cta">Next Scenario</button>
+            </article>
+
+            <article class="phone">
+              <div class="phone-bar"><span>9:31</span><span>Trade Mode</span><span>Hard</span></div>
+              <div class="phone-meta">CL · May 28, 2024 · 11:15 AM</div>
+              <div class="mini-tabs"><span>1m</span><span class="active">5m</span><span>15m</span><span>1h</span></div>
+              <canvas class="mini-chart" width="320" height="220" data-preview="2"></canvas>
+              <label class="trade-input"><span>Entry</span><strong>78.25</strong></label>
+              <label class="trade-input"><span>Stop Loss</span><strong>77.95</strong></label>
+              <label class="trade-input"><span>Take Profit</span><strong>78.75</strong></label>
+              <button class="phone-cta">Start Replay</button>
+            </article>
+          </div>
+        </section>
+
+        <section class="market-intel" aria-label="TradePulse market training intelligence preview">
+          <article class="intel-card edge-card">
+            <div class="edge-ring"><strong>72</strong><span>Edge</span></div>
+            <div>
+              <p class="signal">Decision Quality</p>
+              <h3>Training read is improving</h3>
+              <p>Replay scoring tracks whether your bias, timing, and risk decision match the setup quality.</p>
+            </div>
+          </article>
+
+          <article class="intel-card balance-card">
+            <p class="signal">Risk Balance</p>
+            <div class="balance-scale" aria-hidden="true">
+              <span></span>
+              <i></i>
+              <b></b>
+            </div>
+            <h3>Action vs patience</h3>
+            <p>Learn when a setup has enough evidence to act, and when waiting is the better read.</p>
+          </article>
+
+          <article class="intel-card metric-card">
+            <p class="signal">Flow</p>
+            <div class="flow-bars" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+            <h3>Healthy participation</h3>
+            <p>Pattern drills reward clean structure, not random clicks.</p>
+          </article>
+
+          <article class="intel-card metric-card warning">
+            <p class="signal">Volatility</p>
+            <div class="pulse-line" aria-hidden="true"></div>
+            <h3>Quiet before expansion</h3>
+            <p>Compare timeframes to spot compression, fakeouts, and breakout risk.</p>
+          </article>
+        </section>
+      </header>
+
+      <main>
+        <section class="other-sections page-section" id="modes" data-page="modes">
+          <div class="section-heading training-hub-heading">
+            <p class="signal">Choose A Game</p>
+            <h2>Pick your challenge</h2>
+            <p>Choose your mode, study the chart, then make the call. Every mode uses your same free-play count.</p>
+          </div>
+          <div class="mode-grid">
+            <article class="mode-card">
+              <span>Core</span>
+              <h3>Replay Mode</h3>
+              <p>Study the chart, switch timeframes, answer what happens next, then reveal the candles. Shared starter scenarios plus personalized replays.</p>
+              <button class="panel-button mode-start" data-mode="replay">Play Replay</button>
+            </article>
+            <article class="mode-card">
+              <span>Daily</span>
+              <h3>Daily Challenge</h3>
+              <p>One scenario. One chance. Bonus XP and streak credit for daily practice.</p>
+              <button class="panel-button mode-start" data-mode="daily">Play Daily</button>
+            </article>
+            <article class="mode-card">
+              <span>Ranked</span>
+              <h3>Ranked Battle</h3>
+              <p>Timed decisions, more pressure, bigger XP, and leaderboard climbing.</p>
+              <button class="panel-button mode-start" data-mode="ranked">Play Ranked</button>
+            </article>
+            <article class="mode-card">
+              <span>Advanced</span>
+              <h3>Trade Mode</h3>
+              <p>Pick entry, stop, and target. Score your risk discipline and execution quality.</p>
+              <button class="panel-button mode-start" data-mode="trade">Play Trade Mode</button>
+            </article>
+          </div>
+        </section>
+
+        <section class="trainer-section" id="trainer">
+          <div class="section-heading">
+            <p class="signal" id="active-mode-label">Replay Mode</p>
+            <h2 id="active-mode-title">Replay Mode</h2>
+            <p id="active-mode-copy">Switch timeframes, make the call, then reveal the next candles.</p>
+            <button class="ghost-button" id="exit-game">Back To Modes</button>
+          </div>
+
+          <div class="trainer-grid">
+            <section class="replay-card">
+              <div class="scenario-header">
+                <div>
+                  <p id="scenario-id">Scenario 1247</p>
+                  <h3 id="scenario-title">NQ Opening Range Trap</h3>
+                  <span id="scenario-meta">NQ · 09:45 ET · Hard</span>
+                </div>
+                <div class="timer" id="timer">15s</div>
+              </div>
+
+              <div class="timeframe-tabs" id="timeframe-tabs"></div>
+              <div class="chart-frame">
+                <canvas id="chart" width="1180" height="620" aria-label="Candlestick market replay chart"></canvas>
+                <div class="replay-status" id="replay-status">Future candles hidden</div>
+              </div>
+              <div class="context-box large">
+                <strong>Context</strong>
+                <p id="context"></p>
+              </div>
+            </section>
+
+            <aside class="game-panel">
+              <div class="score-strip">
+                <div><span>XP</span><strong id="xp">0</strong></div>
+                <div><span>Streak</span><strong id="streak">0</strong></div>
+                <div><span>Rank</span><strong id="rank">Rookie</strong></div>
+              </div>
+
+              <p class="tag-line" id="setup-tags">VWAP · Sweep · Opening Range</p>
+              <h3 id="question">What is the highest probability move?</h3>
+              <div class="trade-form hidden" id="trade-form">
+                <label><span>Entry</span><input id="trade-entry" value="78.25" /></label>
+                <label><span>Stop</span><input id="trade-stop" value="77.95" /></label>
+                <label><span>Target</span><input id="trade-target" value="78.75" /></label>
+              </div>
+              <div class="answers" id="answers"></div>
+
+              <div class="result-panel hidden" id="result-panel">
+                <div class="grade" id="grade">A</div>
+                <div>
+                  <h4 id="result-title">Good read</h4>
+                  <p id="explanation"></p>
+                  <p class="xp-line" id="xp-earned">+10 XP</p>
+                </div>
+              </div>
+
+              <div class="control-row">
+                <button class="ghost-button" id="previous-scenario">Back</button>
+                <button class="ghost-button" id="reset-progress">Reset</button>
+                <button class="primary-button" id="next-scenario">Next</button>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="info-grid dashboard-section" data-dashboard-pages="home,modes">
+          <article class="panel wide">
+            <div class="panel-title">How It Works</div>
+            <div class="steps">
+              <div><b>1</b><strong>Scenario starts</strong><span>Read the setup.</span></div>
+              <div><b>2</b><strong>Analyze</strong><span>Use different timeframes.</span></div>
+              <div><b>3</b><strong>Make your call</strong><span>Predict what happens next.</span></div>
+              <div><b>4</b><strong>Replay</strong><span>Reveal the hidden candles.</span></div>
+              <div><b>5</b><strong>Level up</strong><span>Earn XP and improve.</span></div>
+            </div>
+          </article>
+
+          <article class="panel progress-panel">
+            <div class="panel-title">Progress & Stats</div>
+            <div class="level-ring"><span id="hero-level">1</span><small>Level</small></div>
+            <div class="xp-meter"><span id="hero-xp">0 / 500 XP</span><i id="xp-fill"></i></div>
+            <div class="stat-row"><span>Accuracy</span><strong id="hero-accuracy">0%</strong></div>
+            <div class="stat-row"><span>Top Streak</span><strong id="hero-streak">0 Days</strong></div>
+            <div class="stat-row"><span>Scenarios</span><strong id="hero-scenarios">0</strong></div>
+          </article>
+
+          <article class="panel gainers-panel">
+            <div class="panel-title">Biggest Gainers</div>
+            <p class="leaderboard-subtitle">Top XP climbers this week. Earn your spot.</p>
+            <div class="leaderboard" id="leaderboard"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-title">Daily Challenge</div>
+            <p class="muted">One scenario. One chance.</p>
+            <div class="challenge-reward">Reward: 200 XP</div>
+            <button class="panel-button mode-start" data-mode="daily">Start Challenge</button>
+          </article>
+
+          <article class="panel">
+            <div class="panel-title">Achievements</div>
+            <div class="achievement-grid" id="achievements"></div>
+          </article>
+
+          <article class="panel rank-meter-panel">
+            <div class="panel-title">Skill Ranks</div>
+            <p class="rank-meter-copy">Earn XP, climb the ladder, and unlock higher skill status.</p>
+            <div class="rank-meter" id="rank-meter"></div>
+          </article>
+        </section>
+
+        <section class="other-sections feature-preview page-section" data-page="home">
+          <div class="section-heading">
+            <p class="signal">More Modes</p>
+            <h2>Everything needed for the game loop</h2>
+          </div>
+          <div class="mode-grid">
+            <article class="mode-card">
+              <span>Library</span>
+              <h3>Pattern Library</h3>
+              <p>Liquidity sweeps, VWAP reclaims, failed breakouts, absorption, and delta divergence.</p>
+            </article>
+            <article class="mode-card">
+              <span>Daily</span>
+              <h3>Daily Challenge</h3>
+              <p>One fresh scenario each day with streak tracking and bonus XP for consistency.</p>
+            </article>
+            <article class="mode-card">
+              <span>Ranked</span>
+              <h3>Ranked Battle</h3>
+              <p>Timed scenarios against other users. Climb from Rookie to Funded.</p>
+            </article>
+            <article class="mode-card">
+              <span>Advanced</span>
+              <h3>Trade Mode</h3>
+              <p>Pick entry, stop, target, and risk/reward. Score discipline, timing, and efficiency.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="roadmap panel page-section" id="roadmap" data-page="roadmap">
+          <div class="panel-title">MVP Roadmap</div>
+          <div class="roadmap-grid">
+            <div><b>1</b><strong>Core Replay Engine</strong><span>Candlestick replay, questions, scoring.</span></div>
+            <div><b>2</b><strong>Gamification</strong><span>XP, levels, streaks, achievements.</span></div>
+            <div><b>3</b><strong>Content Library</strong><span>100 curated scenarios and lessons.</span></div>
+            <div><b>4</b><strong>Social Features</strong><span>Leaderboards, profiles, friend challenges.</span></div>
+            <div><b>5</b><strong>Advanced Modes</strong><span>Trade mode, ranked battles, analytics.</span></div>
+          </div>
+        </section>
+
+        <section class="plans-section panel page-section" id="plans" data-page="plans">
+          <div class="section-heading">
+            <p class="signal">Plans</p>
+            <h2>Choose your training access</h2>
+            <p>Start with 3 days free. The trial defaults to Player unless you upgrade later.</p>
+          </div>
+          <div class="plans-grid">
+            <article>
+              <span>Player</span>
+              <h3>$19.99/mo</h3>
+              <ul>
+                <li>Unlimited Replay Mode</li>
+                <li>Daily Challenge access</li>
+                <li>Ranked Battle access</li>
+                <li>Trade Mode access</li>
+                <li>XP, streaks, levels, and achievements</li>
+                <li>Leaderboard climbing</li>
+                <li>Personalized scenario pool</li>
+              </ul>
+              <button class="primary-button plan-button" data-plan="Player">Choose Player</button>
+            </article>
+            <article class="featured-plan">
+              <span>Coach</span>
+              <h3>$50/mo</h3>
+              <ul>
+                <li>Everything in Player</li>
+                <li>Deeper educational reasoning after replays</li>
+                <li>Mistake review when answers are wrong</li>
+                <li>Pattern recognition tips</li>
+                <li>Weak-setup awareness</li>
+                <li>Discipline and decision-quality feedback</li>
+                <li>Advanced learning path support</li>
+              </ul>
+              <button class="primary-button plan-button" data-plan="Coach">Choose Coach</button>
+            </article>
+            <article class="elite-plan-card">
+              <span>Elite</span>
+              <h3>$100/mo</h3>
+              <ul>
+                <li>Everything in Coach</li>
+                <li>Personalized weakness detection</li>
+                <li>Custom practice playlists</li>
+                <li>Advanced analytics dashboard</li>
+                <li>Mistake journal</li>
+                <li>Scenario filters</li>
+                <li>Weekly progress report</li>
+                <li>7-day personal curriculum</li>
+                <li>Advanced Trade Mode scoring</li>
+              </ul>
+              <button class="primary-button plan-button" data-plan="Elite">Choose Elite</button>
+            </article>
+          </div>
+          <p class="fineprint">TradePulse is an educational replay simulator. It does not provide financial advice, trade alerts, personalized investment recommendations, or broker execution.</p>
+        </section>
+
+        <section class="elite-section page-section" id="elite" data-page="elite">
+          <div class="elite-hero">
+            <p class="signal">Elite Plan · $100/month</p>
+            <h2>Your personal replay training system.</h2>
+            <p>Elite does more than unlock games. It studies your performance, finds your weak spots, and builds a targeted practice path so every session has a purpose.</p>
+            <button class="primary-button plan-button" data-plan="Elite">Choose Elite</button>
+          </div>
+
+          <div class="elite-grid">
+            <article>
+              <span>01</span>
+              <h3>Weakness Detection</h3>
+              <p>See exactly what you keep missing: VWAP reclaims, liquidity sweeps, chop conditions, news volatility, failed breakouts, and more.</p>
+            </article>
+            <article>
+              <span>02</span>
+              <h3>Custom Practice Playlists</h3>
+              <p>TradePulse builds drills around your mistakes, like 10 no-trade discipline scenarios or 15 hard NQ liquidity sweeps.</p>
+            </article>
+            <article>
+              <span>03</span>
+              <h3>Advanced Analytics</h3>
+              <p>Track accuracy by setup, market, session, difficulty, decision speed, discipline score, and overtrading score.</p>
+            </article>
+            <article>
+              <span>04</span>
+              <h3>Mistake Journal</h3>
+              <p>Every wrong answer becomes a study note showing what you chose, what happened, and what pattern to review next.</p>
+            </article>
+            <article>
+              <span>05</span>
+              <h3>Scenario Filters</h3>
+              <p>Train exactly what you want: hard NQ VWAP reclaims, ES opening range traps, CL news whipsaws, BTC fakeouts, or GC compression breaks.</p>
+            </article>
+            <article>
+              <span>06</span>
+              <h3>Weekly Progress Report</h3>
+              <p>Get a weekly breakdown of completed scenarios, accuracy changes, strongest setups, weakest setups, and recommended next focus.</p>
+            </article>
+            <article>
+              <span>07</span>
+              <h3>Personal Curriculum</h3>
+              <p>Elite gives you a 7-day plan based on your actual performance instead of random lessons or generic education.</p>
+            </article>
+            <article>
+              <span>08</span>
+              <h3>Advanced Trade Mode Scoring</h3>
+              <p>Score entry quality, stop placement, target placement, risk/reward, max drawdown, timing, and execution discipline.</p>
+            </article>
+          </div>
+
+          <div class="elite-value panel">
+            <h3>Why Elite is worth it</h3>
+            <p>Player gives unlimited practice. Coach explains the replay. Elite tells you what to practice next, why you keep missing certain setups, and how your decision quality is changing over time.</p>
+            <div class="elite-comparison">
+              <div><strong>Player</strong><span>Unlimited reps</span></div>
+              <div><strong>Coach</strong><span>Educational reasoning</span></div>
+              <div><strong>Elite</strong><span>Personalized improvement system</span></div>
+            </div>
+          </div>
+
+          <div class="elite-dashboard">
+            <section class="elite-panel weakness-panel">
+              <div class="panel-title">Weakness Detection</div>
+              <h3 id="elite-weakest">No weakness found yet</h3>
+              <p id="elite-weakness-copy">Complete a few scenarios and Elite will identify the patterns that need the most work.</p>
+              <div class="elite-bars" id="elite-bars"></div>
+            </section>
+
+            <section class="elite-panel">
+              <div class="panel-title">Custom Playlist</div>
+              <p class="muted">Generated from your weakest setups.</p>
+              <div class="playlist-list" id="elite-playlist"></div>
+              <button class="primary-button" id="start-elite-playlist">Start Custom Playlist</button>
+            </section>
+
+            <section class="elite-panel">
+              <div class="panel-title">Scenario Filters</div>
+              <div class="filter-grid">
+                <label>Market
+                  <select id="elite-filter-market">
+                    <option>All</option>
+                    <option>NQ</option>
+                    <option>ES</option>
+                    <option>CL</option>
+                    <option>GC</option>
+                    <option>BTC</option>
+                  </select>
+                </label>
+                <label>Setup
+                  <select id="elite-filter-setup">
+                    <option>All</option>
+                    <option>VWAP</option>
+                    <option>Liquidity</option>
+                    <option>Opening Range</option>
+                    <option>Failed Breakout</option>
+                    <option>News</option>
+                    <option>Chop</option>
+                  </select>
+                </label>
+                <label>Difficulty
+                  <select id="elite-filter-difficulty">
+                    <option>All</option>
+                    <option>Easy</option>
+                    <option>Medium</option>
+                    <option>Hard</option>
+                  </select>
+                </label>
+              </div>
+              <button class="primary-button" id="apply-elite-filters">Build Filtered Drill</button>
+            </section>
+
+            <section class="elite-panel">
+              <div class="panel-title">Advanced Analytics</div>
+              <div class="analytics-grid">
+                <div><span>Accuracy</span><strong id="elite-accuracy">0%</strong></div>
+                <div><span>Discipline</span><strong id="elite-discipline">0</strong></div>
+                <div><span>Overtrading</span><strong id="elite-overtrade">0</strong></div>
+                <div><span>Decision Speed</span><strong id="elite-speed">0s</strong></div>
+              </div>
+            </section>
+
+            <section class="elite-panel mistake-panel">
+              <div class="panel-title">Mistake Journal</div>
+              <div id="mistake-journal"></div>
+            </section>
+
+            <section class="elite-panel">
+              <div class="panel-title">Weekly Progress Report</div>
+              <p id="weekly-report">Complete scenarios to generate your first weekly report.</p>
+            </section>
+
+            <section class="elite-panel curriculum-panel">
+              <div class="panel-title">7-Day Curriculum</div>
+              <div id="elite-curriculum"></div>
+            </section>
+
+            <section class="elite-panel">
+              <div class="panel-title">Advanced Trade Mode Score</div>
+              <div class="trade-score-card">
+                <div><span>Entry Quality</span><strong id="score-entry">82</strong></div>
+                <div><span>Stop Placement</span><strong id="score-stop">76</strong></div>
+                <div><span>Target Logic</span><strong id="score-target">88</strong></div>
+                <div><span>Risk/Reward</span><strong id="score-rr">2.1R</strong></div>
+              </div>
+            </section>
+          </div>
+          <p class="fineprint">Elite provides educational analytics and simulator feedback only. It does not provide financial advice, trade alerts, personalized investment recommendations, or broker execution.</p>
+        </section>
+
+        <section class="futures-section page-section" id="futures" data-page="futures">
+          <div class="futures-hero panel">
+            <div>
+              <p class="signal">Beginner Guide</p>
+              <h2>Why serious beginners study futures first</h2>
+              <p>
+                Futures attract ambitious traders because the market is structured, liquid, fast-moving, and built around repeatable behavior. The edge is not magic. It comes from screen time, pattern recognition, disciplined risk, and constant practice.
+              </p>
+              <button class="primary-button mode-start" data-mode="replay">Start Learning With Replays</button>
+            </div>
+            <div class="futures-diagram" aria-hidden="true">
+              <div class="futures-scale">
+                <span>Stocks</span>
+                <i></i>
+                <span>Futures</span>
+              </div>
+              <div class="futures-meter"><b></b></div>
+              <strong>Structure + Practice = Faster Learning Curve</strong>
+            </div>
+          </div>
+
+          <div class="futures-grid">
+            <article class="panel futures-card">
+              <span class="futures-icon">24</span>
+              <h3>More opportunities to practice</h3>
+              <p>Popular futures markets move often and provide clean replay material across multiple sessions. That gives beginners more chances to study setups, mistakes, and timing without waiting for one stock to move.</p>
+            </article>
+
+            <article class="panel futures-card">
+              <span class="futures-icon">LQ</span>
+              <h3>Liquidity and structure</h3>
+              <p>Markets like ES, NQ, CL, and GC often respect key areas, session highs and lows, VWAP, opening ranges, and liquidity sweeps. That structure makes futures valuable for pattern-recognition training.</p>
+            </article>
+
+            <article class="panel futures-card">
+              <span class="futures-icon">⚖</span>
+              <h3>Risk can be defined clearly</h3>
+              <p>Good futures training is not about guessing direction. It is about learning where the idea is wrong, where the target makes sense, and whether the setup is worth the risk.</p>
+            </article>
+
+            <article class="panel futures-card">
+              <span class="futures-icon">XP</span>
+              <h3>Skill compounds with repetition</h3>
+              <p>The traders who improve fastest usually practice deliberately. They review scenarios, compare timeframes, track weak patterns, and repeat the process until decisions become sharper.</p>
+            </article>
+          </div>
+
+          <div class="futures-comparison panel">
+            <div>
+              <p class="signal">Compared To Stocks Or Crypto</p>
+              <h3>Why futures can be a cleaner training arena</h3>
+              <p>Stocks can be crowded with company-specific headlines. Crypto can be highly fragmented and sentiment-driven. Futures are often centered around major global instruments with deep liquidity, defined sessions, and repeatable intraday behavior.</p>
+            </div>
+            <ul>
+              <li>Practice one market deeply instead of chasing hundreds of tickers.</li>
+              <li>Study repeatable session behavior like opens, closes, news reactions, and liquidity sweeps.</li>
+              <li>Use replay to build decision quality before risking real capital.</li>
+              <li>Track progress through accuracy, discipline, streaks, and pattern performance.</li>
+            </ul>
+          </div>
+
+          <div class="futures-warning panel">
+            <strong>Important:</strong>
+            <p>Futures involve substantial risk and are not right for everyone. TradePulse is an educational simulator. It helps users practice reading historical-style scenarios; it does not tell users what to buy, sell, or trade live.</p>
+          </div>
+        </section>
+
+        <section class="faq-section panel page-section" data-page="faq">
+          <div class="panel-title">FAQ</div>
+          <div class="faq-grid">
+            <article>
+              <h3>Is TradePulse giving trading advice?</h3>
+              <p>No. TradePulse is an educational replay simulator for pattern recognition practice. It does not give trade alerts, broker execution, or personalized financial recommendations.</p>
+            </article>
+            <article>
+              <h3>How many free plays do I get?</h3>
+              <p>You get 3 free plays total across Replay Mode, Daily Challenge, Ranked Battle, and Trade Mode. After that, the subscription screen appears.</p>
+            </article>
+            <article>
+              <h3>What is included in the $19.99 plan?</h3>
+              <p>The Player plan unlocks unlimited access to the games, XP progression, streaks, leaderboards, achievements, and the full scenario pool.</p>
+            </article>
+            <article>
+              <h3>What does the $50 Coach plan add?</h3>
+              <p>The Coach plan adds deeper educational reasoning, mistake review, and practice tips after each replay so users understand the pattern more clearly.</p>
+            </article>
+            <article>
+              <h3>Will everyone see the same scenarios?</h3>
+              <p>A few featured scenarios are shared so everyone can compare scores. After that, the app uses a large personalized scenario pool so each user gets a different training path.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="profile-section page-section" id="profile" data-page="profile">
+          <div class="profile-hero panel">
+            <div class="profile-avatar" id="profile-avatar">TP</div>
+            <div>
+              <p class="signal">Training Profile</p>
+              <h2 id="profile-name">Guest Trader</h2>
+              <p id="profile-email">Create a profile to save your training data.</p>
+            </div>
+            <div class="profile-access">
+              <span>Current Access</span>
+              <strong id="profile-access">Free</strong>
+              <small id="profile-trial">3 free plays available</small>
+            </div>
+          </div>
+
+          <div class="profile-grid">
+            <article class="panel profile-rank-card">
+              <span>Rank</span>
+              <strong id="profile-rank">Rookie</strong>
+              <div class="profile-ring"><b id="profile-level">1</b><small>Level</small></div>
+              <div class="xp-meter"><span id="profile-xp-label">0 / 500 XP</span><i id="profile-xp-fill"></i></div>
+            </article>
+
+            <article class="panel profile-stat-card">
+              <span>Accuracy</span>
+              <strong id="profile-accuracy">0%</strong>
+              <small>Correct reads across all modes</small>
+            </article>
+
+            <article class="panel profile-stat-card">
+              <span>Top Streak</span>
+              <strong id="profile-top-streak">0 Days</strong>
+              <small>Best training streak saved</small>
+            </article>
+
+            <article class="panel profile-stat-card">
+              <span>Scenarios</span>
+              <strong id="profile-scenarios">0</strong>
+              <small>Total completed replays</small>
+            </article>
+
+            <article class="panel profile-wide">
+              <div class="panel-title">Mode Breakdown</div>
+              <div class="profile-mode-list" id="profile-modes"></div>
+            </article>
+
+            <article class="panel profile-wide">
+              <div class="panel-title">Pattern Report</div>
+              <div class="profile-patterns">
+                <div>
+                  <span>Strongest Setup</span>
+                  <strong id="profile-strongest">Not enough data</strong>
+                </div>
+                <div>
+                  <span>Needs Work</span>
+                  <strong id="profile-weakest">Not enough data</strong>
+                </div>
+              </div>
+              <div id="profile-pattern-bars"></div>
+            </article>
+
+            <article class="panel profile-wide">
+              <div class="panel-title">Recent Training</div>
+              <div class="profile-recent" id="profile-recent"></div>
+            </article>
+
+            <article class="panel profile-sub-card">
+              <div class="panel-title">Subscription</div>
+              <h3 id="profile-subscription">Free</h3>
+              <p id="profile-subscription-copy">Create a profile or start a trial to unlock more training.</p>
+              <button class="ghost-button hidden" id="manage-billing" type="button">Manage Billing</button>
+              <button class="primary-button nav-tab" data-page-target="plans" type="button"><span>View Plans</span></button>
+            </article>
+          </div>
+        </section>
+
+        <section class="invite-section page-section" id="trial" data-page="home">
+          <div>
+            <p class="invite-pill"><span></span> The replay room is opening</p>
+            <h2>Train without limits for 3 days. <span>Then continue for $19.99/month.</span></h2>
+            <p>Enter your details to start unlimited access across Replay, Daily, Ranked, and Trade Mode.</p>
+          </div>
+          <form class="invite-form trial-form" id="invite-form">
+            <div class="trial-fields">
+              <input id="invite-name" required placeholder="Full name" />
+              <input id="invite-email" type="email" required placeholder="trader@yourdomain.com" />
+              <button type="submit">Start 3-day free trial <span>→</span></button>
+            </div>
+            <label class="trial-consent">
+              <input id="trial-consent" type="checkbox" required />
+              <span>I understand I get unlimited access for 3 days, then the Player plan begins automatically at $19.99/month unless I cancel.</span>
+            </label>
+            <small>No spam. No fake signals. Cancel or unsubscribe anytime before the trial ends.</small>
+          </form>
+        </section>
+
+        <footer class="site-footer">
+          <span>© 2026 TradePulse</span>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/terms.html">Terms</a>
+          <a href="/disclaimer.html">Education Disclaimer</a>
+        </footer>
+      </main>
+    </div>
+
+    <div class="modal hidden" id="signup-modal">
+      <form class="modal-card" id="signup-form">
+        <p class="signal">Free Access</p>
+        <h2>Create your training profile</h2>
+        <p class="muted">Enter your details to unlock 3 free plays across Replay, Daily, Ranked, and Trade Mode.</p>
+        <label>Full name <input id="signup-name" required placeholder="Your name" /></label>
+        <label>Email <input id="signup-email" required type="email" placeholder="you@example.com" /></label>
+        <label>Trading experience
+          <select id="signup-experience" required>
+            <option value="">Choose one</option>
+            <option>Beginner</option>
+            <option>Learning futures</option>
+            <option>Intermediate</option>
+            <option>Advanced</option>
+          </select>
+        </label>
+        <label>Primary market <input id="signup-market" required placeholder="NQ, ES, CL, GC, BTC" /></label>
+        <p class="safe-note">Education only. No trade alerts, personalized recommendations, broker execution, or financial advice.</p>
+        <button class="primary-button" type="submit">Unlock 3 Free Plays</button>
+      </form>
+    </div>
+
+    <div class="modal hidden" id="paywall-modal">
+      <div class="modal-card paywall-card">
+        <p class="signal">Free Plays Used</p>
+        <h2>Choose your plan</h2>
+        <p class="muted">Choose a plan to continue training. Billing is securely handled through Stripe.</p>
+        <div class="pricing-grid">
+          <article>
+            <h3>Player</h3>
+            <strong>$19.99/mo</strong>
+            <p>Unlimited access to Replay, Daily, Ranked, and Trade Mode.</p>
+            <button class="primary-button plan-button" data-plan="Player">Choose Player</button>
+          </article>
+          <article class="featured-plan">
+            <h3>Coach</h3>
+            <strong>$50/mo</strong>
+            <p>Everything in Player plus deeper educational reasoning, mistake review, and practice tips.</p>
+            <button class="primary-button plan-button" data-plan="Coach">Choose Coach</button>
+          </article>
+          <article class="elite-paywall-plan">
+            <h3>Elite</h3>
+            <strong>$100/mo</strong>
+            <p>Personalized weakness detection, custom drills, advanced analytics, mistake journal, and weekly progress planning.</p>
+            <button class="primary-button plan-button" data-plan="Elite">Choose Elite</button>
+          </article>
+        </div>
+        <p class="fineprint">TradePulse is an educational replay simulator. It does not provide financial advice, trade alerts, personalized investment recommendations, or broker execution.</p>
+        <button class="ghost-button" id="close-paywall">Maybe Later</button>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
