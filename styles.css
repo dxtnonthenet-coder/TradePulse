@@ -2493,6 +2493,34 @@ body.playing .trainer-section {
   background: linear-gradient(180deg, rgba(16, 25, 34, 0.9), rgba(8, 14, 19, 0.94));
 }
 
+.elite-action-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.elite-action-panel .playlist-list,
+.elite-action-panel .filter-grid {
+  width: 100%;
+}
+
+.elite-action-footer {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid rgba(77, 255, 171, 0.12);
+}
+
+.elite-action-footer .primary-button {
+  flex: 0 1 300px;
+  width: min(100%, 300px);
+  min-height: 50px;
+  padding: 0 20px;
+  text-align: center;
+  white-space: nowrap;
+}
+
 .weakness-panel,
 .mistake-panel,
 .curriculum-panel {
