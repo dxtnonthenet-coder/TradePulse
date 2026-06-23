@@ -2916,7 +2916,7 @@ body.playing .trainer-section {
 .market-tape {
   position: relative;
   display: grid;
-  grid-template-columns: 1.15fr repeat(4, 1fr) auto;
+  grid-template-columns: 1.15fr repeat(4, 1fr);
   min-height: 66px;
   margin: 8px 0 56px;
   border-top: 1px solid rgba(77, 255, 171, 0.2);
