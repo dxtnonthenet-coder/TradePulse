@@ -415,6 +415,8 @@ const state = {
   progress: JSON.parse(localStorage.getItem("tradePulseProgress") || "{}")
 };
 
+let audioContext;
+
 const els = {
   scenarioId: document.getElementById("scenario-id"),
   title: document.getElementById("scenario-title"),
@@ -615,6 +617,35 @@ async function openBillingPortal() {
     alert(result.message || result.error || "Billing portal is not ready for this account yet.");
   } catch (error) {
     alert(`Billing portal needs attention: ${error.message}`);
+  }
+}
+
+function tone(frequency, start, duration, type, volume) {
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime + start);
+  gain.gain.setValueAtTime(0.0001, audioContext.currentTime + start);
+  gain.gain.exponentialRampToValueAtTime(volume, audioContext.currentTime + start + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + start + duration);
+  oscillator.connect(gain);
+  gain.connect(audioContext.destination);
+  oscillator.start(audioContext.currentTime + start);
+  oscillator.stop(audioContext.currentTime + start + duration + 0.02);
+}
+
+function playAnswerSound(correct) {
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return;
+  audioContext ||= new AudioCtx();
+  if (audioContext.state === "suspended") audioContext.resume();
+
+  if (correct) {
+    tone(660, 0, 0.11, "sine", 0.12);
+    tone(920, 0.1, 0.16, "sine", 0.11);
+  } else {
+    tone(130, 0, 0.16, "sawtooth", 0.1);
+    tone(92, 0.12, 0.22, "square", 0.075);
   }
 }
 
@@ -1017,6 +1048,7 @@ function submitAnswer(answer) {
   const modeBonus = state.activeMode === "ranked" ? 80 : state.activeMode === "daily" ? 200 : state.activeMode === "trade" ? 60 : 0;
   const earned = correct ? 120 + modeBonus + Math.min(80, p.streak * 20) : 20;
 
+  playAnswerSound(correct);
   state.selected = answer;
   state.revealed = true;
   p.xp += earned;
