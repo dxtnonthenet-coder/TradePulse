@@ -1424,39 +1424,26 @@ document.querySelectorAll(".mode-start").forEach((button) => {
 
 document.querySelectorAll(".nav-tab").forEach((button) => {
   button.addEventListener("click", () => {
-    document.getElementById("menu-dropdown").classList.remove("open");
-    document.getElementById("menu-dropdown").setAttribute("aria-hidden", "true");
     showPage(button.dataset.pageTarget || "home");
+    if (window.innerWidth <= 760) {
+      document.body.classList.remove("sidebar-expanded");
+      document.getElementById("side-toggle").setAttribute("aria-expanded", "false");
+    }
   });
 });
 
 document.getElementById("brand-home").addEventListener("click", () => {
-  document.getElementById("menu-dropdown").classList.remove("open");
-  document.getElementById("menu-dropdown").setAttribute("aria-hidden", "true");
   showPage("home");
-});
-
-document.querySelector(".elite-nav-button").addEventListener("click", (event) => {
-  document.getElementById("menu-dropdown").classList.remove("open");
-  document.getElementById("menu-dropdown").setAttribute("aria-hidden", "true");
-  showPage(event.currentTarget.dataset.pageTarget || "elite");
 });
 
 document.getElementById("start-elite-playlist").addEventListener("click", startElitePlaylist);
 document.getElementById("apply-elite-filters").addEventListener("click", applyEliteFilters);
 
-document.getElementById("menu-button").addEventListener("click", () => {
-  const dropdown = document.getElementById("menu-dropdown");
-  const isOpen = dropdown.classList.toggle("open");
-  dropdown.setAttribute("aria-hidden", String(!isOpen));
-});
-
-document.addEventListener("click", (event) => {
-  const menu = document.querySelector(".menu-wrap");
-  if (!menu.contains(event.target)) {
-    document.getElementById("menu-dropdown").classList.remove("open");
-    document.getElementById("menu-dropdown").setAttribute("aria-hidden", "true");
-  }
+document.getElementById("side-toggle").addEventListener("click", () => {
+  const isExpanded = document.body.classList.toggle("sidebar-expanded");
+  document.getElementById("side-toggle").setAttribute("aria-expanded", String(isExpanded));
+  document.getElementById("side-toggle").setAttribute("aria-label", isExpanded ? "Collapse navigation" : "Expand navigation");
+  localStorage.setItem("tradePulseSidebarExpanded", String(isExpanded));
 });
 
 document.getElementById("exit-game").addEventListener("click", () => {
@@ -1494,8 +1481,6 @@ gate.closePaywall.addEventListener("click", closeModals);
 document.getElementById("manage-billing").addEventListener("click", openBillingPortal);
 document.getElementById("logout-profile").addEventListener("click", logoutUser);
 document.getElementById("menu-logout").addEventListener("click", () => {
-  document.getElementById("menu-dropdown").classList.remove("open");
-  document.getElementById("menu-dropdown").setAttribute("aria-hidden", "true");
   logoutUser();
 });
 
@@ -1529,9 +1514,9 @@ document.getElementById("share-button").addEventListener("click", async () => {
     await navigator.share({ title: "TradePulse", text });
   } else {
     await navigator.clipboard.writeText(text);
-    document.getElementById("share-button").textContent = "Copied";
+    document.getElementById("share-label").textContent = "Copied";
     setTimeout(() => {
-      document.getElementById("share-button").textContent = "Share";
+      document.getElementById("share-label").textContent = "Share";
     }, 1300);
   }
 });
@@ -1592,6 +1577,11 @@ function prepareVisitScenarioSession() {
 }
 
 prepareVisitScenarioSession();
+if (localStorage.getItem("tradePulseSidebarExpanded") === "true" && window.innerWidth > 760) {
+  document.body.classList.add("sidebar-expanded");
+  document.getElementById("side-toggle").setAttribute("aria-expanded", "true");
+  document.getElementById("side-toggle").setAttribute("aria-label", "Collapse navigation");
+}
 refreshSubscriptionStatus();
 drawPreviewCharts();
 updateProgressUi();

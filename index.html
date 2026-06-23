@@ -7,6 +7,54 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <aside class="side-nav" id="side-nav" aria-label="TradePulse navigation">
+      <button class="side-toggle" id="side-toggle" type="button" aria-label="Expand navigation" aria-expanded="false">
+        <span class="side-icon">☰</span>
+        <span class="side-label">Menu</span>
+      </button>
+
+      <div class="side-nav-links">
+        <button class="side-link start-side-link nav-tab" data-page-target="modes" type="button" data-tooltip="Start Training">
+          <span class="side-icon">▶</span>
+          <span class="side-label">Start Training</span>
+        </button>
+        <button class="side-link elite-side-link nav-tab" data-page-target="elite" type="button" data-tooltip="Elite">
+          <span class="side-icon">◆</span>
+          <span class="side-label">Elite</span>
+        </button>
+        <div class="side-divider"></div>
+        <button class="side-link futures-tab nav-tab" data-page-target="futures" type="button" data-tooltip="Why Futures?">
+          <span class="side-icon">F</span>
+          <span class="side-label">Why Futures?</span>
+        </button>
+        <button class="side-link profile-tab nav-tab" data-page-target="profile" type="button" data-tooltip="Profile">
+          <span class="side-icon">ID</span>
+          <span class="side-label">Profile</span>
+        </button>
+        <button class="side-link plans-tab nav-tab" data-page-target="plans" type="button" data-tooltip="View Plans">
+          <span class="side-icon">$</span>
+          <span class="side-label">View Plans</span>
+        </button>
+        <button class="side-link roadmap-tab nav-tab" data-page-target="roadmap" type="button" data-tooltip="Build Path">
+          <span class="side-icon">✓</span>
+          <span class="side-label">Build Path</span>
+        </button>
+        <button class="side-link faq-tab nav-tab" data-page-target="faq" type="button" data-tooltip="Questions">
+          <span class="side-icon">?</span>
+          <span class="side-label">Questions</span>
+        </button>
+        <button class="side-link" id="share-button" type="button" data-tooltip="Share">
+          <span class="side-icon">↗</span>
+          <span class="side-label" id="share-label">Share</span>
+        </button>
+      </div>
+
+      <button class="side-link logout-tab hidden" id="menu-logout" type="button" data-tooltip="Logout">
+        <span class="side-icon">↪</span>
+        <span class="side-label">Logout</span>
+      </button>
+    </aside>
+
     <div class="site-shell">
       <header class="hero">
         <nav class="top-nav" aria-label="Primary navigation">
@@ -18,24 +66,6 @@
             </div>
             <strong>TRADE<span>PULSE</span></strong>
           </button>
-          <div class="nav-actions">
-            <button class="start-training-nav nav-tab" data-page-target="modes" type="button"><span>Start Training</span></button>
-            <button id="share-button">Share</button>
-            <button class="elite-nav-button" data-page-target="elite" type="button">Elite</button>
-            <div class="menu-wrap">
-              <button class="menu-button" id="menu-button" type="button" aria-label="Open navigation menu">
-                Menu
-              </button>
-              <div class="menu-dropdown" id="menu-dropdown" aria-hidden="true">
-                <button class="nav-tab futures-tab" data-page-target="futures"><span>Why Futures?</span></button>
-                <button class="nav-tab profile-tab" data-page-target="profile"><span>Profile</span></button>
-                <button class="nav-tab plans-tab" data-page-target="plans"><span>View Plans</span></button>
-                <button class="nav-tab roadmap-tab" data-page-target="roadmap"><span>Build Path</span></button>
-                <button class="nav-tab faq-tab" data-page-target="faq"><span>Questions</span></button>
-                <button class="nav-tab logout-tab hidden" id="menu-logout" type="button"><span>Logout</span></button>
-              </div>
-            </div>
-          </div>
         </nav>
 
         <section class="market-tape" aria-label="TradePulse training status">
