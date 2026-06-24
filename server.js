@@ -15,7 +15,9 @@ const types = {
   ".js": "application/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
   ".svg": "image/svg+xml",
-  ".png": "image/png"
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg"
 };
 
 const publicFiles = new Set([
@@ -24,7 +26,11 @@ const publicFiles = new Set([
   "app.js",
   "privacy.html",
   "terms.html",
-  "disclaimer.html"
+  "disclaimer.html",
+  "assets/modes/replay-mode.jpg",
+  "assets/modes/daily-challenge.jpg",
+  "assets/modes/ranked-battle.jpg",
+  "assets/modes/trade-mode.jpg"
 ]);
 
 function loadEnv() {

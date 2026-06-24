@@ -336,17 +336,31 @@ function getScenario(index) {
   return personalizedScenario(index);
 }
 
-function isScenarioAnswered(index) {
-  const scenario = getScenario(index);
-  return Boolean(progress().completed[scenario.id]);
+function completionKey(scenarioId, mode = state.activeMode) {
+  return `${mode}:${scenarioId}`;
 }
 
-function findNextUnanswered(startIndex, step = 1) {
+function completedScenario(scenario, mode = state.activeMode) {
+  const p = progress();
+  const keyed = p.completed[completionKey(scenario.id, mode)];
+  if (keyed) return keyed;
+
+  const legacy = p.completed[scenario.id];
+  const matchingAttempt = p.attempts.some((attempt) => attempt.scenarioId === scenario.id && (attempt.mode || "replay") === mode);
+  return matchingAttempt ? legacy : null;
+}
+
+function isScenarioAnswered(index, mode = state.activeMode) {
+  const scenario = getScenario(index);
+  return Boolean(completedScenario(scenario, mode));
+}
+
+function findNextUnanswered(startIndex, step = 1, mode = state.activeMode) {
   const direction = step >= 0 ? 1 : -1;
   let index = ((startIndex % TOTAL_SCENARIO_COUNT) + TOTAL_SCENARIO_COUNT) % TOTAL_SCENARIO_COUNT;
 
   for (let checked = 0; checked < TOTAL_SCENARIO_COUNT; checked += 1) {
-    if (!isScenarioAnswered(index)) return index;
+    if (!isScenarioAnswered(index, mode)) return index;
     index = (index + direction + TOTAL_SCENARIO_COUNT) % TOTAL_SCENARIO_COUNT;
   }
 
@@ -377,7 +391,7 @@ function nextScenarioForMode(mode) {
 
   const savedIndex = Number(p.nextByMode[mode]);
   const baseIndex = Number.isFinite(savedIndex) ? savedIndex : Number(p.sessionStartIndex);
-  const index = findNextUnanswered(baseIndex);
+  const index = findNextUnanswered(baseIndex, 1, mode);
   p.nextByMode[mode] = index;
   saveProgress();
   return index;
@@ -386,7 +400,7 @@ function nextScenarioForMode(mode) {
 function saveNextScenarioForMode(mode, fromIndex) {
   const p = progress();
   p.nextByMode ||= {};
-  p.nextByMode[mode] = findNextUnanswered(fromIndex);
+  p.nextByMode[mode] = findNextUnanswered(fromIndex, 1, mode);
   saveProgress();
 }
 
@@ -410,12 +424,20 @@ const state = {
   scenarioIndex: 0,
   timeframe: "1m",
   revealed: false,
+  revealCount: 0,
+  replayPlaying: false,
+  replaySpeed: 1,
   selected: null,
+  confidence: "medium",
+  tradeDirection: "wait",
+  survivalRound: 0,
+  survivalCorrect: 0,
   activeMode: "replay",
   progress: JSON.parse(localStorage.getItem("tradePulseProgress") || "{}")
 };
 
 let audioContext;
+let replayTimer;
 
 const els = {
   scenarioId: document.getElementById("scenario-id"),
@@ -455,7 +477,13 @@ const gate = {
   tradeForm: document.getElementById("trade-form"),
   activeModeLabel: document.getElementById("active-mode-label"),
   activeModeTitle: document.getElementById("active-mode-title"),
-  activeModeCopy: document.getElementById("active-mode-copy")
+  activeModeCopy: document.getElementById("active-mode-copy"),
+  confidencePicker: document.getElementById("confidence-picker"),
+  thesisBuilder: document.getElementById("thesis-builder"),
+  survivalStatus: document.getElementById("survival-status"),
+  modeInstruction: document.getElementById("mode-instruction"),
+  chartHotspots: document.getElementById("chart-hotspots"),
+  resultBreakdown: document.getElementById("result-breakdown")
 };
 
 function showPage(page) {
@@ -495,7 +523,15 @@ function defaultProgress() {
 }
 
 function progress() {
-  state.progress = { ...defaultProgress(), ...state.progress };
+  if (!state.progress || typeof state.progress !== "object") {
+    state.progress = defaultProgress();
+  }
+  const defaults = defaultProgress();
+  Object.entries(defaults).forEach(([key, value]) => {
+    if (state.progress[key] === undefined) {
+      state.progress[key] = Array.isArray(value) ? [] : value && typeof value === "object" ? { ...value } : value;
+    }
+  });
   const trialActive = Boolean(state.progress.trialEndsAt && Date.now() < Number(state.progress.trialEndsAt));
   if (state.progress.trialPlan === "Player" && trialActive && state.progress.plan === "Elite") {
     state.progress.plan = null;
@@ -769,6 +805,7 @@ function startMode(mode) {
   }
 
   state.activeMode = mode;
+  resetModeState();
   state.scenarioIndex = nextScenarioForMode(mode);
   showPage("modes");
   document.getElementById("trainer").scrollIntoView({ behavior: "smooth" });
@@ -776,18 +813,51 @@ function startMode(mode) {
   renderScenario();
 }
 
+function resetModeState() {
+  stopReplay();
+  state.revealed = false;
+  state.revealCount = 0;
+  state.selected = null;
+  state.confidence = "medium";
+  state.tradeDirection = "wait";
+  state.survivalRound = 0;
+  state.survivalCorrect = 0;
+}
+
 function applyModeUi() {
   const copy = {
     replay: ["Replay Mode", "Switch timeframes, make the call, then reveal the next candles."],
     daily: ["Daily Challenge", "One scenario. One chance. Bonus XP for consistency."],
     ranked: ["Ranked Battle", "Timed decisions with bigger XP and leaderboard pressure."],
-    trade: ["Trade Mode", "Pick a training entry, stop, and target before revealing the replay."]
+    trade: ["Trade Builder", "Choose direction, entry, stop, and target before running the replay."],
+    spot: ["Spot the Setup", "Click the chart zone where the highest-value setup forms."],
+    survival: ["Candle Survival", "Make a new decision as each group of candles develops."],
+    notrade: ["No-Trade Challenge", "Decide whether the setup deserves action or should be skipped."],
+    detective: ["Chart Detective", "Find the strongest clue that explains what happens next."],
+    thesis: ["Build the Thesis", "Assemble a complete market read instead of guessing one answer."]
   };
   const active = copy[state.activeMode] || copy.replay;
   gate.activeModeLabel.textContent = active[0];
   gate.activeModeTitle.textContent = active[0];
   gate.activeModeCopy.textContent = `${active[1]} Access: ${hasPaidPlan() ? "Unlimited" : `${freePlaysLeft()} free plays left`}.`;
   gate.tradeForm.classList.toggle("hidden", state.activeMode !== "trade");
+  gate.thesisBuilder.classList.toggle("hidden", state.activeMode !== "thesis");
+  gate.survivalStatus.classList.toggle("hidden", state.activeMode !== "survival");
+  gate.confidencePicker.classList.toggle("hidden", !["replay", "daily", "ranked", "notrade", "detective"].includes(state.activeMode));
+  gate.chartHotspots.classList.toggle("hidden", state.activeMode !== "spot" || state.revealed);
+
+  const instructions = {
+    replay: "Inspect every timeframe, choose the likely outcome, then rate your confidence.",
+    daily: "One scored attempt. Use every timeframe before committing.",
+    ranked: "Speed matters, but high-confidence mistakes carry a calibration penalty.",
+    trade: "Build the trade first. The simulator scores direction, placement, and risk/reward.",
+    spot: "Click one of the glowing chart zones where the key setup is forming.",
+    survival: "The chart advances after every choice. Adapt as new candles appear.",
+    notrade: "The best trade may be no trade. Protect discipline over activity.",
+    detective: "Identify the clue that most strongly supports the replay outcome.",
+    thesis: "Complete all five parts of the thesis. Each component is scored separately."
+  };
+  gate.modeInstruction.textContent = instructions[state.activeMode] || instructions.replay;
 }
 
 function seededRandom(seed) {
@@ -798,10 +868,10 @@ function seededRandom(seed) {
   };
 }
 
-function makeCandles(scenario, timeframe, reveal) {
+function makeCandles(scenario, timeframe, revealAmount = 0) {
   const multipliers = { "1m": 1, "5m": 1.7, "15m": 3.1, "1h": 5.7, "4h": 7.4 };
   const visible = 42;
-  const future = reveal ? 18 : 0;
+  const future = revealAmount === true ? 18 : Math.max(0, Math.min(18, Number(revealAmount) || 0));
   const total = visible + future;
   const rand = seededRandom(scenario.seed + timeframe.charCodeAt(0) * 19);
   const candles = [];
@@ -832,11 +902,12 @@ function makeCandles(scenario, timeframe, reveal) {
   return candles;
 }
 
-function drawChartOn(canvas, scenario, timeframe, reveal, compact = false) {
+function drawChartOn(canvas, scenario, timeframe, revealAmount = 0, compact = false) {
   const ctx = canvas.getContext("2d");
   const width = canvas.width;
   const height = canvas.height;
-  const candles = makeCandles(scenario, timeframe, reveal);
+  const revealCount = revealAmount === true ? 18 : Math.max(0, Math.min(18, Number(revealAmount) || 0));
+  const candles = makeCandles(scenario, timeframe, revealCount);
   const pad = compact ? { top: 18, right: 8, bottom: 18, left: 8 } : { top: 34, right: 68, bottom: 44, left: 54 };
   const plotW = width - pad.left - pad.right;
   const plotH = height - pad.top - pad.bottom;
@@ -897,8 +968,8 @@ function drawChartOn(canvas, scenario, timeframe, reveal, compact = false) {
 
   ctx.globalAlpha = 1;
 
-  if (!compact && !reveal) {
-    const hiddenX = pad.left + 42 * xStep;
+  if (!compact && revealCount < 18) {
+    const hiddenX = pad.left + (42 + revealCount) * xStep;
     ctx.fillStyle = "rgba(5, 9, 13, 0.72)";
     ctx.fillRect(hiddenX, pad.top, width - pad.right - hiddenX, plotH);
     ctx.strokeStyle = "#f6c34e";
@@ -908,7 +979,8 @@ function drawChartOn(canvas, scenario, timeframe, reveal, compact = false) {
     ctx.stroke();
     ctx.fillStyle = "#eef7f1";
     ctx.font = "25px Inter, system-ui";
-    ctx.fillText("Future candles locked", hiddenX + 24, pad.top + 52);
+    const labelX = Math.min(hiddenX + 24, width - pad.right - 238);
+    ctx.fillText(revealCount ? `${18 - revealCount} candles locked` : "Future candles locked", labelX, pad.top + 52);
   }
 
   if (!compact) {
@@ -943,22 +1015,69 @@ function drawDashedLine(ctx, x1, y1, x2, y2, color) {
 }
 
 function drawChart() {
-  drawChartOn(els.chart, getScenario(state.scenarioIndex), state.timeframe, state.revealed);
+  drawChartOn(els.chart, getScenario(state.scenarioIndex), state.timeframe, state.revealCount);
+  updateReplayControls();
 }
 
 function drawPreviewCharts() {
   document.querySelectorAll(".mini-chart").forEach((canvas) => {
     const index = Number(canvas.dataset.preview || 0);
     const scenario = getScenario(index);
-    drawChartOn(canvas, scenario, index === 2 ? "5m" : "1m", index === 1, true);
+    drawChartOn(canvas, scenario, index === 2 ? "5m" : "1m", index === 1 ? 18 : 0, true);
   });
+}
+
+function updateReplayControls() {
+  document.getElementById("candle-counter").textContent = `${state.revealCount} / 18`;
+  document.getElementById("replay-play").textContent = state.replayPlaying ? "Ⅱ" : "▶";
+  document.getElementById("replay-step-back").disabled = state.revealCount <= 0;
+  document.getElementById("replay-step-forward").disabled = !state.revealed || state.revealCount >= 18;
+  document.getElementById("replay-play").disabled = !state.revealed || state.revealCount >= 18;
+  document.querySelectorAll("#speed-control button").forEach((button) => {
+    button.classList.toggle("active", Number(button.dataset.speed) === state.replaySpeed);
+  });
+}
+
+function stopReplay() {
+  clearInterval(replayTimer);
+  replayTimer = null;
+  state.replayPlaying = false;
+  document.getElementById("replay-play")?.replaceChildren(document.createTextNode("▶"));
+}
+
+function playReplay() {
+  if (!state.revealed || state.revealCount >= 18) return;
+  if (state.replayPlaying) {
+    stopReplay();
+    updateReplayControls();
+    return;
+  }
+
+  state.replayPlaying = true;
+  updateReplayControls();
+  const interval = Math.max(90, 620 / state.replaySpeed);
+  replayTimer = setInterval(() => {
+    state.revealCount = Math.min(18, state.revealCount + 1);
+    drawChart();
+    if (state.revealCount >= 18) stopReplay();
+  }, interval);
+}
+
+function animateReplay(from = 0) {
+  stopReplay();
+  state.revealCount = Math.max(0, Math.min(18, from));
+  drawChart();
+  playReplay();
 }
 
 function renderScenario() {
   const scenario = getScenario(state.scenarioIndex);
-  const completed = progress().completed[scenario.id];
+  const completed = completedScenario(scenario);
   state.revealed = Boolean(completed);
+  state.revealCount = state.revealed ? 18 : 0;
   state.selected = completed?.selected || null;
+  state.confidence = completed?.confidence || state.confidence || "medium";
+  stopReplay();
 
   els.scenarioId.textContent = scenario.scenarioCode;
   els.title.textContent = scenario.title;
@@ -967,11 +1086,19 @@ function renderScenario() {
   els.tags.textContent = scenario.tags.join(" · ");
   els.question.textContent = scenario.question;
   if (state.activeMode === "ranked") els.question.textContent = `Timed: ${scenario.question}`;
-  if (state.activeMode === "trade") els.question.textContent = "Place your practice trade, then choose the most likely replay outcome.";
+  if (state.activeMode === "trade") els.question.textContent = "Build the highest-quality practice trade.";
+  if (state.activeMode === "spot") els.question.textContent = "Where is the key setup forming?";
+  if (state.activeMode === "survival") els.question.textContent = "What is your decision as the next candles develop?";
+  if (state.activeMode === "notrade") els.question.textContent = "Does this setup deserve a trade?";
+  if (state.activeMode === "detective") els.question.textContent = "Which clue matters most?";
+  if (state.activeMode === "thesis") els.question.textContent = "Build the complete market thesis.";
   els.status.textContent = state.revealed ? "Future candles revealed" : "Future candles hidden";
 
+  applyModeUi();
   renderTabs();
   renderAnswers();
+  renderChartHotspots();
+  updateTradePreview();
   drawChart();
 }
 
@@ -1006,30 +1133,97 @@ function renderAnswers() {
     return;
   }
 
-  scenario.answers.forEach((answer, index) => {
+  if (state.activeMode === "trade" || state.activeMode === "thesis" || state.activeMode === "spot") {
+    if (state.revealed) {
+      const completed = completedScenario(scenario);
+      showResult(completed.correct, completed.earned, completed);
+    } else {
+      els.resultPanel.classList.add("hidden");
+      gate.resultBreakdown.classList.add("hidden");
+    }
+    return;
+  }
+
+  let answers = scenario.answers;
+  let correctAnswer = scenario.correctAnswer;
+
+  if (state.activeMode === "notrade") {
+    answers = ["Take the long", "Take the short", "Skip the trade"];
+    correctAnswer = noTradeAnswer(scenario);
+  }
+
+  if (state.activeMode === "detective") {
+    answers = detectiveOptions(scenario);
+    correctAnswer = answers[0];
+  }
+
+  if (state.activeMode === "survival") {
+    answers = ["Hold bias", "Change bias", "Enter", "Exit", "Do nothing"];
+    correctAnswer = survivalAnswer(scenario, state.survivalRound);
+    document.getElementById("survival-round").textContent = Math.min(5, state.survivalRound + 1);
+    document.getElementById("survival-progress").style.width = `${(state.survivalRound / 5) * 100}%`;
+    document.getElementById("survival-score").textContent = `${state.survivalCorrect} strong decision${state.survivalCorrect === 1 ? "" : "s"}`;
+  }
+
+  answers.forEach((answer, index) => {
     const button = document.createElement("button");
     button.className = "answer-button";
     button.textContent = `${String.fromCharCode(65 + index)}  ${answer}`;
     button.disabled = state.revealed;
 
     if (state.revealed) {
-      if (answer === scenario.correctAnswer) button.classList.add("correct");
-      if (answer === state.selected && answer !== scenario.correctAnswer) button.classList.add("wrong");
+      if (answer === correctAnswer) button.classList.add("correct");
+      if (answer === state.selected && answer !== correctAnswer) button.classList.add("wrong");
     }
 
-    button.addEventListener("click", () => submitAnswer(answer));
+    button.addEventListener("click", () => {
+      if (state.activeMode === "survival") submitSurvivalDecision(answer);
+      else submitAnswer(answer, correctAnswer);
+    });
     els.answers.appendChild(button);
   });
 
   if (state.revealed) {
-    const completed = progress().completed[scenario.id];
-    showResult(completed.correct, completed.earned);
+    const completed = completedScenario(scenario);
+    showResult(completed.correct, completed.earned, completed);
   } else {
     els.resultPanel.classList.add("hidden");
+    gate.resultBreakdown.classList.add("hidden");
   }
 }
 
-function submitAnswer(answer) {
+function noTradeAnswer(scenario) {
+  if (scenario.bias === "chop" || scenario.pattern.includes("Whipsaw") || scenario.pattern.includes("No Trade")) return "Skip the trade";
+  if (scenario.bias === "reversal") return "Take the short";
+  return "Take the long";
+}
+
+function detectiveOptions(scenario) {
+  const primary = scenario.tags[1] || scenario.tags[0] || "Key level reaction";
+  return [
+    primary,
+    "The candle color by itself",
+    "A random lower-timeframe wick",
+    "The market symbol"
+  ];
+}
+
+function survivalAnswer(scenario, round) {
+  if (round === 0) return "Hold bias";
+  if (round === 1) return scenario.bias === "chop" ? "Do nothing" : "Enter";
+  if (round === 2) return scenario.bias === "reversal" ? "Change bias" : "Hold bias";
+  if (round === 3) return scenario.bias === "chop" ? "Do nothing" : "Hold bias";
+  return "Exit";
+}
+
+function confidenceBonus(correct) {
+  if (!correct) return 0;
+  if (state.confidence === "high") return 48;
+  if (state.confidence === "medium") return 18;
+  return 0;
+}
+
+function submitAnswer(answer, correctAnswer = getScenario(state.scenarioIndex).correctAnswer) {
   if (!hasSignup()) {
     openSignup();
     return;
@@ -1043,30 +1237,110 @@ function submitAnswer(answer) {
   }
 
   const scenario = getScenario(state.scenarioIndex);
-  const p = progress();
-  const correct = answer === scenario.correctAnswer;
-  const modeBonus = state.activeMode === "ranked" ? 80 : state.activeMode === "daily" ? 200 : state.activeMode === "trade" ? 60 : 0;
-  const earned = correct ? 120 + modeBonus + Math.min(80, p.streak * 20) : 20;
+  const correct = answer === correctAnswer;
+  const modeBonus = state.activeMode === "ranked" ? 80 : state.activeMode === "daily" ? 200 : state.activeMode === "detective" ? 45 : state.activeMode === "notrade" ? 55 : 0;
+  const earned = correct ? 120 + modeBonus + confidenceBonus(correct) + Math.min(80, progress().streak * 20) : 20;
+  finishAttempt({ answer, correct, earned, correctAnswer });
+}
 
+function submitSurvivalDecision(answer) {
+  if (!hasSignup()) {
+    openSignup();
+    return;
+  }
+  if (!hasPaidPlan() && freePlaysLeft() <= 0) {
+    openPaywall();
+    return;
+  }
+
+  const scenario = getScenario(state.scenarioIndex);
+  const expected = survivalAnswer(scenario, state.survivalRound);
+  if (answer === expected) state.survivalCorrect += 1;
+  state.survivalRound += 1;
+  state.revealCount = Math.min(15, state.survivalRound * 3);
+  playAnswerSound(answer === expected);
+  drawChart();
+
+  if (state.survivalRound >= 5) {
+    const correct = state.survivalCorrect >= 3;
+    const earned = 45 + state.survivalCorrect * 35;
+    finishAttempt({
+      answer: `${state.survivalCorrect}/5 strong decisions`,
+      correct,
+      earned,
+      correctAnswer: "Adapt to all five candle decisions",
+      metadata: { survivalCorrect: state.survivalCorrect }
+    });
+    return;
+  }
+  renderAnswers();
+}
+
+function finishAttempt({ answer, correct, earned, correctAnswer, metadata = {} }) {
+  const scenario = getScenario(state.scenarioIndex);
+  const p = progress();
+  const paid = hasPaidPlan();
   playAnswerSound(correct);
+  stopReplay();
   state.selected = answer;
   state.revealed = true;
   p.xp += earned;
   if (!paid) p.freePlaysUsed = Number(p.freePlaysUsed || 0) + 1;
   p.streak = correct ? p.streak + 1 : 0;
   p.topStreak = Math.max(p.topStreak, p.streak);
-  p.attempts.push({ scenarioId: scenario.id, answer, correct, pattern: scenario.pattern, mode: state.activeMode });
-  p.completed[scenario.id] = { selected: answer, correct, earned };
+  const attempt = {
+    scenarioId: scenario.id,
+    answer,
+    correct,
+    pattern: scenario.pattern,
+    mode: state.activeMode,
+    confidence: state.confidence,
+    ...metadata
+  };
+  p.attempts.push(attempt);
+  p.completed[completionKey(scenario.id)] = { selected: answer, correct, earned, correctAnswer, confidence: state.confidence, ...metadata };
   p.nextByMode ||= {};
   p.nextByMode[state.activeMode] = findNextUnanswered(state.scenarioIndex + 1);
   saveProgress();
   updateProgressUi();
-  els.status.textContent = "Future candles revealed";
+  els.status.textContent = "Replay ready";
   renderAnswers();
-  drawChart();
+  renderChartHotspots();
+  animateReplay(0);
 }
 
-function showResult(correct, earned) {
+function clueForScenario(scenario) {
+  if (scenario.pattern.includes("VWAP")) return "Price acceptance or rejection around VWAP was the key clue.";
+  if (scenario.pattern.includes("Liquidity") || scenario.pattern.includes("Failed")) return "The failure to hold beyond the prior high or low exposed the trap.";
+  if (scenario.bias === "chop") return "Overlapping candles and flat structure warned that no clean edge existed.";
+  if (scenario.bias === "breakout") return "Compression and shallow pullbacks showed energy building before expansion.";
+  return `${scenario.tags[1] || scenario.tags[0]} was the strongest contextual clue.`;
+}
+
+function invalidationForScenario(scenario) {
+  if (scenario.bias === "reversal") return "Sustained acceptance beyond the swept level would invalidate the reversal read.";
+  if (scenario.bias === "chop") return "A clean range break followed by acceptance would end the no-trade condition.";
+  return "A failed hold back through the key level would invalidate continuation.";
+}
+
+function optionReviewForScenario(scenario, completed) {
+  if (state.activeMode === "thesis") return `${completed.thesisScore || 0} of 5 thesis components matched the scenario structure. Review the components separately instead of treating the thesis as one directional guess.`;
+  if (state.activeMode === "trade") return `Direction and risk were scored independently. The expected training direction was ${expectedDirection(scenario)}, while your planned trade scored ${completed.tradeScore || 0}/100.`;
+  if (state.activeMode === "survival") return `Each survival choice was compared with the developing structure. You made ${completed.survivalCorrect || 0} strong decisions across five checkpoints.`;
+  if (state.activeMode === "spot") return `Only one zone combined the strongest location and confirmation. Your selected zone was ${completed.zone || "not recorded"}; the other zones lacked the same confluence.`;
+  const selected = completed.selected || state.selected || "your answer";
+  const alternatives = scenario.answers.filter((answer) => answer !== scenario.correctAnswer).slice(0, 2).join(" and ");
+  return `${scenario.correctAnswer} matched location, momentum, and acceptance. ${selected === scenario.correctAnswer ? "Your choice matched those clues." : `${selected} conflicted with the reveal.`} Alternatives such as ${alternatives} lacked enough confirmation.`;
+}
+
+function calibrationText() {
+  const attempts = progress().attempts.filter((attempt) => attempt.confidence === state.confidence);
+  const correct = attempts.filter((attempt) => attempt.correct).length;
+  const rate = attempts.length ? Math.round((correct / attempts.length) * 100) : 0;
+  return `Your ${state.confidence} confidence calls are correct ${rate}% of the time across ${attempts.length} decision${attempts.length === 1 ? "" : "s"}.`;
+}
+
+function showResult(correct, earned, completed = {}) {
   const paid = hasPaidPlan();
   const scenario = getScenario(state.scenarioIndex);
   els.resultPanel.classList.remove("hidden");
@@ -1076,10 +1350,132 @@ function showResult(correct, earned) {
     ? `${scenario.explanation} Coach tip: review location, momentum, and whether price accepted or failed around the key level. Educational practice only, not financial advice.`
     : scenario.explanation;
   els.xpEarned.textContent = `+${earned} XP`;
+  gate.resultBreakdown.classList.remove("hidden");
+  document.getElementById("why-correct").textContent = scenario.explanation;
+  document.getElementById("option-review").textContent = optionReviewForScenario(scenario, completed);
+  document.getElementById("missed-clue").textContent = correct
+    ? `You recognized it: ${clueForScenario(scenario)}`
+    : clueForScenario(scenario);
+  document.getElementById("invalidation").textContent = invalidationForScenario(scenario);
+  document.getElementById("calibration").textContent = completed.confidence ? calibrationText() : "Complete confidence-rated decisions to build your calibration score.";
   applyModeUi();
   if (!paid && freePlaysLeft() <= 0) {
     setTimeout(openPaywall, 800);
   }
+}
+
+function renderChartHotspots() {
+  gate.chartHotspots.innerHTML = "";
+  if (state.activeMode !== "spot" || state.revealed) {
+    gate.chartHotspots.classList.add("hidden");
+    return;
+  }
+
+  gate.chartHotspots.classList.remove("hidden");
+  const scenario = getScenario(state.scenarioIndex);
+  const correctIndex = scenario.seed % 4;
+  ["Opening structure", "Key level test", "Failure / reclaim", "Expansion trigger"].forEach((label, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.style.left = `${15 + index * 22}%`;
+    button.style.top = `${index % 2 ? 38 : 58}%`;
+    button.innerHTML = `<span>${index + 1}</span><small>${label}</small>`;
+    button.addEventListener("click", () => {
+      const correct = index === correctIndex;
+      finishAttempt({
+        answer: `Zone ${index + 1}: ${label}`,
+        correct,
+        earned: correct ? 165 : 25,
+        correctAnswer: `Zone ${correctIndex + 1}`,
+        metadata: { zone: index + 1 }
+      });
+    });
+    gate.chartHotspots.appendChild(button);
+  });
+}
+
+function expectedDirection(scenario) {
+  if (scenario.bias === "chop") return "wait";
+  if (scenario.bias === "reversal") return "short";
+  return "long";
+}
+
+function updateTradePreview() {
+  const entry = Number(document.getElementById("trade-entry").value);
+  const stop = Number(document.getElementById("trade-stop").value);
+  const target = Number(document.getElementById("trade-target").value);
+  const risk = Math.abs(entry - stop);
+  const reward = Math.abs(target - entry);
+  const rr = risk > 0 ? reward / risk : 0;
+  document.getElementById("trade-rr-preview").textContent = `${rr.toFixed(2)}R`;
+  return rr;
+}
+
+function submitTradeBuilder() {
+  if (!hasSignup()) {
+    openSignup();
+    return;
+  }
+  if (!hasPaidPlan() && freePlaysLeft() <= 0) {
+    openPaywall();
+    return;
+  }
+
+  const scenario = getScenario(state.scenarioIndex);
+  const rr = updateTradePreview();
+  const directionCorrect = state.tradeDirection === expectedDirection(scenario);
+  const placementScore = Math.min(40, Math.round(rr * 16));
+  const directionScore = directionCorrect ? 60 : 10;
+  const totalScore = Math.min(100, directionScore + placementScore);
+  const correct = directionCorrect && (state.tradeDirection === "wait" || rr >= 1.5);
+  const earned = 35 + totalScore;
+  finishAttempt({
+    answer: `${state.tradeDirection.toUpperCase()} · ${rr.toFixed(2)}R`,
+    correct,
+    earned,
+    correctAnswer: `${expectedDirection(scenario).toUpperCase()} with disciplined risk`,
+    metadata: { rr: Number(rr.toFixed(2)), tradeScore: totalScore, direction: state.tradeDirection }
+  });
+}
+
+function expectedThesis(scenario) {
+  return {
+    trend: scenario.bias === "reversal" ? "Bearish" : scenario.bias === "chop" ? "Neutral" : "Bullish",
+    location: scenario.bias === "reversal" ? "Premium" : scenario.bias === "chop" ? "Mid-range" : "Discount",
+    momentum: scenario.bias === "reversal" ? "Weakening" : scenario.bias === "chop" ? "Balanced" : "Strengthening",
+    liquidity: scenario.bias === "reversal" ? "Above price" : scenario.bias === "chop" ? "Both sides" : "Below price",
+    action: scenario.bias === "reversal" ? "Short" : scenario.bias === "chop" ? "Avoid" : "Long"
+  };
+}
+
+function submitThesisBuilder() {
+  if (!hasSignup()) {
+    openSignup();
+    return;
+  }
+  if (!hasPaidPlan() && freePlaysLeft() <= 0) {
+    openPaywall();
+    return;
+  }
+
+  const scenario = getScenario(state.scenarioIndex);
+  const expected = expectedThesis(scenario);
+  const chosen = {
+    trend: document.getElementById("thesis-trend").value,
+    location: document.getElementById("thesis-location").value,
+    momentum: document.getElementById("thesis-momentum").value,
+    liquidity: document.getElementById("thesis-liquidity").value,
+    action: document.getElementById("thesis-action").value
+  };
+  const components = Object.keys(expected).filter((key) => chosen[key] === expected[key]).length;
+  const correct = components >= 4;
+  finishAttempt({
+    answer: `${components}/5 thesis components`,
+    correct,
+    earned: 30 + components * 35,
+    correctAnswer: Object.values(expected).join(" · "),
+    metadata: { thesisScore: components, thesis: chosen }
+  });
 }
 
 function renderLeaderboard() {
@@ -1251,12 +1647,17 @@ function renderProfile() {
   const patterns = actualPatternStats();
   const strongest = [...patterns].sort((a, b) => b.accuracy - a.accuracy || b.total - a.total)[0];
   const weakest = [...patterns].sort((a, b) => a.accuracy - b.accuracy || b.total - a.total)[0];
-  const modes = ["replay", "daily", "ranked", "trade"];
+  const modes = ["replay", "daily", "ranked", "trade", "spot", "survival", "notrade", "detective", "thesis"];
   const modeLabels = {
     replay: "Replay Mode",
     daily: "Daily Challenge",
     ranked: "Ranked Battle",
-    trade: "Trade Mode"
+    trade: "Trade Builder",
+    spot: "Spot the Setup",
+    survival: "Candle Survival",
+    notrade: "No-Trade Challenge",
+    detective: "Chart Detective",
+    thesis: "Build the Thesis"
   };
 
   document.getElementById("profile-avatar").textContent = initials;
@@ -1397,12 +1798,14 @@ document.getElementById("next-scenario").addEventListener("click", () => {
     openPaywall();
     return;
   }
+  resetModeState();
   state.scenarioIndex = findNextUnanswered(state.scenarioIndex + 1);
   saveNextScenarioForMode(state.activeMode, state.scenarioIndex);
   renderScenario();
 });
 
 document.getElementById("previous-scenario").addEventListener("click", () => {
+  resetModeState();
   state.scenarioIndex = findNextUnanswered(state.scenarioIndex - 1, -1);
   saveNextScenarioForMode(state.activeMode, state.scenarioIndex);
   renderScenario();
@@ -1420,6 +1823,59 @@ document.getElementById("reset-progress").addEventListener("click", () => {
 
 document.querySelectorAll(".mode-start").forEach((button) => {
   button.addEventListener("click", () => startMode(button.dataset.mode || "replay"));
+});
+
+document.querySelectorAll("#confidence-picker button").forEach((button) => {
+  button.addEventListener("click", () => {
+    state.confidence = button.dataset.confidence;
+    document.querySelectorAll("#confidence-picker button").forEach((item) => item.classList.toggle("active", item === button));
+    const copy = {
+      low: "Low confidence has no XP modifier.",
+      medium: "Medium confidence earns a 15% correct-answer bonus.",
+      high: "High confidence earns a 40% correct-answer bonus and tests calibration."
+    };
+    document.getElementById("confidence-copy").textContent = copy[state.confidence];
+  });
+});
+
+document.querySelectorAll("#trade-direction button").forEach((button) => {
+  button.addEventListener("click", () => {
+    state.tradeDirection = button.dataset.direction;
+    document.querySelectorAll("#trade-direction button").forEach((item) => item.classList.toggle("active", item === button));
+  });
+});
+
+["trade-entry", "trade-stop", "trade-target"].forEach((id) => {
+  document.getElementById(id).addEventListener("input", updateTradePreview);
+});
+
+document.getElementById("submit-trade").addEventListener("click", submitTradeBuilder);
+document.getElementById("submit-thesis").addEventListener("click", submitThesisBuilder);
+document.getElementById("replay-restart").addEventListener("click", () => {
+  stopReplay();
+  state.revealCount = 0;
+  drawChart();
+});
+document.getElementById("replay-step-back").addEventListener("click", () => {
+  stopReplay();
+  state.revealCount = Math.max(0, state.revealCount - 1);
+  drawChart();
+});
+document.getElementById("replay-step-forward").addEventListener("click", () => {
+  stopReplay();
+  if (!state.revealed) return;
+  state.revealCount = Math.min(18, state.revealCount + 1);
+  drawChart();
+});
+document.getElementById("replay-play").addEventListener("click", playReplay);
+document.querySelectorAll("#speed-control button").forEach((button) => {
+  button.addEventListener("click", () => {
+    const wasPlaying = state.replayPlaying;
+    stopReplay();
+    state.replaySpeed = Number(button.dataset.speed);
+    updateReplayControls();
+    if (wasPlaying) playReplay();
+  });
 });
 
 document.querySelectorAll(".nav-tab").forEach((button) => {
