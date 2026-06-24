@@ -4461,6 +4461,19 @@ body:not(.sidebar-expanded) .side-link:hover::after {
   transition: width 240ms ease, left 240ms ease;
 }
 
+body.playing .site-shell,
+body[data-page="modes"] .site-shell {
+  width: min(1540px, calc(100% - var(--sidebar-width) - 40px));
+}
+
+body.playing .trainer-section,
+body[data-page="modes"] .trainer-section {
+  width: calc(100vw - var(--sidebar-width));
+  padding-right: max(20px, calc((100vw - var(--sidebar-width) - 1540px) / 2));
+  padding-left: max(20px, calc((100vw - var(--sidebar-width) - 1540px) / 2));
+  transition: width 240ms ease, padding 240ms ease;
+}
+
 @media (max-width: 760px) {
   body,
   body.sidebar-expanded {
@@ -4489,6 +4502,18 @@ body:not(.sidebar-expanded) .side-link:hover::after {
     width: calc(100% - 76px);
     margin-left: 68px;
     padding-top: 98px;
+  }
+
+  body.playing .site-shell,
+  body[data-page="modes"] .site-shell {
+    width: calc(100% - 76px);
+  }
+
+  body.playing .trainer-section,
+  body[data-page="modes"] .trainer-section {
+    width: calc(100vw - 60px);
+    padding-right: 12px;
+    padding-left: 12px;
   }
 
   .top-nav {
