@@ -377,11 +377,52 @@ function freshScenarioBase() {
 
 function startFreshScenarioSession() {
   const p = progress();
+  const start = Number(p.sessionAttemptStart || 0);
+  const previous = p.attempts.slice(start);
+  if (previous.length) {
+    p.lastSessionSummary = {
+      count: previous.length,
+      correct: previous.filter((attempt) => attempt.correct).length,
+      xp: previous.reduce((sum, attempt) => sum + Number(attempt.earned || 0), 0),
+      endedAt: p.lastLoginAt || Date.now()
+    };
+  }
   p.loginCount = Number(p.loginCount || 0) + 1;
   p.lastLoginAt = Date.now();
+  p.sessionAttemptStart = p.attempts.length;
   p.sessionStartIndex = freshScenarioBase();
   p.nextByMode = {};
   saveProgress();
+}
+
+function applyMissedDayFreeze() {
+  const p = progress();
+  if (!p.lastLoginAt || !p.streak) return;
+  const daysAway = Math.floor((Date.now() - Number(p.lastLoginAt)) / 86400000);
+  if (daysAway <= 1) return;
+  if (Number(p.streakFreezes || 0) > 0) {
+    p.streakFreezes = Number(p.streakFreezes || 0) - 1;
+    showToast("Streak freeze used. Your streak survived the missed day.", "success");
+  } else {
+    p.streak = 0;
+  }
+}
+
+function maybeShowReturnRecap() {
+  const p = progress();
+  if (!p.lastLoginAt || sessionStorage.getItem("tradePulseReturnRecapShown")) return;
+  const hoursAway = (Date.now() - Number(p.lastLoginAt)) / 3600000;
+  if (hoursAway < 12 || !els.returnRecap) return;
+  const summary = p.lastSessionSummary || {
+    count: Math.min(5, p.attempts.length),
+    correct: p.attempts.slice(-5).filter((attempt) => attempt.correct).length,
+    xp: p.attempts.slice(-5).reduce((sum, attempt) => sum + Number(attempt.earned || 0), 0)
+  };
+  if (!summary.count) return;
+  document.getElementById("return-recap-copy").textContent =
+    `Last session: ${summary.count} scenarios, ${summary.correct} correct, +${summary.xp || 0} XP. Ready to continue?`;
+  els.returnRecap.classList.remove("hidden");
+  sessionStorage.setItem("tradePulseReturnRecapShown", "true");
 }
 
 function nextScenarioForMode(mode) {
@@ -438,6 +479,7 @@ const state = {
 
 let audioContext;
 let replayTimer;
+let tapeScenarioCount;
 
 const els = {
   scenarioId: document.getElementById("scenario-id"),
@@ -472,7 +514,14 @@ const els = {
   tapeSession: document.getElementById("tape-session"),
   tapeAccuracy: document.getElementById("tape-accuracy"),
   tapeDelta: document.getElementById("tape-delta"),
-  tapeScenarios: document.getElementById("tape-scenarios")
+  tapeScenarios: document.getElementById("tape-scenarios"),
+  difficultyBadge: document.getElementById("difficulty-badge"),
+  paywallProgress: document.getElementById("paywall-progress-line"),
+  levelUpNudge: document.getElementById("level-up-nudge"),
+  distributionSummary: document.getElementById("distribution-summary"),
+  toastStack: document.getElementById("toast-stack"),
+  exitIntent: document.getElementById("exit-intent"),
+  returnRecap: document.getElementById("return-recap")
 };
 
 const gate = {
@@ -494,6 +543,11 @@ const gate = {
 };
 
 function showPage(page) {
+  const target = document.querySelector(`.page-section[data-page="${page}"]`);
+  const dashboardTarget = [...document.querySelectorAll(".dashboard-section")].some((section) =>
+    (section.dataset.dashboardPages || "").split(",").includes(page)
+  );
+  if (!target && !dashboardTarget) page = "home";
   document.body.dataset.page = page;
   document.body.classList.remove("playing");
   document.querySelectorAll(".page-section").forEach((section) => {
@@ -525,7 +579,11 @@ function defaultProgress() {
     loginDays: 1,
     freePlaysUsed: 0,
     signup: null,
-    plan: null
+    plan: null,
+    streakFreezes: 0,
+    freezeAwardedAtFive: false,
+    sessionAttemptStart: 0,
+    lastSessionSummary: null
   };
 }
 
@@ -579,7 +637,7 @@ async function saveLead(type, payload) {
 async function startCheckout(plan, trial = false, triggerButton = null) {
   const p = progress();
   if (location.protocol === "file:") {
-    alert("Open http://localhost:4173 to use Stripe/Supabase setup. This file view can only run the demo.");
+    showToast("Open http://localhost:4173 to use Stripe checkout. This file view can only run the demo.", "warning");
     return false;
   }
 
@@ -601,12 +659,12 @@ async function startCheckout(plan, trial = false, triggerButton = null) {
       return true;
     }
     if (result.configured === false) {
-      alert(result.message);
+      showToast(result.message, "warning");
       return false;
     }
     throw new Error(result.error || "Checkout did not return a URL.");
   } catch (error) {
-    alert(`Checkout setup needs attention: ${error.message}`);
+    showToast(`Checkout setup needs attention: ${error.message}`, "error");
     return false;
   } finally {
     checkoutButtonLoading(triggerButton, false);
@@ -660,10 +718,23 @@ async function openBillingPortal() {
       window.location.href = result.url;
       return;
     }
-    alert(result.message || result.error || "Billing portal is not ready for this account yet.");
+    showToast(result.message || result.error || "Billing portal is not ready for this account yet.", "warning");
   } catch (error) {
-    alert(`Billing portal needs attention: ${error.message}`);
+    showToast(`Billing portal needs attention: ${error.message}`, "error");
   }
+}
+
+function showToast(message, type = "success") {
+  if (!els.toastStack) return;
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  els.toastStack.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add("show"));
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 220);
+  }, 3600);
 }
 
 function tone(frequency, start, duration, type, volume) {
@@ -785,6 +856,30 @@ function updateProgressUi() {
   renderAchievements();
   renderRankMeter();
   updateMarketTape();
+  renderSidebarProgress();
+  renderPaywallProgress();
+  updateGameCards();
+}
+
+function renderSidebarProgress() {
+  const p = progress();
+  const level = Math.max(1, Math.floor(p.xp / 500) + 1);
+  const currentLevelXp = p.xp % 500;
+  const next = nextRankFromXp(p.xp);
+  document.getElementById("side-progress-rank").textContent = `${rankFromXp(p.xp)} · Level ${level}`;
+  document.getElementById("side-progress-xp").textContent = `${currentLevelXp} / 500 XP`;
+  document.getElementById("side-progress-fill").style.width = `${Math.min(100, (currentLevelXp / 500) * 100)}%`;
+  document.getElementById("side-progress-next").textContent = next.xp <= p.xp ? "Top rank reached" : `Next rank: ${next.name}`;
+}
+
+function renderPaywallProgress() {
+  if (!els.paywallProgress) return;
+  const p = progress();
+  const rank = rankFromXp(p.xp);
+  const attempts = p.attempts.length;
+  els.paywallProgress.textContent = attempts
+    ? `You've earned ${p.xp.toLocaleString()} XP and reached ${rank} rank. Keep your progress moving.`
+    : "Start your first replay now and keep every XP point, rank, and streak you earn.";
 }
 
 function hasSignup() {
@@ -798,6 +893,28 @@ function hasPaidPlan() {
 
 function hasElitePlan() {
   return progress().plan === "Elite";
+}
+
+function planLevel(plan) {
+  return { Free: 0, Player: 1, Coach: 2, Elite: 3 }[plan || "Free"] || 0;
+}
+
+function effectivePlan() {
+  if (progress().plan) return progress().plan;
+  if (isTrialActive()) return "Player";
+  return "Free";
+}
+
+function modeRequirement(mode) {
+  if (mode === "thesis") return "Coach";
+  if (mode === "survival") return "Elite";
+  return null;
+}
+
+function canUseMode(mode) {
+  const required = modeRequirement(mode);
+  if (!required) return true;
+  return planLevel(effectivePlan()) >= planLevel(required);
 }
 
 function isTrialActive() {
@@ -820,6 +937,7 @@ function openSignup() {
 }
 
 function openPaywall() {
+  renderPaywallProgress();
   gate.paywallModal.classList.remove("hidden");
 }
 
@@ -840,13 +958,99 @@ function startMode(mode) {
     return;
   }
 
+  if (!canUseMode(mode)) {
+    const required = modeRequirement(mode);
+    showToast(`${required} unlocks ${modeLabel(mode)}. Choose a plan to continue.`, "warning");
+    openPaywall();
+    return;
+  }
+
   state.activeMode = mode;
   resetModeState();
-  state.scenarioIndex = nextScenarioForMode(mode);
+  state.scenarioIndex = mode === "daily" ? dailyScenarioIndex() : nextScenarioForMode(mode);
   showPage("modes");
   document.getElementById("trainer").scrollIntoView({ behavior: "smooth" });
   applyModeUi();
   renderScenario();
+}
+
+function modeLabel(mode) {
+  return {
+    replay: "Replay Mode",
+    daily: "Daily Challenge",
+    ranked: "Ranked Battle",
+    trade: "Trade Mode",
+    spot: "Spot the Setup",
+    survival: "Candle Survival",
+    notrade: "No-Trade Challenge",
+    detective: "Chart Detective",
+    thesis: "Build the Thesis"
+  }[mode] || "this mode";
+}
+
+function dayOfYear() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 0);
+  return Math.floor((now - start) / 86400000);
+}
+
+function dailyScenarioIndex() {
+  return dayOfYear() % Math.min(SHARED_SCENARIO_COUNT, scenarios.length);
+}
+
+function dailyCountdownText() {
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 0, 0);
+  const ms = Math.max(0, midnight - now);
+  const hours = Math.floor(ms / 3600000);
+  const minutes = Math.floor((ms % 3600000) / 60000);
+  return `Resets in ${hours}h ${minutes}m`;
+}
+
+function modeLiveCount(mode) {
+  const seed = stringSeed(`${mode}-${Math.floor(Date.now() / 5000)}`);
+  const base = {
+    replay: 1180,
+    daily: 820,
+    ranked: 610,
+    trade: 520,
+    spot: 700,
+    survival: 930,
+    notrade: 410,
+    detective: 580,
+    thesis: 370
+  }[mode] || 320;
+  return base + (seed % 44);
+}
+
+function updateGameCards() {
+  document.querySelectorAll(".game-mode-card").forEach((card) => {
+    const mode = card.dataset.mode || "replay";
+    const required = modeRequirement(mode);
+    const locked = Boolean(required && !canUseMode(mode));
+    card.classList.toggle("locked-mode", locked);
+    card.setAttribute("aria-disabled", locked ? "true" : "false");
+    const footer = card.querySelector(".game-footer b");
+    const action = card.querySelector(".game-footer em");
+    if (footer) {
+      if (locked) {
+        footer.innerHTML = `<i></i> ${required} plan required`;
+      } else if (mode === "daily") {
+        footer.innerHTML = `<i></i> ${dailyCountdownText()}`;
+      } else {
+        footer.innerHTML = `<i></i> ${modeLiveCount(mode).toLocaleString()} playing`;
+      }
+    }
+    if (action) action.textContent = locked ? `Unlock ${required} ↗` : action.textContent.replace(/^Unlock .+ ↗$/, "Play Now ↗");
+  });
+}
+
+function renderDifficultyBadge(scenario) {
+  if (!els.difficultyBadge) return;
+  const rate = difficultyWinRate(scenario);
+  els.difficultyBadge.className = `difficulty-badge ${scenario.difficulty.toLowerCase()}`;
+  els.difficultyBadge.textContent = `${scenario.difficulty} · only ${rate}% accuracy`;
 }
 
 function resetModeState() {
@@ -1144,6 +1348,7 @@ function renderScenario() {
 
   applyModeUi();
   updateDifficultyMessage(scenario);
+  renderDifficultyBadge(scenario);
   renderTabs();
   renderAnswers();
   renderChartHotspots();
@@ -1288,8 +1493,12 @@ function submitAnswer(answer, correctAnswer = getScenario(state.scenarioIndex).c
   const scenario = getScenario(state.scenarioIndex);
   const correct = answer === correctAnswer;
   const modeBonus = state.activeMode === "ranked" ? 80 : state.activeMode === "daily" ? 200 : state.activeMode === "detective" ? 45 : state.activeMode === "notrade" ? 55 : 0;
-  const earned = correct ? 120 + modeBonus + confidenceBonus(correct) + Math.min(80, progress().streak * 20) : 20;
-  finishAttempt({ answer, correct, earned, correctAnswer });
+  const baseEarned = correct ? 120 + modeBonus + confidenceBonus(correct) + Math.min(80, progress().streak * 20) : 20;
+  const comboMultiplier = correct && progress().streak >= 2 ? 1.5 : 1;
+  const earned = Math.round(baseEarned * comboMultiplier);
+  const sourceButton = [...els.answers.querySelectorAll("button")].find((button) => button.textContent.includes(answer));
+  state.lastAnswerRect = sourceButton?.getBoundingClientRect() || null;
+  finishAttempt({ answer, correct, earned, correctAnswer, metadata: { comboMultiplier } });
 }
 
 function submitSurvivalDecision(answer) {
@@ -1337,6 +1546,11 @@ function finishAttempt({ answer, correct, earned, correctAnswer, metadata = {} }
   if (!paid) p.freePlaysUsed = Number(p.freePlaysUsed || 0) + 1;
   p.streak = correct ? p.streak + 1 : 0;
   p.topStreak = Math.max(p.topStreak, p.streak);
+  if (p.streak >= 5 && !p.freezeAwardedAtFive) {
+    p.streakFreezes = Number(p.streakFreezes || 0) + 1;
+    p.freezeAwardedAtFive = true;
+    showToast("Streak freeze banked. It can protect your streak once.", "success");
+  }
   const attempt = {
     scenarioId: scenario.id,
     answer,
@@ -1354,6 +1568,7 @@ function finishAttempt({ answer, correct, earned, correctAnswer, metadata = {} }
   saveProgress();
   updateProgressUi();
   animateXpGain(earned, correct);
+  if (metadata.comboMultiplier > 1) flashCombo(metadata.comboMultiplier);
   els.status.textContent = "Replay ready";
   renderAnswers();
   renderChartHotspots();
@@ -1539,7 +1754,13 @@ function optionDistribution(scenario, completed) {
 function renderAnswerDistribution(scenario, completed) {
   const container = document.getElementById("answer-distribution");
   container.innerHTML = "";
-  optionDistribution(scenario, completed).forEach((item) => {
+  const distribution = optionDistribution(scenario, completed);
+  const correctPercent = distribution.find((item) => item.correct)?.percent || difficultyWinRate(scenario);
+  const selectedText = completed.correct
+    ? `You chose correctly. ${100 - correctPercent}% of players usually miss this read.`
+    : `You chose a tempting answer. Only ${correctPercent}% usually choose the correct read.`;
+  if (els.distributionSummary) els.distributionSummary.textContent = selectedText;
+  distribution.forEach((item) => {
     const row = document.createElement("div");
     row.className = `distribution-row ${item.correct ? "correct" : ""} ${item.selected ? "selected" : ""}`;
     row.innerHTML = `
@@ -1603,8 +1824,33 @@ function animateXpGain(earned, correct) {
   const burst = document.createElement("div");
   burst.className = `xp-burst ${correct ? "correct" : "review"}`;
   burst.textContent = `+${earned} XP`;
+  if (state.lastAnswerRect) {
+    burst.style.left = `${state.lastAnswerRect.left + state.lastAnswerRect.width / 2}px`;
+    burst.style.top = `${state.lastAnswerRect.top + 10}px`;
+  }
   document.body.appendChild(burst);
   setTimeout(() => burst.remove(), 1200);
+}
+
+function flashCombo(multiplier) {
+  const combo = document.createElement("div");
+  combo.className = "combo-flash";
+  combo.textContent = `COMBO ×${multiplier}`;
+  document.body.appendChild(combo);
+  setTimeout(() => combo.remove(), 1500);
+}
+
+function renderLevelUpNudge() {
+  if (!els.levelUpNudge) return;
+  const p = progress();
+  const next = nextRankFromXp(p.xp);
+  const remaining = next.xp - p.xp;
+  if (remaining > 0 && remaining <= 50) {
+    els.levelUpNudge.textContent = `Only ${remaining} XP to reach ${next.name}. One focused replay could do it.`;
+    els.levelUpNudge.classList.remove("hidden");
+  } else {
+    els.levelUpNudge.classList.add("hidden");
+  }
 }
 
 function showResult(correct, earned, completed = {}) {
@@ -1632,6 +1878,7 @@ function showResult(correct, earned, completed = {}) {
   document.getElementById("coach-review-title").textContent = hasCoachPlan() ? "Coach Review" : "Coach Review Locked";
   document.getElementById("coach-review").textContent = coachReviewText(scenario, correct);
   document.getElementById("streak-reminder").textContent = streakReminderText();
+  renderLevelUpNudge();
   renderSessionSummary();
   document.getElementById("similar-pattern-label").textContent = `Try another ${scenario.pattern} drill`;
   renderResultClueMarker(scenario);
@@ -1793,14 +2040,15 @@ function updateMarketTape() {
   const market = p.signup?.market && markets.includes(p.signup.market) ? p.signup.market : markets[seed % markets.length];
   const move = ((rand() * 2.8) - 1.1).toFixed(2);
   const benchmark = Math.max(38, Math.min(82, 54 + Math.round(rand() * 18) + Math.round(accuracy() / 10)));
-  const analyzed = 248000 + Math.round(rand() * 1800) + p.attempts.length * 11;
+  if (!tapeScenarioCount) tapeScenarioCount = 248901 + p.attempts.length * 11;
+  tapeScenarioCount += 1 + (seed % 3);
   els.tapeMarket.textContent = market;
   els.tapeMove.textContent = `${Number(move) >= 0 ? "+" : ""}${move}%`;
   els.tapeMove.classList.toggle("negative", Number(move) < 0);
   els.tapeSession.textContent = sessions[(seed + p.attempts.length) % sessions.length];
   els.tapeAccuracy.textContent = `${benchmark}.${seed % 10}%`;
   els.tapeDelta.textContent = `+${(1.4 + rand() * 3.8).toFixed(1)}%`;
-  els.tapeScenarios.textContent = analyzed.toLocaleString();
+  els.tapeScenarios.textContent = tapeScenarioCount.toLocaleString();
 }
 
 function renderAchievements() {
@@ -1976,6 +2224,11 @@ function renderProfile() {
   document.getElementById("profile-accuracy").textContent = `${accuracy()}%`;
   document.getElementById("profile-top-streak").textContent = `${Math.max(p.topStreak, p.streak)} Days`;
   document.getElementById("profile-scenarios").textContent = p.attempts.length;
+  document.getElementById("profile-freeze").textContent = Number(p.streakFreezes || 0);
+  document.getElementById("profile-freeze-copy").textContent = Number(p.streakFreezes || 0)
+    ? "Banked and ready if you miss a training day."
+    : "Reach a 5-day streak to bank one.";
+  document.getElementById("profile-empty-state").classList.toggle("hidden", p.attempts.length > 0);
   document.getElementById("profile-strongest").textContent = strongest ? `${strongest.pattern} · ${strongest.accuracy}%` : "Not enough data";
   document.getElementById("profile-weakest").textContent = weakest ? `${weakest.pattern} · ${weakest.accuracy}%` : "Not enough data";
   document.getElementById("profile-subscription").textContent = access.title;
@@ -2312,9 +2565,42 @@ document.getElementById("share-button").addEventListener("click", async () => {
   } else {
     await navigator.clipboard.writeText(text);
     document.getElementById("share-label").textContent = "Copied";
+    showToast("Copied to clipboard.", "success");
     setTimeout(() => {
       document.getElementById("share-label").textContent = "Share";
     }, 1300);
+  }
+});
+
+document.getElementById("close-return-recap")?.addEventListener("click", () => {
+  els.returnRecap?.classList.add("hidden");
+});
+
+document.getElementById("exit-close")?.addEventListener("click", () => {
+  els.exitIntent?.classList.add("hidden");
+});
+
+document.getElementById("exit-claim")?.addEventListener("click", () => {
+  els.exitIntent?.classList.add("hidden");
+  openSignup();
+});
+
+document.addEventListener("mouseleave", (event) => {
+  if (event.clientY > 8) return;
+  if (hasSignup() || hasPaidPlan() || sessionStorage.getItem("tradePulseExitIntentShown")) return;
+  sessionStorage.setItem("tradePulseExitIntentShown", "true");
+  els.exitIntent?.classList.remove("hidden");
+});
+
+document.addEventListener("keydown", (event) => {
+  if (["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement?.tagName)) return;
+  if (document.body.dataset.page !== "modes") return;
+  if (/^[1-5]$/.test(event.key) && !state.revealed) {
+    const button = els.answers.querySelectorAll("button")[Number(event.key) - 1];
+    if (button && !button.disabled) button.click();
+  }
+  if (event.key === "Enter" && state.revealed) {
+    document.getElementById("next-scenario").click();
   }
 });
 
@@ -2372,6 +2658,8 @@ function prepareVisitScenarioSession() {
   }
 
   if (hasSignup() && !sessionStorage.getItem("tradePulseVisitStarted")) {
+    maybeShowReturnRecap();
+    applyMissedDayFreeze();
     startFreshScenarioSession();
     sessionStorage.setItem("tradePulseVisitStarted", String(Date.now()));
   }
@@ -2392,3 +2680,4 @@ applyModeUi();
 renderScenario();
 showPage("home");
 setInterval(updateMarketTape, 4000);
+setInterval(updateGameCards, 30000);

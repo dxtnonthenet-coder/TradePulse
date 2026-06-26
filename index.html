@@ -24,17 +24,10 @@
           <span class="side-label">Elite</span>
         </button>
         <div class="side-divider"></div>
+        <div class="side-section-label">Learn</div>
         <button class="side-link futures-tab nav-tab" data-page-target="futures" type="button" data-tooltip="Why Futures?">
           <span class="side-icon"><i data-lucide="landmark"></i></span>
           <span class="side-label">Why Futures?</span>
-        </button>
-        <button class="side-link profile-tab nav-tab" data-page-target="profile" type="button" data-tooltip="Profile">
-          <span class="side-icon"><i data-lucide="id-card"></i></span>
-          <span class="side-label">Profile</span>
-        </button>
-        <button class="side-link plans-tab nav-tab" data-page-target="plans" type="button" data-tooltip="View Plans">
-          <span class="side-icon"><i data-lucide="badge-dollar-sign"></i></span>
-          <span class="side-label">View Plans</span>
         </button>
         <button class="side-link roadmap-tab nav-tab" data-page-target="roadmap" type="button" data-tooltip="Build Path">
           <span class="side-icon"><i data-lucide="route"></i></span>
@@ -44,10 +37,27 @@
           <span class="side-icon"><i data-lucide="circle-help"></i></span>
           <span class="side-label">Questions</span>
         </button>
+        <div class="side-divider"></div>
+        <div class="side-section-label">Account</div>
+        <button class="side-link profile-tab nav-tab" data-page-target="profile" type="button" data-tooltip="Profile">
+          <span class="side-icon"><i data-lucide="id-card"></i></span>
+          <span class="side-label">Profile</span>
+        </button>
+        <button class="side-link plans-tab nav-tab" data-page-target="plans" type="button" data-tooltip="View Plans">
+          <span class="side-icon"><i data-lucide="badge-dollar-sign"></i></span>
+          <span class="side-label">View Plans</span>
+        </button>
         <button class="side-link" id="share-button" type="button" data-tooltip="Share">
           <span class="side-icon"><i data-lucide="share-2"></i></span>
           <span class="side-label" id="share-label">Share</span>
         </button>
+      </div>
+
+      <div class="side-progress-card" id="side-progress-card">
+        <span id="side-progress-rank">Rookie · Level 1</span>
+        <strong id="side-progress-xp">0 / 500 XP</strong>
+        <div><i id="side-progress-fill"></i></div>
+        <small id="side-progress-next">Next rank: Scalper</small>
       </div>
 
       <button class="side-link logout-tab hidden" id="menu-logout" type="button" data-tooltip="Logout">
@@ -76,6 +86,12 @@
           <div><span>Trainer benchmark</span><strong id="tape-accuracy">68.4%</strong><b id="tape-delta">+3.2%</b></div>
           <div><span>Replay pool</span><strong id="tape-scenarios">248,901</strong><b class="neutral">Rotating</b></div>
         </section>
+
+        <div class="return-recap hidden" id="return-recap">
+          <span id="return-recap-copy">Last session recap ready.</span>
+          <button class="mode-start" data-mode="replay" type="button">Continue Training</button>
+          <button id="close-return-recap" type="button" aria-label="Dismiss recap">×</button>
+        </div>
 
         <section class="hero-grid">
           <div class="hero-copy">
@@ -346,7 +362,10 @@
                   <h3 id="scenario-title">NQ Opening Range Trap</h3>
                   <span id="scenario-meta">NQ · 09:45 ET · Hard</span>
                 </div>
-                <div class="timer" id="timer">15s</div>
+                <div class="scenario-side">
+                  <div class="difficulty-badge" id="difficulty-badge">Hard · 29% accuracy</div>
+                  <div class="timer" id="timer">15s</div>
+                </div>
               </div>
 
               <div class="timeframe-tabs" id="timeframe-tabs"></div>
@@ -464,7 +483,7 @@
                 </div>
                 <div class="result-section result-social">
                   <span class="result-section-icon">07</span>
-                  <div><strong>Answer distribution</strong><div class="distribution-list" id="answer-distribution"></div></div>
+                  <div><strong>Answer distribution</strong><p class="distribution-summary" id="distribution-summary"></p><div class="distribution-list" id="answer-distribution"></div></div>
                 </div>
                 <div class="result-section result-coach" id="coach-review-section">
                   <span class="result-section-icon">08</span>
@@ -474,6 +493,7 @@
                   <span class="result-section-icon">09</span>
                   <div><strong>Streak reminder</strong><p id="streak-reminder"></p></div>
                 </div>
+                <div class="level-up-nudge hidden" id="level-up-nudge"></div>
                 <div class="session-summary hidden" id="session-summary">
                   <strong>Session recap</strong>
                   <div id="session-summary-stats"></div>
@@ -603,6 +623,20 @@
               </ul>
               <button class="primary-button plan-button" data-plan="Elite">Choose Elite</button>
             </article>
+          </div>
+          <div class="plan-compare">
+            <div class="panel-title">What’s Included</div>
+            <div class="compare-table">
+              <div class="compare-head"><span>Feature</span><strong>Player</strong><strong>Coach</strong><strong>Elite</strong></div>
+              <div><span>Unlimited replay games</span><b>✓</b><b>✓</b><b>✓</b></div>
+              <div><span>Daily challenge + ranked</span><b>✓</b><b>✓</b><b>✓</b></div>
+              <div><span>Replay controls + XP progression</span><b>✓</b><b>✓</b><b>✓</b></div>
+              <div><span>Deeper mistake review</span><b>—</b><b>✓</b><b>✓</b></div>
+              <div><span>Coach reasoning after each replay</span><b>—</b><b>✓</b><b>✓</b></div>
+              <div><span>Weakness detection</span><b>—</b><b>—</b><b>✓</b></div>
+              <div><span>Custom playlists + scenario filters</span><b>—</b><b>—</b><b>✓</b></div>
+              <div><span>Weekly progress curriculum</span><b>—</b><b>—</b><b>✓</b></div>
+            </div>
           </div>
           <p class="fineprint">TradePulse is an educational replay simulator. It does not provide financial advice, trade alerts, personalized investment recommendations, or broker execution.</p>
         </section>
@@ -869,6 +903,15 @@
             </div>
           </div>
 
+          <div class="profile-empty-state panel hidden" id="profile-empty-state">
+            <div>
+              <p class="signal">Start Your Profile</p>
+              <h3>Complete your first scenario to build your training dashboard.</h3>
+              <p>Your accuracy, weak patterns, XP, rank, streak, and recent training history will appear here after your first replay.</p>
+            </div>
+            <button class="primary-button mode-start" data-mode="replay" type="button">Start First Scenario</button>
+          </div>
+
           <div class="profile-grid">
             <article class="panel profile-rank-card">
               <span>Rank</span>
@@ -887,6 +930,12 @@
               <span>Top Streak</span>
               <strong id="profile-top-streak">0 Days</strong>
               <small>Best training streak saved</small>
+            </article>
+
+            <article class="panel profile-stat-card freeze-card">
+              <span>Streak Freeze</span>
+              <strong id="profile-freeze">0</strong>
+              <small id="profile-freeze-copy">Reach a 5-day streak to bank one.</small>
             </article>
 
             <article class="panel profile-stat-card">
@@ -998,6 +1047,7 @@
         <p class="signal">Free Plays Used</p>
         <h2>Choose your plan</h2>
         <p class="muted">Choose a plan to continue training. Billing is securely handled through Stripe.</p>
+        <div class="paywall-progress-line" id="paywall-progress-line">Your progress is ready to continue.</div>
         <div class="pricing-grid">
           <article>
             <h3>Player</h3>
@@ -1022,6 +1072,17 @@
         <button class="ghost-button" id="close-paywall">Maybe Later</button>
       </div>
     </div>
+
+    <div class="exit-intent hidden" id="exit-intent">
+      <div>
+        <strong>Before you go — your 3 free plays are waiting.</strong>
+        <span>Build your first replay score in under two minutes.</span>
+      </div>
+      <button class="primary-button" id="exit-claim" type="button">Claim Free Plays</button>
+      <button class="exit-close" id="exit-close" type="button" aria-label="Dismiss exit reminder">×</button>
+    </div>
+
+    <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
 
     <script src="app.js"></script>
   </body>
