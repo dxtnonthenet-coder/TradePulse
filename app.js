@@ -483,7 +483,8 @@ const gate = {
   survivalStatus: document.getElementById("survival-status"),
   modeInstruction: document.getElementById("mode-instruction"),
   chartHotspots: document.getElementById("chart-hotspots"),
-  resultBreakdown: document.getElementById("result-breakdown")
+  resultBreakdown: document.getElementById("result-breakdown"),
+  resultClueMarker: document.getElementById("result-clue-marker")
 };
 
 function showPage(page) {
@@ -822,6 +823,7 @@ function resetModeState() {
   state.tradeDirection = "wait";
   state.survivalRound = 0;
   state.survivalCorrect = 0;
+  gate.resultClueMarker.classList.add("hidden");
 }
 
 function applyModeUi() {
@@ -1078,6 +1080,7 @@ function renderScenario() {
   state.selected = completed?.selected || null;
   state.confidence = completed?.confidence || state.confidence || "medium";
   stopReplay();
+  gate.resultClueMarker.classList.toggle("hidden", !state.revealed);
 
   els.scenarioId.textContent = scenario.scenarioCode;
   els.title.textContent = scenario.title;
@@ -1317,20 +1320,144 @@ function clueForScenario(scenario) {
   return `${scenario.tags[1] || scenario.tags[0]} was the strongest contextual clue.`;
 }
 
+function candleSequenceForScenario(scenario) {
+  const sequences = {
+    reversal: "Price pushed through the reference level, failed to hold above it, printed a rejection candle, then rotated back through the breakout area as trapped momentum unwound.",
+    continuation: "Price tested the key level, held it on smaller opposing candles, printed a firm response candle, then continued in the original direction with improving follow-through.",
+    breakout: "Candles compressed near the range edge, pullbacks became shallower, the boundary broke with expansion, and the next candles accepted beyond the old range.",
+    chop: "Price overlapped around VWAP, rejected both edges of the range, failed to produce follow-through, and returned repeatedly toward the middle."
+  };
+  return sequences[scenario.bias] || "Price tested the key reference, showed its response through candle structure, and confirmed the higher-quality decision during the reveal.";
+}
+
+function evidenceForScenario(scenario) {
+  if (scenario.pattern.includes("VWAP")) return "The strongest evidence was the reclaim or rejection at VWAP followed by acceptance on the correct side. Location and the next pullback mattered more than candle color alone.";
+  if (scenario.pattern.includes("Liquidity") || scenario.pattern.includes("Failed")) return "The strongest evidence was the sweep beyond the prior extreme followed by immediate failure to hold. That combination identified trapped participation and favored rotation.";
+  if (scenario.bias === "chop") return "The strongest evidence was the lack of displacement: overlapping bodies, a flat reference level, and repeated rejection on both sides made patience the highest-quality decision.";
+  if (scenario.bias === "breakout") return "The strongest evidence was compression directly beneath the boundary followed by decisive expansion and acceptance outside the range.";
+  if (scenario.bias === "reversal") return "The strongest evidence was weakening follow-through at an important location, followed by rejection and a close back through the level.";
+  return "The strongest evidence was a controlled retest, smaller opposing candles, and a strong response that preserved the existing structure.";
+}
+
 function invalidationForScenario(scenario) {
   if (scenario.bias === "reversal") return "Sustained acceptance beyond the swept level would invalidate the reversal read.";
   if (scenario.bias === "chop") return "A clean range break followed by acceptance would end the no-trade condition.";
-  return "A failed hold back through the key level would invalidate continuation.";
+  if (scenario.bias === "breakout") return "A quick close back inside the old range, followed by failure to reclaim the boundary, would invalidate the breakout.";
+  return "A failed hold back through the key level would invalidate continuation. Risk belongs beyond the structure that proves the retest failed, not at an arbitrary distance.";
 }
 
-function optionReviewForScenario(scenario, completed) {
-  if (state.activeMode === "thesis") return `${completed.thesisScore || 0} of 5 thesis components matched the scenario structure. Review the components separately instead of treating the thesis as one directional guess.`;
-  if (state.activeMode === "trade") return `Direction and risk were scored independently. The expected training direction was ${expectedDirection(scenario)}, while your planned trade scored ${completed.tradeScore || 0}/100.`;
-  if (state.activeMode === "survival") return `Each survival choice was compared with the developing structure. You made ${completed.survivalCorrect || 0} strong decisions across five checkpoints.`;
-  if (state.activeMode === "spot") return `Only one zone combined the strongest location and confirmation. Your selected zone was ${completed.zone || "not recorded"}; the other zones lacked the same confluence.`;
-  const selected = completed.selected || state.selected || "your answer";
-  const alternatives = scenario.answers.filter((answer) => answer !== scenario.correctAnswer).slice(0, 2).join(" and ");
-  return `${scenario.correctAnswer} matched location, momentum, and acceptance. ${selected === scenario.correctAnswer ? "Your choice matched those clues." : `${selected} conflicted with the reveal.`} Alternatives such as ${alternatives} lacked enough confirmation.`;
+function genericAlternativeReason(scenario, answer) {
+  const lower = answer.toLowerCase();
+  if (answer === scenario.correctAnswer) return evidenceForScenario(scenario);
+  if (lower.includes("breakout") || lower.includes("continuation") || lower.includes("long")) {
+    return scenario.bias === "chop"
+      ? "There was no acceptance or displacement to justify directional continuation."
+      : "The move lacked a clean hold beyond the reference level, so continuation was not confirmed.";
+  }
+  if (lower.includes("reversal") || lower.includes("failure") || lower.includes("short")) {
+    return "A reversal needed rejection plus structural failure. The reveal instead preserved or reclaimed the key level.";
+  }
+  if (lower.includes("wait") || lower.includes("avoid") || lower.includes("skip")) {
+    return "Waiting protects capital in weak structure, but this reveal supplied enough location, confirmation, and follow-through to justify the correct action.";
+  }
+  return "This choice relied on a single surface clue and ignored the stronger combination of location, structure, and follow-through.";
+}
+
+function resultOptionsForScenario(scenario, completed) {
+  if (state.activeMode === "trade") {
+    const expected = expectedDirection(scenario);
+    return [
+      { label: "Direction", correct: completed.direction === expected, reason: `The training direction was ${expected}. Your direction is scored separately from entry quality.` },
+      { label: "Stop placement", correct: Number(completed.rr || 0) >= 1, reason: "The stop must sit beyond the structure that invalidates the idea, while keeping risk proportionate." },
+      { label: "Target and R:R", correct: Number(completed.rr || 0) >= 1.5, reason: `${Number(completed.rr || 0).toFixed(2)}R was planned. The drill expects at least 1.50R unless the correct decision is no trade.` }
+    ];
+  }
+  if (state.activeMode === "thesis") {
+    const expected = expectedThesis(scenario);
+    return Object.entries(expected).map(([key, value]) => ({
+      label: `${key[0].toUpperCase()}${key.slice(1)}: ${completed.thesis?.[key] || "Not selected"}`,
+      correct: completed.thesis?.[key] === value,
+      reason: completed.thesis?.[key] === value ? `Matched the replay: ${value}.` : `The reveal supported ${value}.`
+    }));
+  }
+  if (state.activeMode === "survival") {
+    return [
+      { label: "Early read", correct: Number(completed.survivalCorrect || 0) >= 1, reason: "The opening decisions should respect the original structure before reacting to noise." },
+      { label: "Adaptation", correct: Number(completed.survivalCorrect || 0) >= 3, reason: "Strong survival play updates only when the developing candles materially change the thesis." },
+      { label: "Exit discipline", correct: Number(completed.survivalCorrect || 0) >= 4, reason: "The final decision should protect the read when momentum or structure stops confirming it." }
+    ];
+  }
+  if (state.activeMode === "spot") {
+    const correctZone = (scenario.seed % 4) + 1;
+    return ["Opening structure", "Key level test", "Failure / reclaim", "Expansion trigger"].map((label, index) => ({
+      label: `Zone ${index + 1}: ${label}`,
+      correct: index + 1 === correctZone,
+      reason: index + 1 === correctZone
+        ? "This zone combined the key location with the confirmation candle."
+        : "This area was useful context, but it did not contain both location and confirmation."
+    }));
+  }
+
+  let answers = scenario.answers;
+  let correctAnswer = scenario.correctAnswer;
+  if (state.activeMode === "notrade") {
+    answers = ["Take the long", "Take the short", "Skip the trade"];
+    correctAnswer = noTradeAnswer(scenario);
+  }
+  if (state.activeMode === "detective") {
+    answers = detectiveOptions(scenario);
+    correctAnswer = answers[0];
+  }
+  return answers.map((answer) => ({
+    label: answer,
+    correct: answer === correctAnswer,
+    selected: answer === completed.selected,
+    reason: answer === correctAnswer ? evidenceForScenario(scenario) : genericAlternativeReason(scenario, answer)
+  }));
+}
+
+function renderOptionReview(scenario, completed) {
+  const container = document.getElementById("option-review");
+  container.innerHTML = "";
+  resultOptionsForScenario(scenario, completed).forEach((option) => {
+    const row = document.createElement("div");
+    row.className = `option-review-item ${option.correct ? "correct" : "failed"} ${option.selected ? "selected" : ""}`;
+    const verdict = option.correct ? "Worked" : option.selected ? "Your choice" : "Failed";
+    row.innerHTML = `<span>${option.correct ? "✓" : "×"}</span><div><strong>${option.label}<small>${verdict}</small></strong><p>${option.reason}</p></div>`;
+    container.appendChild(row);
+  });
+}
+
+function clueMarkerForScenario(scenario) {
+  const positions = {
+    reversal: { left: 72, top: 31, label: "Rejection + close back through" },
+    continuation: { left: 67, top: 57, label: "Retest hold + response candle" },
+    breakout: { left: 76, top: 44, label: "Expansion candle + acceptance" },
+    chop: { left: 60, top: 48, label: "Overlap around flat VWAP" }
+  };
+  return positions[scenario.bias] || { left: 68, top: 45, label: "Structure confirmation" };
+}
+
+function renderResultClueMarker(scenario) {
+  const marker = clueMarkerForScenario(scenario);
+  gate.resultClueMarker.style.left = `${marker.left}%`;
+  gate.resultClueMarker.style.top = `${marker.top}%`;
+  document.getElementById("result-clue-label").textContent = marker.label;
+  gate.resultClueMarker.classList.remove("hidden");
+}
+
+function findSimilarScenarioIndex(scenario) {
+  for (let offset = 1; offset <= 5000; offset += 1) {
+    const index = (state.scenarioIndex + offset) % TOTAL_SCENARIO_COUNT;
+    const candidate = getScenario(index);
+    if (candidate.id !== scenario.id && candidate.pattern === scenario.pattern && !isScenarioAnswered(index, state.activeMode)) return index;
+  }
+  for (let offset = 1; offset <= 5000; offset += 1) {
+    const index = (state.scenarioIndex + offset) % TOTAL_SCENARIO_COUNT;
+    const candidate = getScenario(index);
+    if (candidate.id !== scenario.id && candidate.bias === scenario.bias && !isScenarioAnswered(index, state.activeMode)) return index;
+  }
+  return findNextUnanswered(state.scenarioIndex + 1, 1, state.activeMode);
 }
 
 function calibrationText() {
@@ -1351,13 +1478,16 @@ function showResult(correct, earned, completed = {}) {
     : scenario.explanation;
   els.xpEarned.textContent = `+${earned} XP`;
   gate.resultBreakdown.classList.remove("hidden");
-  document.getElementById("why-correct").textContent = scenario.explanation;
-  document.getElementById("option-review").textContent = optionReviewForScenario(scenario, completed);
+  document.getElementById("candle-sequence").textContent = candleSequenceForScenario(scenario);
+  document.getElementById("why-correct").textContent = evidenceForScenario(scenario);
+  renderOptionReview(scenario, completed);
   document.getElementById("missed-clue").textContent = correct
-    ? `You recognized it: ${clueForScenario(scenario)}`
-    : clueForScenario(scenario);
+    ? `You recognized it. ${clueForScenario(scenario)} The marker shows the exact confirmation area.`
+    : `${clueForScenario(scenario)} The marker shows the exact candle area where the evidence became actionable.`;
   document.getElementById("invalidation").textContent = invalidationForScenario(scenario);
   document.getElementById("calibration").textContent = completed.confidence ? calibrationText() : "Complete confidence-rated decisions to build your calibration score.";
+  document.getElementById("similar-pattern-label").textContent = `Try another ${scenario.pattern} drill`;
+  renderResultClueMarker(scenario);
   applyModeUi();
   if (!paid && freePlaysLeft() <= 0) {
     setTimeout(openPaywall, 800);
@@ -1851,6 +1981,26 @@ document.querySelectorAll("#trade-direction button").forEach((button) => {
 
 document.getElementById("submit-trade").addEventListener("click", submitTradeBuilder);
 document.getElementById("submit-thesis").addEventListener("click", submitThesisBuilder);
+document.getElementById("show-clue").addEventListener("click", () => {
+  const chartFrame = document.querySelector(".chart-frame");
+  renderResultClueMarker(getScenario(state.scenarioIndex));
+  chartFrame.classList.remove("clue-focus");
+  requestAnimationFrame(() => chartFrame.classList.add("clue-focus"));
+  chartFrame.scrollIntoView({ behavior: "smooth", block: "center" });
+});
+document.getElementById("similar-scenario").addEventListener("click", () => {
+  if (!hasPaidPlan() && freePlaysLeft() <= 0) {
+    openPaywall();
+    return;
+  }
+  const scenario = getScenario(state.scenarioIndex);
+  const similarIndex = findSimilarScenarioIndex(scenario);
+  resetModeState();
+  state.scenarioIndex = similarIndex;
+  saveNextScenarioForMode(state.activeMode, similarIndex);
+  renderScenario();
+  document.getElementById("trainer").scrollIntoView({ behavior: "smooth", block: "start" });
+});
 document.getElementById("replay-restart").addEventListener("click", () => {
   stopReplay();
   state.revealCount = 0;
@@ -1932,6 +2082,9 @@ gate.signupForm.addEventListener("submit", (event) => {
   startMode(state.activeMode);
 });
 
+document.getElementById("close-signup").addEventListener("click", () => {
+  gate.signupModal.classList.add("hidden");
+});
 gate.closePaywall.addEventListener("click", closeModals);
 
 document.getElementById("manage-billing").addEventListener("click", openBillingPortal);

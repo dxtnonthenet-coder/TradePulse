@@ -353,6 +353,10 @@
                 <canvas id="chart" width="1180" height="620" aria-label="Candlestick market replay chart"></canvas>
                 <div class="replay-status" id="replay-status">Future candles hidden</div>
                 <div class="chart-hotspots hidden" id="chart-hotspots" aria-label="Chart setup zones"></div>
+                <div class="result-clue-marker hidden" id="result-clue-marker" aria-hidden="true">
+                  <span></span>
+                  <small id="result-clue-label">Key clue</small>
+                </div>
               </div>
               <div class="replay-controls" id="replay-controls">
                 <button type="button" id="replay-restart" title="Restart replay">↺</button>
@@ -433,11 +437,35 @@
                 </div>
               </div>
               <div class="result-breakdown hidden" id="result-breakdown">
-                <div><strong>Why it worked</strong><p id="why-correct"></p></div>
-                <div><strong>Option review</strong><p id="option-review"></p></div>
-                <div><strong>What clue did you miss?</strong><p id="missed-clue"></p></div>
-                <div><strong>Invalidation</strong><p id="invalidation"></p></div>
-                <div><strong>Confidence calibration</strong><p id="calibration"></p></div>
+                <div class="result-section result-sequence">
+                  <span class="result-section-icon">01</span>
+                  <div><strong>What happened</strong><p id="candle-sequence"></p></div>
+                </div>
+                <div class="result-section result-evidence">
+                  <span class="result-section-icon">02</span>
+                  <div><strong>Why the correct decision worked</strong><p id="why-correct"></p></div>
+                </div>
+                <div class="result-section result-options">
+                  <span class="result-section-icon">03</span>
+                  <div><strong>Why each alternative failed</strong><div class="option-review-list" id="option-review"></div></div>
+                </div>
+                <div class="result-section result-clue">
+                  <span class="result-section-icon">04</span>
+                  <div><strong>What clue did you miss?</strong><p id="missed-clue"></p><button class="clue-jump" id="show-clue" type="button">Show clue on chart</button></div>
+                </div>
+                <div class="result-section result-risk">
+                  <span class="result-section-icon">05</span>
+                  <div><strong>What would invalidate the setup?</strong><p id="invalidation"></p></div>
+                </div>
+                <div class="result-section result-calibration">
+                  <span class="result-section-icon">06</span>
+                  <div><strong>Confidence calibration</strong><p id="calibration"></p></div>
+                </div>
+                <button class="similar-drill-button" id="similar-scenario" type="button">
+                  <span>Practice this pattern again</span>
+                  <strong id="similar-pattern-label">Try a similar scenario</strong>
+                  <i>→</i>
+                </button>
               </div>
 
               <div class="control-row">
@@ -917,6 +945,7 @@
 
     <div class="modal hidden" id="signup-modal">
       <form class="modal-card" id="signup-form">
+        <button class="modal-close" id="close-signup" type="button" aria-label="Close free access form">×</button>
         <p class="signal">Free Access</p>
         <h2>Create your training profile</h2>
         <p class="muted">Enter your details to unlock 3 free plays across all nine training games.</p>
