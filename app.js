@@ -268,10 +268,10 @@ const scenarios = [
 ];
 
 const leaderboardBase = [
-  { name: "MarketNinja", gain: 6240, rank: "Master", streak: 18 },
-  { name: "FuturesKing", gain: 5310, rank: "Pro", streak: 14 },
-  { name: "ChartMaster", gain: 4890, rank: "Pro", streak: 11 },
-  { name: "PriceActionPro", gain: 3725, rank: "Sniper", streak: 8 }
+  { name: "MarketNinja", rank: "Master", streak: 18, base: 6240 },
+  { name: "FuturesKing", rank: "Pro", streak: 14, base: 5310 },
+  { name: "ChartMaster", rank: "Pro", streak: 11, base: 4890 },
+  { name: "PriceActionPro", rank: "Sniper", streak: 8, base: 3725 }
 ];
 
 const scenarioTemplates = [
@@ -466,7 +466,13 @@ const els = {
   heroScenarios: document.getElementById("hero-scenarios"),
   leaderboard: document.getElementById("leaderboard"),
   achievements: document.getElementById("achievements"),
-  rankMeter: document.getElementById("rank-meter")
+  rankMeter: document.getElementById("rank-meter"),
+  tapeMarket: document.getElementById("tape-market"),
+  tapeMove: document.getElementById("tape-move"),
+  tapeSession: document.getElementById("tape-session"),
+  tapeAccuracy: document.getElementById("tape-accuracy"),
+  tapeDelta: document.getElementById("tape-delta"),
+  tapeScenarios: document.getElementById("tape-scenarios")
 };
 
 const gate = {
@@ -570,7 +576,7 @@ async function saveLead(type, payload) {
   }
 }
 
-async function startCheckout(plan, trial = false) {
+async function startCheckout(plan, trial = false, triggerButton = null) {
   const p = progress();
   if (location.protocol === "file:") {
     alert("Open http://localhost:4173 to use Stripe/Supabase setup. This file view can only run the demo.");
@@ -578,6 +584,7 @@ async function startCheckout(plan, trial = false) {
   }
 
   try {
+    checkoutButtonLoading(triggerButton, true);
     const response = await fetch("/api/create-checkout-session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -601,6 +608,8 @@ async function startCheckout(plan, trial = false) {
   } catch (error) {
     alert(`Checkout setup needs attention: ${error.message}`);
     return false;
+  } finally {
+    checkoutButtonLoading(triggerButton, false);
   }
 }
 
@@ -723,6 +732,31 @@ function rankFromXp(xp) {
   return "Rookie";
 }
 
+function hasCoachPlan() {
+  const plan = progress().plan;
+  return plan === "Coach" || plan === "Elite";
+}
+
+function difficultyWinRate(scenario) {
+  if (scenario.difficulty === "Hard") return 29 + (scenario.seed % 9);
+  if (scenario.difficulty === "Medium") return 46 + (scenario.seed % 12);
+  return 66 + (scenario.seed % 14);
+}
+
+function checkoutButtonLoading(button, isLoading, label = "Redirecting to Stripe...") {
+  if (!button) return;
+  if (isLoading) {
+    button.dataset.defaultText ||= button.textContent;
+    button.disabled = true;
+    button.classList.add("is-loading");
+    button.textContent = label;
+    return;
+  }
+  button.disabled = false;
+  button.classList.remove("is-loading");
+  if (button.dataset.defaultText) button.textContent = button.dataset.defaultText;
+}
+
 function nextRankFromXp(xp) {
   return rankTiers.find((tier) => tier.xp > xp) || rankTiers[rankTiers.length - 1];
 }
@@ -750,6 +784,7 @@ function updateProgressUi() {
   renderLeaderboard();
   renderAchievements();
   renderRankMeter();
+  updateMarketTape();
 }
 
 function hasSignup() {
@@ -860,6 +895,16 @@ function applyModeUi() {
     thesis: "Complete all five parts of the thesis. Each component is scored separately."
   };
   gate.modeInstruction.textContent = instructions[state.activeMode] || instructions.replay;
+}
+
+function updateDifficultyMessage(scenario) {
+  const rate = difficultyWinRate(scenario);
+  const intro = scenario.difficulty === "Hard"
+    ? `This one's tough: only ${rate}% of players usually get this read. `
+    : scenario.difficulty === "Medium"
+      ? `Medium pressure drill: about ${rate}% choose the right read. `
+      : `Starter-friendly drill: about ${rate}% of players get it right. `;
+  gate.modeInstruction.textContent = `${intro}${gate.modeInstruction.textContent}`;
 }
 
 function seededRandom(seed) {
@@ -1098,6 +1143,7 @@ function renderScenario() {
   els.status.textContent = state.revealed ? "Future candles revealed" : "Future candles hidden";
 
   applyModeUi();
+  updateDifficultyMessage(scenario);
   renderTabs();
   renderAnswers();
   renderChartHotspots();
@@ -1295,6 +1341,7 @@ function finishAttempt({ answer, correct, earned, correctAnswer, metadata = {} }
     scenarioId: scenario.id,
     answer,
     correct,
+    earned,
     pattern: scenario.pattern,
     mode: state.activeMode,
     confidence: state.confidence,
@@ -1306,6 +1353,7 @@ function finishAttempt({ answer, correct, earned, correctAnswer, metadata = {} }
   p.nextByMode[state.activeMode] = findNextUnanswered(state.scenarioIndex + 1);
   saveProgress();
   updateProgressUi();
+  animateXpGain(earned, correct);
   els.status.textContent = "Replay ready";
   renderAnswers();
   renderChartHotspots();
@@ -1467,6 +1515,98 @@ function calibrationText() {
   return `Your ${state.confidence} confidence calls are correct ${rate}% of the time across ${attempts.length} decision${attempts.length === 1 ? "" : "s"}.`;
 }
 
+function optionDistribution(scenario, completed) {
+  const options = resultOptionsForScenario(scenario, completed).slice(0, 5);
+  const correctIndex = Math.max(0, options.findIndex((option) => option.correct));
+  const rand = seededRandom(scenario.seed + stringSeed(state.activeMode) + 771);
+  let remaining = 100;
+  const values = options.map((option, index) => {
+    const base = index === correctIndex ? 30 + Math.floor(rand() * 22) : 8 + Math.floor(rand() * 17);
+    const value = Math.min(remaining, base);
+    remaining -= value;
+    return value;
+  });
+  values[correctIndex] += Math.max(0, remaining);
+  const total = values.reduce((sum, value) => sum + value, 0) || 1;
+  return options.map((option, index) => ({
+    label: option.label,
+    correct: option.correct,
+    selected: option.selected,
+    percent: Math.round((values[index] / total) * 100)
+  })).sort((a, b) => b.percent - a.percent);
+}
+
+function renderAnswerDistribution(scenario, completed) {
+  const container = document.getElementById("answer-distribution");
+  container.innerHTML = "";
+  optionDistribution(scenario, completed).forEach((item) => {
+    const row = document.createElement("div");
+    row.className = `distribution-row ${item.correct ? "correct" : ""} ${item.selected ? "selected" : ""}`;
+    row.innerHTML = `
+      <strong><span>${item.label}</span><b>${item.percent}%</b></strong>
+      <div><i style="width:${item.percent}%"></i></div>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function coachReviewText(scenario, correct) {
+  const clue = clueForScenario(scenario);
+  if (!hasCoachPlan()) {
+    return "Coach unlocks the deeper mistake review layer: exact clue priority, why the weak answer was tempting, and the drill to run next.";
+  }
+  if (correct) {
+    return `Coach read: good decision. You weighted the strongest evidence correctly: ${clue} Next, repeat this pattern on a different timeframe so the read becomes automatic.`;
+  }
+  return `Coach read: the missed piece was evidence stacking. Start with location, then ask whether momentum accepted or failed there. ${clue} Run a similar drill before switching patterns.`;
+}
+
+function streakReminderText() {
+  const p = progress();
+  if (p.streak > 0) return `Come back tomorrow to keep your ${p.streak}-day streak alive. One clean replay is enough to keep momentum.`;
+  if (p.topStreak > 0) return `Your best streak is ${p.topStreak} days. Start a new streak tomorrow and try to beat it.`;
+  return "Come back tomorrow for a fresh daily challenge and start building your first streak.";
+}
+
+function renderSessionSummary() {
+  const p = progress();
+  const summary = document.getElementById("session-summary");
+  const stats = document.getElementById("session-summary-stats");
+  const copy = document.getElementById("session-summary-copy");
+  const attempts = p.attempts.slice(-5);
+
+  if (p.attempts.length < 5 || p.attempts.length % 5 !== 0) {
+    summary.classList.add("hidden");
+    return;
+  }
+
+  const correct = attempts.filter((attempt) => attempt.correct).length;
+  const earned = attempts.reduce((sum, attempt) => sum + Number(attempt.earned || 0), 0);
+  const patternCounts = attempts.reduce((acc, attempt) => {
+    acc[attempt.pattern] = (acc[attempt.pattern] || 0) + 1;
+    return acc;
+  }, {});
+  const bestPattern = Object.entries(patternCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "Pattern Recognition";
+  stats.innerHTML = `
+    <span><b>${correct}/5</b> accuracy</span>
+    <span><b>+${earned}</b> XP</span>
+    <span><b>${p.streak}</b> streak</span>
+    <span><b>${bestPattern}</b> focus</span>
+  `;
+  copy.textContent = hasPaidPlan()
+    ? "Nice session. Run one similar drill now while the pattern is still fresh."
+    : "That is your natural session checkpoint. Upgrade when you want unlimited reps, leaderboards, and deeper review.";
+  summary.classList.remove("hidden");
+}
+
+function animateXpGain(earned, correct) {
+  const burst = document.createElement("div");
+  burst.className = `xp-burst ${correct ? "correct" : "review"}`;
+  burst.textContent = `+${earned} XP`;
+  document.body.appendChild(burst);
+  setTimeout(() => burst.remove(), 1200);
+}
+
 function showResult(correct, earned, completed = {}) {
   const paid = hasPaidPlan();
   const scenario = getScenario(state.scenarioIndex);
@@ -1486,6 +1626,13 @@ function showResult(correct, earned, completed = {}) {
     : `${clueForScenario(scenario)} The marker shows the exact candle area where the evidence became actionable.`;
   document.getElementById("invalidation").textContent = invalidationForScenario(scenario);
   document.getElementById("calibration").textContent = completed.confidence ? calibrationText() : "Complete confidence-rated decisions to build your calibration score.";
+  renderAnswerDistribution(scenario, completed);
+  const coachSection = document.getElementById("coach-review-section");
+  coachSection.classList.toggle("locked", !hasCoachPlan());
+  document.getElementById("coach-review-title").textContent = hasCoachPlan() ? "Coach Review" : "Coach Review Locked";
+  document.getElementById("coach-review").textContent = coachReviewText(scenario, correct);
+  document.getElementById("streak-reminder").textContent = streakReminderText();
+  renderSessionSummary();
   document.getElementById("similar-pattern-label").textContent = `Try another ${scenario.pattern} drill`;
   renderResultClueMarker(scenario);
   applyModeUi();
@@ -1611,9 +1758,16 @@ function submitThesisBuilder() {
 function renderLeaderboard() {
   const p = progress();
   const weeklyGain = Math.max(420, p.attempts.slice(-12).reduce((sum, attempt) => sum + (attempt.correct ? 180 : 45), 0) + p.streak * 90);
+  const seed = stringSeed(p.signup?.email || p.inviteEmail || "weekly-board") + Math.floor(Date.now() / 3600000);
+  const rand = seededRandom(seed);
+  const competitors = leaderboardBase.map((row, index) => ({
+    ...row,
+    gain: Math.max(900, row.base + Math.round(rand() * 900) - index * 120),
+    streak: Math.max(3, row.streak + Math.round(rand() * 4) - 2)
+  }));
   const rows = [
     { name: "You", gain: weeklyGain, rank: rankFromXp(p.xp), streak: Math.max(p.streak, p.topStreak), you: true },
-    ...leaderboardBase
+    ...competitors
   ].sort((a, b) => b.gain - a.gain);
   const medals = ["1", "2", "3"];
   els.leaderboard.innerHTML = "";
@@ -1627,6 +1781,26 @@ function renderLeaderboard() {
     `;
     els.leaderboard.appendChild(item);
   });
+}
+
+function updateMarketTape() {
+  const p = progress();
+  const markets = ["NQ", "ES", "CL", "GC", "BTC"];
+  const sessions = ["New York", "London", "Asia", "Replay Lab"];
+  const tick = Math.floor(Date.now() / 4000);
+  const seed = stringSeed(p.signup?.email || p.inviteEmail || "guest") + tick;
+  const rand = seededRandom(seed);
+  const market = p.signup?.market && markets.includes(p.signup.market) ? p.signup.market : markets[seed % markets.length];
+  const move = ((rand() * 2.8) - 1.1).toFixed(2);
+  const benchmark = Math.max(38, Math.min(82, 54 + Math.round(rand() * 18) + Math.round(accuracy() / 10)));
+  const analyzed = 248000 + Math.round(rand() * 1800) + p.attempts.length * 11;
+  els.tapeMarket.textContent = market;
+  els.tapeMove.textContent = `${Number(move) >= 0 ? "+" : ""}${move}%`;
+  els.tapeMove.classList.toggle("negative", Number(move) < 0);
+  els.tapeSession.textContent = sessions[(seed + p.attempts.length) % sessions.length];
+  els.tapeAccuracy.textContent = `${benchmark}.${seed % 10}%`;
+  els.tapeDelta.textContent = `+${(1.4 + rand() * 3.8).toFixed(1)}%`;
+  els.tapeScenarios.textContent = analyzed.toLocaleString();
 }
 
 function renderAchievements() {
@@ -1825,7 +1999,14 @@ function renderProfile() {
     `;
   }).join("");
 
-  document.getElementById("profile-pattern-bars").innerHTML = patterns.length ? patterns
+  const neededForReport = Math.max(0, 5 - p.attempts.length);
+  document.getElementById("profile-pattern-bars").innerHTML = neededForReport ? `
+    <div class="profile-report-progress">
+      <strong>Pattern Report loading</strong>
+      <span>Complete ${neededForReport} more scenario${neededForReport === 1 ? "" : "s"} to unlock your first pattern report.</span>
+      <div class="bar-track"><span style="width:${Math.min(100, (p.attempts.length / 5) * 100)}%"></span></div>
+    </div>
+  ` : patterns.length ? patterns
     .sort((a, b) => b.total - a.total || b.accuracy - a.accuracy)
     .slice(0, 5)
     .map((row) => `
@@ -1849,10 +2030,14 @@ function renderEliteDashboard() {
   const overallAccuracy = Math.round((data.filter((item) => item.correct).length / data.length) * 100);
   const discipline = Math.max(45, Math.min(96, overallAccuracy + 14));
   const overtrade = Math.max(4, 100 - discipline);
+  const eliteUnlocked = hasElitePlan();
+  document.getElementById("elite").classList.toggle("elite-locked-preview", !eliteUnlocked);
 
   document.getElementById("elite-weakest").textContent = weakest.pattern;
   document.getElementById("elite-weakness-copy").textContent =
-    `${weakest.pattern} is currently your highest-priority training focus. Elite will build drills around this until accuracy improves.`;
+    eliteUnlocked
+      ? `${weakest.pattern} is currently your highest-priority training focus. Elite will build drills around this until accuracy improves.`
+      : `Preview: Elite turns your weakest setup into targeted drills, custom filters, a mistake journal, and weekly curriculum. Choose Elite to activate the buttons below.`;
   document.getElementById("elite-accuracy").textContent = `${overallAccuracy}%`;
   document.getElementById("elite-discipline").textContent = discipline;
   document.getElementById("elite-overtrade").textContent = overtrade;
@@ -1872,6 +2057,8 @@ function renderEliteDashboard() {
     </div>
   `).join("");
   document.getElementById("elite-playlist").innerHTML = playlist;
+  document.getElementById("start-elite-playlist").textContent = eliteUnlocked ? "Start Custom Playlist" : "Unlock Elite Playlist";
+  document.getElementById("apply-elite-filters").textContent = eliteUnlocked ? "Build Filtered Drill" : "Unlock Elite Filters";
 
   const mistakes = data.filter((item) => !item.correct).slice(-4).reverse();
   document.getElementById("mistake-journal").innerHTML = mistakes.length ? mistakes.map((item) => `
@@ -2095,6 +2282,7 @@ document.getElementById("menu-logout").addEventListener("click", () => {
 
 document.querySelectorAll(".plan-button").forEach((button) => {
   button.addEventListener("click", async () => {
+    if (button.disabled) return;
     const p = progress();
     const selectedPlan = button.dataset.plan;
     p.pendingPlan = selectedPlan;
@@ -2109,7 +2297,7 @@ document.querySelectorAll(".plan-button").forEach((button) => {
         attempts: p.attempts.length
       }
     });
-    await startCheckout(selectedPlan, false);
+    await startCheckout(selectedPlan, false, button);
     closeModals();
     await refreshSubscriptionStatus();
     applyModeUi();
@@ -2132,6 +2320,8 @@ document.getElementById("share-button").addEventListener("click", async () => {
 
 document.getElementById("invite-form").addEventListener("submit", async (event) => {
   event.preventDefault();
+  const submitButton = event.currentTarget.querySelector("button");
+  if (submitButton.disabled) return;
   const name = document.getElementById("invite-name").value;
   const email = document.getElementById("invite-email").value;
   const p = progress();
@@ -2160,14 +2350,18 @@ document.getElementById("invite-form").addEventListener("submit", async (event) 
   });
   updateProgressUi();
   applyModeUi();
-  event.currentTarget.querySelector("button").textContent = "Trial started";
-  await startCheckout("Player", true);
+  submitButton.textContent = "Trial started";
+  await startCheckout("Player", true, submitButton);
   await refreshSubscriptionStatus();
 });
 
 window.addEventListener("resize", () => {
   drawChart();
   drawPreviewCharts();
+});
+
+window.addEventListener("load", () => {
+  if (window.lucide) window.lucide.createIcons();
 });
 
 function prepareVisitScenarioSession() {
@@ -2197,3 +2391,4 @@ updateProgressUi();
 applyModeUi();
 renderScenario();
 showPage("home");
+setInterval(updateMarketTape, 4000);

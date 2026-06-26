@@ -5,52 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TradePulse</title>
     <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/lucide@latest" defer></script>
   </head>
   <body>
     <aside class="side-nav" id="side-nav" aria-label="TradePulse navigation">
       <button class="side-toggle" id="side-toggle" type="button" aria-label="Expand navigation" aria-expanded="false">
-        <span class="side-icon">☰</span>
+        <span class="side-icon"><i data-lucide="menu"></i></span>
         <span class="side-label">Menu</span>
       </button>
 
       <div class="side-nav-links">
         <button class="side-link start-side-link nav-tab" data-page-target="modes" type="button" data-tooltip="Start Training">
-          <span class="side-icon">▶</span>
+          <span class="side-icon"><i data-lucide="play"></i></span>
           <span class="side-label">Start Training</span>
         </button>
         <button class="side-link elite-side-link nav-tab" data-page-target="elite" type="button" data-tooltip="Elite">
-          <span class="side-icon">◆</span>
+          <span class="side-icon"><i data-lucide="gem"></i></span>
           <span class="side-label">Elite</span>
         </button>
         <div class="side-divider"></div>
         <button class="side-link futures-tab nav-tab" data-page-target="futures" type="button" data-tooltip="Why Futures?">
-          <span class="side-icon">F</span>
+          <span class="side-icon"><i data-lucide="landmark"></i></span>
           <span class="side-label">Why Futures?</span>
         </button>
         <button class="side-link profile-tab nav-tab" data-page-target="profile" type="button" data-tooltip="Profile">
-          <span class="side-icon">ID</span>
+          <span class="side-icon"><i data-lucide="id-card"></i></span>
           <span class="side-label">Profile</span>
         </button>
         <button class="side-link plans-tab nav-tab" data-page-target="plans" type="button" data-tooltip="View Plans">
-          <span class="side-icon">$</span>
+          <span class="side-icon"><i data-lucide="badge-dollar-sign"></i></span>
           <span class="side-label">View Plans</span>
         </button>
         <button class="side-link roadmap-tab nav-tab" data-page-target="roadmap" type="button" data-tooltip="Build Path">
-          <span class="side-icon">✓</span>
+          <span class="side-icon"><i data-lucide="route"></i></span>
           <span class="side-label">Build Path</span>
         </button>
         <button class="side-link faq-tab nav-tab" data-page-target="faq" type="button" data-tooltip="Questions">
-          <span class="side-icon">?</span>
+          <span class="side-icon"><i data-lucide="circle-help"></i></span>
           <span class="side-label">Questions</span>
         </button>
         <button class="side-link" id="share-button" type="button" data-tooltip="Share">
-          <span class="side-icon">↗</span>
+          <span class="side-icon"><i data-lucide="share-2"></i></span>
           <span class="side-label" id="share-label">Share</span>
         </button>
       </div>
 
       <button class="side-link logout-tab hidden" id="menu-logout" type="button" data-tooltip="Logout">
-        <span class="side-icon">↪</span>
+        <span class="side-icon"><i data-lucide="log-out"></i></span>
         <span class="side-label">Logout</span>
       </button>
     </aside>
@@ -70,10 +71,10 @@
 
         <section class="market-tape" aria-label="TradePulse training status">
           <div class="tape-status"><i></i><strong>Replay engine online</strong></div>
-          <div><span>Active market</span><strong>NQ</strong><b>+1.24%</b></div>
-          <div><span>Session</span><strong>New York</strong><b class="neutral">Open</b></div>
-          <div><span>Community accuracy</span><strong>68.4%</strong><b>+3.2%</b></div>
-          <div><span>Scenarios analyzed</span><strong>248,901</strong><b class="neutral">Live pool</b></div>
+          <div><span>Active market</span><strong id="tape-market">NQ</strong><b id="tape-move">+1.24%</b></div>
+          <div><span>Session</span><strong id="tape-session">New York</strong><b class="neutral">Practice</b></div>
+          <div><span>Trainer benchmark</span><strong id="tape-accuracy">68.4%</strong><b id="tape-delta">+3.2%</b></div>
+          <div><span>Replay pool</span><strong id="tape-scenarios">248,901</strong><b class="neutral">Rotating</b></div>
         </section>
 
         <section class="hero-grid">
@@ -460,6 +461,23 @@
                 <div class="result-section result-calibration">
                   <span class="result-section-icon">06</span>
                   <div><strong>Confidence calibration</strong><p id="calibration"></p></div>
+                </div>
+                <div class="result-section result-social">
+                  <span class="result-section-icon">07</span>
+                  <div><strong>Answer distribution</strong><div class="distribution-list" id="answer-distribution"></div></div>
+                </div>
+                <div class="result-section result-coach" id="coach-review-section">
+                  <span class="result-section-icon">08</span>
+                  <div><strong id="coach-review-title">Coach Review</strong><p id="coach-review"></p></div>
+                </div>
+                <div class="result-section result-streak">
+                  <span class="result-section-icon">09</span>
+                  <div><strong>Streak reminder</strong><p id="streak-reminder"></p></div>
+                </div>
+                <div class="session-summary hidden" id="session-summary">
+                  <strong>Session recap</strong>
+                  <div id="session-summary-stats"></div>
+                  <p id="session-summary-copy"></p>
                 </div>
                 <button class="similar-drill-button" id="similar-scenario" type="button">
                   <span>Practice this pattern again</span>
@@ -960,7 +978,16 @@
             <option>Advanced</option>
           </select>
         </label>
-        <label>Primary market <input id="signup-market" required placeholder="NQ, ES, CL, GC, BTC" /></label>
+        <label>Primary market
+          <select id="signup-market" required>
+            <option value="">Choose one</option>
+            <option>NQ</option>
+            <option>ES</option>
+            <option>CL</option>
+            <option>GC</option>
+            <option>BTC</option>
+          </select>
+        </label>
         <p class="safe-note">Education only. No trade alerts, personalized recommendations, broker execution, or financial advice.</p>
         <button class="primary-button" type="submit">Unlock 3 Free Plays</button>
       </form>
