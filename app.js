@@ -474,6 +474,14 @@ const state = {
   survivalRound: 0,
   survivalCorrect: 0,
   activeMode: "replay",
+  currentView: "home",
+  pendingAnswer: null,
+  timerRunning: false,
+  timerStartedAt: 0,
+  timerDuration: 20000,
+  timerRaf: null,
+  timerWarningPlayed: false,
+  audioMuted: true,
   progress: JSON.parse(localStorage.getItem("tradePulseProgress") || "{}")
 };
 
@@ -495,6 +503,7 @@ const els = {
   xpEarned: document.getElementById("xp-earned"),
   grade: document.getElementById("grade"),
   status: document.getElementById("replay-status"),
+  timer: document.getElementById("timer"),
   tabs: document.getElementById("timeframe-tabs"),
   chart: document.getElementById("chart"),
   xp: document.getElementById("xp"),
@@ -524,6 +533,17 @@ const els = {
   returnRecap: document.getElementById("return-recap")
 };
 
+els.submitAnswer = document.getElementById("submit-answer");
+els.countdownBar = document.getElementById("countdown-bar");
+els.countdownFill = document.getElementById("countdown-fill");
+els.comboBadge = document.getElementById("combo-badge");
+els.streakDots = document.getElementById("streak-dots");
+els.scenarioPills = document.getElementById("scenario-pills");
+els.audioToggle = document.getElementById("audio-toggle");
+els.topbarBack = document.getElementById("topbar-back");
+els.resultNext = document.getElementById("result-next");
+els.leaderboardFull = document.getElementById("leaderboard-full");
+
 const gate = {
   signupModal: document.getElementById("signup-modal"),
   signupForm: document.getElementById("signup-form"),
@@ -542,27 +562,54 @@ const gate = {
   resultClueMarker: document.getElementById("result-clue-marker")
 };
 
-function showPage(page) {
-  const target = document.querySelector(`.page-section[data-page="${page}"]`);
-  const dashboardTarget = [...document.querySelectorAll(".dashboard-section")].some((section) =>
-    (section.dataset.dashboardPages || "").split(",").includes(page)
+function viewExists(viewName) {
+  return Boolean(
+    document.querySelector(`[data-view="${viewName}"]`) ||
+    [...document.querySelectorAll(".dashboard-section")].some((section) =>
+      (section.dataset.dashboardPages || "").split(",").includes(viewName)
+    )
   );
-  if (!target && !dashboardTarget) page = "home";
-  document.body.dataset.page = page;
-  document.body.classList.remove("playing");
-  document.querySelectorAll(".page-section").forEach((section) => {
-    section.classList.toggle("active-page", section.dataset.page === page);
+}
+
+function navigateTo(viewName = "home", options = {}) {
+  const view = viewExists(viewName) ? viewName : "home";
+  const previousView = state.currentView;
+  state.currentView = view;
+  document.body.dataset.view = view;
+  document.body.dataset.page = view;
+  document.body.classList.toggle("playing", view === "game");
+
+  document.querySelectorAll("[data-view]").forEach((section) => {
+    section.classList.toggle("active-view", section.dataset.view === view);
+    section.classList.toggle("active-page", section.dataset.view === view);
   });
   document.querySelectorAll(".dashboard-section").forEach((section) => {
-    const allowedPages = (section.dataset.dashboardPages || "").split(",");
-    section.classList.toggle("active-page", allowedPages.includes(page));
+    const allowedViews = (section.dataset.dashboardPages || "").split(",");
+    const active = allowedViews.includes(view);
+    section.classList.toggle("active-view", active);
+    section.classList.toggle("active-page", active);
   });
   document.querySelectorAll(".nav-tab").forEach((button) => {
-    button.classList.toggle("active", button.dataset.pageTarget === page);
+    const target = button.dataset.viewTarget || button.dataset.pageTarget || "home";
+    const isActive = target === view || (view === "game" && target === "home");
+    button.classList.toggle("active", isActive);
   });
-  if (page === "profile") renderProfile();
-  if (page === "elite") renderEliteDashboard();
-  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  els.topbarBack?.classList.toggle("hidden", view !== "game");
+  if (view !== "game" && previousView === "game") stopDecisionTimer();
+  if (view === "game" && !state.revealed) startDecisionTimer();
+  if (view === "profile") renderProfile();
+  if (view === "elite") renderEliteDashboard();
+  if (view === "leaderboard") renderLeaderboard();
+
+  if (!options.fromHash && window.location.hash !== `#${view}`) {
+    history.pushState({ view }, "", `#${view}`);
+  }
+  if (options.scroll !== false) window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function showPage(page) {
+  navigateTo(page);
 }
 
 function defaultProgress() {
@@ -752,6 +799,7 @@ function tone(frequency, start, duration, type, volume) {
 }
 
 function playAnswerSound(correct) {
+  if (state.audioMuted) return;
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
   if (!AudioCtx) return;
   audioContext ||= new AudioCtx();
@@ -764,6 +812,87 @@ function playAnswerSound(correct) {
     tone(130, 0, 0.16, "sawtooth", 0.1);
     tone(92, 0.12, 0.22, "square", 0.075);
   }
+}
+
+function playTimerWarningSound() {
+  if (state.audioMuted) return;
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return;
+  audioContext ||= new AudioCtx();
+  if (audioContext.state === "suspended") audioContext.resume();
+  [0, 0.09, 0.18].forEach((offset) => tone(760, offset, 0.055, "square", 0.08));
+}
+
+function updateAudioToggle() {
+  if (!els.audioToggle) return;
+  els.audioToggle.setAttribute("aria-pressed", String(!state.audioMuted));
+  els.audioToggle.classList.toggle("active", !state.audioMuted);
+  els.audioToggle.innerHTML = `<i data-lucide="${state.audioMuted ? "volume-x" : "volume-2"}"></i><span>${state.audioMuted ? "Muted" : "Sound On"}</span>`;
+  if (window.lucide) window.lucide.createIcons();
+}
+
+function canUseDecisionTimer() {
+  return state.currentView === "game" && ["replay", "daily", "ranked", "notrade", "detective"].includes(state.activeMode);
+}
+
+function stopDecisionTimer() {
+  if (state.timerRaf) cancelAnimationFrame(state.timerRaf);
+  state.timerRaf = null;
+  state.timerRunning = false;
+  els.countdownBar?.classList.remove("amber", "red", "pulse");
+}
+
+function startDecisionTimer() {
+  stopDecisionTimer();
+  if (!canUseDecisionTimer() || state.revealed) {
+    if (els.countdownFill) els.countdownFill.style.width = "0%";
+    return;
+  }
+
+  state.timerRunning = true;
+  state.timerStartedAt = performance.now();
+  state.timerWarningPlayed = false;
+  els.countdownBar?.classList.remove("amber", "red", "pulse");
+  if (els.countdownFill) els.countdownFill.style.width = "100%";
+
+  const tick = (now) => {
+    if (!state.timerRunning || state.revealed) return;
+    const elapsed = now - state.timerStartedAt;
+    const remaining = Math.max(0, state.timerDuration - elapsed);
+    const seconds = Math.ceil(remaining / 1000);
+    const percent = (remaining / state.timerDuration) * 100;
+
+    if (els.countdownFill) els.countdownFill.style.width = `${percent}%`;
+    if (els.timer) els.timer.textContent = `${seconds}s`;
+    els.countdownBar?.classList.toggle("amber", remaining <= 8000 && remaining > 4000);
+    els.countdownBar?.classList.toggle("red", remaining <= 4000);
+    els.countdownBar?.classList.toggle("pulse", remaining <= 4000);
+    if (remaining <= 4000 && !state.timerWarningPlayed) {
+      state.timerWarningPlayed = true;
+      playTimerWarningSound();
+    }
+    if (remaining <= 0) {
+      handleDecisionTimeout();
+      return;
+    }
+    state.timerRaf = requestAnimationFrame(tick);
+  };
+
+  state.timerRaf = requestAnimationFrame(tick);
+}
+
+function handleDecisionTimeout() {
+  if (state.revealed) return;
+  stopDecisionTimer();
+  state.lastAnswerRect = null;
+  const scenario = getScenario(state.scenarioIndex);
+  finishAttempt({
+    answer: "Timed out",
+    correct: false,
+    earned: 0,
+    correctAnswer: currentCorrectAnswer(scenario),
+    metadata: { timeout: true }
+  });
 }
 
 function hasProfileSession() {
@@ -968,8 +1097,7 @@ function startMode(mode) {
   state.activeMode = mode;
   resetModeState();
   state.scenarioIndex = mode === "daily" ? dailyScenarioIndex() : nextScenarioForMode(mode);
-  showPage("modes");
-  document.getElementById("trainer").scrollIntoView({ behavior: "smooth" });
+  navigateTo("game");
   applyModeUi();
   renderScenario();
 }
@@ -1327,6 +1455,7 @@ function renderScenario() {
   state.revealed = Boolean(completed);
   state.revealCount = state.revealed ? 18 : 0;
   state.selected = completed?.selected || null;
+  state.pendingAnswer = null;
   state.confidence = completed?.confidence || state.confidence || "medium";
   stopReplay();
   gate.resultClueMarker.classList.toggle("hidden", !state.revealed);
@@ -1349,11 +1478,15 @@ function renderScenario() {
   applyModeUi();
   updateDifficultyMessage(scenario);
   renderDifficultyBadge(scenario);
+  renderScenarioPills(scenario);
+  renderStreakDots();
   renderTabs();
   renderAnswers();
   renderChartHotspots();
   updateTradePreview();
   drawChart();
+  if (state.revealed) stopDecisionTimer();
+  else startDecisionTimer();
 }
 
 function renderTabs() {
@@ -1371,9 +1504,102 @@ function renderTabs() {
   });
 }
 
+function modeName(mode = state.activeMode) {
+  const names = {
+    replay: "Replay Mode",
+    daily: "Daily Challenge",
+    ranked: "Ranked Battle",
+    trade: "Trade Mode",
+    spot: "Spot the Setup",
+    survival: "Candle Survival",
+    notrade: "No-Trade Challenge",
+    detective: "Chart Detective",
+    thesis: "Build the Thesis"
+  };
+  return names[mode] || "Replay Mode";
+}
+
+function sessionName(scenario) {
+  if (/8:|9:|10:/.test(scenario.time)) return "New York Open";
+  if (/11:|12:/.test(scenario.time)) return "Midday Session";
+  if (/1:|2:/.test(scenario.time)) return "Afternoon Session";
+  return "Replay Session";
+}
+
+function renderScenarioPills(scenario) {
+  if (!els.scenarioPills) return;
+  const difficulty = scenario.difficulty.toLowerCase();
+  els.scenarioPills.innerHTML = `
+    <span><i data-lucide="activity"></i>${scenario.market}</span>
+    <span class="difficulty-pill ${difficulty}"><i data-lucide="gauge"></i>${scenario.difficulty}</span>
+    <span><i data-lucide="clock-3"></i>${sessionName(scenario)}</span>
+    <span><i data-lucide="gamepad-2"></i>${modeName()}</span>
+  `;
+  if (window.lucide) window.lucide.createIcons();
+}
+
+function renderStreakDots() {
+  if (!els.streakDots) return;
+  const current = Math.min(5, progress().streak || 0);
+  els.streakDots.innerHTML = Array.from({ length: 5 }, (_, index) =>
+    `<span class="${index < current ? "filled" : ""}"></span>`
+  ).join("");
+}
+
+function currentCorrectAnswer(scenario = getScenario(state.scenarioIndex)) {
+  if (state.activeMode === "notrade") return noTradeAnswer(scenario);
+  if (state.activeMode === "detective") return detectiveOptions(scenario)[0];
+  if (state.activeMode === "survival") return survivalAnswer(scenario, state.survivalRound);
+  return scenario.correctAnswer;
+}
+
+function currentAnswerOptions(scenario = getScenario(state.scenarioIndex)) {
+  if (state.activeMode === "notrade") return ["Take the long", "Take the short", "Skip the trade"];
+  if (state.activeMode === "detective") return detectiveOptions(scenario);
+  if (state.activeMode === "survival") return ["Hold bias", "Change bias", "Enter", "Exit", "Do nothing"];
+  return scenario.answers;
+}
+
+function selectPendingAnswer(answer) {
+  if (state.revealed) return;
+  state.pendingAnswer = answer;
+  els.answers.querySelectorAll(".answer-button").forEach((button) => {
+    button.classList.toggle("selected", button.dataset.answer === answer);
+  });
+  if (els.submitAnswer) {
+    els.submitAnswer.disabled = false;
+    els.submitAnswer.classList.remove("hidden");
+    els.submitAnswer.textContent = "Submit Answer";
+  }
+}
+
+function submitPendingAnswer() {
+  if (!state.pendingAnswer || state.revealed) return;
+  const scenario = getScenario(state.scenarioIndex);
+  submitAnswer(state.pendingAnswer, currentCorrectAnswer(scenario), { activeSelection: true });
+}
+
+function difficultyDistributionPercent(scenario) {
+  if (scenario.difficulty === "Hard") return 32;
+  if (scenario.difficulty === "Medium") return 54;
+  return 74;
+}
+
+function decorateAnswerDistribution(button, item) {
+  const wrap = document.createElement("span");
+  wrap.className = "answer-distribution-bar";
+  wrap.innerHTML = `<b>${item.percent}% chose this</b><i></i>`;
+  button.appendChild(wrap);
+  requestAnimationFrame(() => {
+    wrap.querySelector("i").style.width = `${item.percent}%`;
+  });
+}
+
 function renderAnswers() {
   const scenario = getScenario(state.scenarioIndex);
   els.answers.innerHTML = "";
+  els.submitAnswer?.classList.add("hidden");
+  if (els.submitAnswer) els.submitAnswer.disabled = true;
 
   if (!hasPaidPlan() && freePlaysLeft() <= 0 && !state.revealed) {
     openPaywall();
@@ -1398,51 +1624,51 @@ function renderAnswers() {
     return;
   }
 
-  let answers = scenario.answers;
-  let correctAnswer = scenario.correctAnswer;
-
-  if (state.activeMode === "notrade") {
-    answers = ["Take the long", "Take the short", "Skip the trade"];
-    correctAnswer = noTradeAnswer(scenario);
-  }
-
-  if (state.activeMode === "detective") {
-    answers = detectiveOptions(scenario);
-    correctAnswer = answers[0];
-  }
+  let answers = currentAnswerOptions(scenario);
+  let correctAnswer = currentCorrectAnswer(scenario);
 
   if (state.activeMode === "survival") {
-    answers = ["Hold bias", "Change bias", "Enter", "Exit", "Do nothing"];
-    correctAnswer = survivalAnswer(scenario, state.survivalRound);
     document.getElementById("survival-round").textContent = Math.min(5, state.survivalRound + 1);
     document.getElementById("survival-progress").style.width = `${(state.survivalRound / 5) * 100}%`;
     document.getElementById("survival-score").textContent = `${state.survivalCorrect} strong decision${state.survivalCorrect === 1 ? "" : "s"}`;
   }
 
+  const completed = state.revealed ? completedScenario(scenario) : null;
+  const distribution = state.revealed && completed ? optionDistribution(scenario, completed) : [];
+
   answers.forEach((answer, index) => {
     const button = document.createElement("button");
     button.className = "answer-button";
-    button.textContent = `${String.fromCharCode(65 + index)}  ${answer}`;
+    button.dataset.answer = answer;
+    button.innerHTML = `<span class="answer-main"><b>${String.fromCharCode(65 + index)}</b><span>${answer}</span></span>`;
     button.disabled = state.revealed;
 
     if (state.revealed) {
       if (answer === correctAnswer) button.classList.add("correct");
       if (answer === state.selected && answer !== correctAnswer) button.classList.add("wrong");
+      if (answer !== correctAnswer && answer !== state.selected) button.classList.add("dimmed");
+      const item = distribution.find((row) => row.label === answer);
+      if (item) decorateAnswerDistribution(button, item);
     }
 
     button.addEventListener("click", () => {
       if (state.activeMode === "survival") submitSurvivalDecision(answer);
-      else submitAnswer(answer, correctAnswer);
+      else selectPendingAnswer(answer);
     });
     els.answers.appendChild(button);
   });
 
   if (state.revealed) {
-    const completed = completedScenario(scenario);
+    els.submitAnswer?.classList.add("hidden");
     showResult(completed.correct, completed.earned, completed);
   } else {
     els.resultPanel.classList.add("hidden");
     gate.resultBreakdown.classList.add("hidden");
+    if (canUseDecisionTimer() && els.submitAnswer) {
+      els.submitAnswer.disabled = true;
+      els.submitAnswer.classList.remove("hidden");
+      els.submitAnswer.textContent = "Submit Answer";
+    }
   }
 }
 
@@ -1477,7 +1703,7 @@ function confidenceBonus(correct) {
   return 0;
 }
 
-function submitAnswer(answer, correctAnswer = getScenario(state.scenarioIndex).correctAnswer) {
+function submitAnswer(answer, correctAnswer = getScenario(state.scenarioIndex).correctAnswer, options = {}) {
   if (!hasSignup()) {
     openSignup();
     return;
@@ -1494,10 +1720,16 @@ function submitAnswer(answer, correctAnswer = getScenario(state.scenarioIndex).c
   const correct = answer === correctAnswer;
   const modeBonus = state.activeMode === "ranked" ? 80 : state.activeMode === "daily" ? 200 : state.activeMode === "detective" ? 45 : state.activeMode === "notrade" ? 55 : 0;
   const baseEarned = correct ? 120 + modeBonus + confidenceBonus(correct) + Math.min(80, progress().streak * 20) : 20;
-  const comboMultiplier = correct && progress().streak >= 2 ? 1.5 : 1;
+  const comboMultiplier = correct && progress().streak >= 2 ? 2 : 1;
   const earned = Math.round(baseEarned * comboMultiplier);
-  const sourceButton = [...els.answers.querySelectorAll("button")].find((button) => button.textContent.includes(answer));
+  const sourceButton = [...els.answers.querySelectorAll("button")].find((button) => button.dataset.answer === answer);
   state.lastAnswerRect = sourceButton?.getBoundingClientRect() || null;
+  stopDecisionTimer();
+  if (!correct && options.activeSelection) {
+    sourceButton?.classList.add("wrong-flash");
+    shakeGameCard();
+    setTimeout(() => sourceButton?.classList.remove("wrong-flash"), 380);
+  }
   finishAttempt({ answer, correct, earned, correctAnswer, metadata: { comboMultiplier } });
 }
 
@@ -1567,6 +1799,7 @@ function finishAttempt({ answer, correct, earned, correctAnswer, metadata = {} }
   p.nextByMode[state.activeMode] = findNextUnanswered(state.scenarioIndex + 1);
   saveProgress();
   updateProgressUi();
+  renderStreakDots();
   animateXpGain(earned, correct);
   if (metadata.comboMultiplier > 1) flashCombo(metadata.comboMultiplier);
   els.status.textContent = "Replay ready";
@@ -1734,21 +1967,25 @@ function optionDistribution(scenario, completed) {
   const options = resultOptionsForScenario(scenario, completed).slice(0, 5);
   const correctIndex = Math.max(0, options.findIndex((option) => option.correct));
   const rand = seededRandom(scenario.seed + stringSeed(state.activeMode) + 771);
-  let remaining = 100;
-  const values = options.map((option, index) => {
-    const base = index === correctIndex ? 30 + Math.floor(rand() * 22) : 8 + Math.floor(rand() * 17);
-    const value = Math.min(remaining, base);
+  const correctPercent = difficultyDistributionPercent(scenario);
+  let remaining = 100 - correctPercent;
+  const values = options.map((_, index) => index === correctIndex ? correctPercent : 0);
+  const otherIndexes = options.map((_, index) => index).filter((index) => index !== correctIndex);
+  otherIndexes.forEach((index, order) => {
+    const slotsLeft = otherIndexes.length - order;
+    const minReserve = Math.max(0, slotsLeft - 1) * 6;
+    const maxValue = Math.max(6, remaining - minReserve);
+    const value = order === otherIndexes.length - 1 ? remaining : 6 + Math.floor(rand() * Math.max(1, maxValue - 5));
+    values[index] = value;
     remaining -= value;
-    return value;
   });
-  values[correctIndex] += Math.max(0, remaining);
   const total = values.reduce((sum, value) => sum + value, 0) || 1;
   return options.map((option, index) => ({
     label: option.label,
     correct: option.correct,
     selected: option.selected,
     percent: Math.round((values[index] / total) * 100)
-  })).sort((a, b) => b.percent - a.percent);
+  }));
 }
 
 function renderAnswerDistribution(scenario, completed) {
@@ -1823,21 +2060,36 @@ function renderSessionSummary() {
 function animateXpGain(earned, correct) {
   const burst = document.createElement("div");
   burst.className = `xp-burst ${correct ? "correct" : "review"}`;
-  burst.textContent = `+${earned} XP`;
+  burst.textContent = correct ? `+${earned} XP` : "-";
   if (state.lastAnswerRect) {
     burst.style.left = `${state.lastAnswerRect.left + state.lastAnswerRect.width / 2}px`;
     burst.style.top = `${state.lastAnswerRect.top + 10}px`;
   }
   document.body.appendChild(burst);
-  setTimeout(() => burst.remove(), 1200);
+  setTimeout(() => burst.remove(), 760);
 }
 
 function flashCombo(multiplier) {
-  const combo = document.createElement("div");
-  combo.className = "combo-flash";
-  combo.textContent = `COMBO ×${multiplier}`;
-  document.body.appendChild(combo);
-  setTimeout(() => combo.remove(), 1500);
+  const combo = els.comboBadge || document.createElement("div");
+  combo.className = "combo-badge";
+  combo.textContent = `COMBO x${multiplier}`;
+  if (!els.comboBadge) document.body.appendChild(combo);
+  combo.classList.remove("hidden", "show");
+  requestAnimationFrame(() => combo.classList.add("show"));
+  setTimeout(() => {
+    combo.classList.remove("show");
+    if (!els.comboBadge) combo.remove();
+    else combo.classList.add("hidden");
+  }, 1500);
+}
+
+function shakeGameCard() {
+  const card = document.querySelector(".trainer-grid");
+  if (!card) return;
+  card.classList.remove("shake");
+  void card.offsetWidth;
+  card.classList.add("shake");
+  setTimeout(() => card.classList.remove("shake"), 360);
 }
 
 function renderLevelUpNudge() {
@@ -2017,16 +2269,21 @@ function renderLeaderboard() {
     ...competitors
   ].sort((a, b) => b.gain - a.gain);
   const medals = ["1", "2", "3"];
-  els.leaderboard.innerHTML = "";
+  const containers = [els.leaderboard, els.leaderboardFull].filter(Boolean);
+  containers.forEach((container) => {
+    container.innerHTML = "";
+  });
   rows.forEach((row, index) => {
-    const item = document.createElement("div");
-    item.className = `leader-row gainer-row ${row.you ? "you" : ""} ${index < 3 ? "top-gainer" : ""}`;
-    item.innerHTML = `
-      <strong class="gainer-rank">${medals[index] || index + 1}</strong>
-      <span class="gainer-name">${row.name}<br><small>${row.rank} · ${row.streak} day streak</small></span>
-      <strong class="gainer-points">+${row.gain.toLocaleString()} XP</strong>
-    `;
-    els.leaderboard.appendChild(item);
+    containers.forEach((container) => {
+      const item = document.createElement("div");
+      item.className = `leader-row gainer-row ${row.you ? "you" : ""} ${index < 3 ? "top-gainer" : ""}`;
+      item.innerHTML = `
+        <strong class="gainer-rank">${medals[index] || index + 1}</strong>
+        <span class="gainer-name">${row.name}<br><small>${row.rank} · ${row.streak} day streak</small></span>
+        <strong class="gainer-points">+${row.gain.toLocaleString()} XP</strong>
+      `;
+      container.appendChild(item);
+    });
   });
 }
 
@@ -2339,10 +2596,9 @@ function startElitePlaylist() {
 
   state.activeMode = "replay";
   state.scenarioIndex = findNextUnanswered(SHARED_SCENARIO_COUNT + stringSeed(document.getElementById("elite-weakest").textContent || "elite") % 9000);
-  showPage("modes");
+  navigateTo("game");
   applyModeUi();
   renderScenario();
-  document.getElementById("trainer").scrollIntoView({ behavior: "smooth" });
 }
 
 function applyEliteFilters() {
@@ -2357,10 +2613,9 @@ function applyEliteFilters() {
   const key = `${market}-${setup}-${difficulty}`;
   state.activeMode = "replay";
   state.scenarioIndex = findNextUnanswered(SHARED_SCENARIO_COUNT + stringSeed(key) % 50000);
-  showPage("modes");
+  navigateTo("game");
   applyModeUi();
   renderScenario();
-  document.getElementById("trainer").scrollIntoView({ behavior: "smooth" });
 }
 
 document.getElementById("next-scenario").addEventListener("click", () => {
@@ -2372,6 +2627,10 @@ document.getElementById("next-scenario").addEventListener("click", () => {
   state.scenarioIndex = findNextUnanswered(state.scenarioIndex + 1);
   saveNextScenarioForMode(state.activeMode, state.scenarioIndex);
   renderScenario();
+});
+
+els.resultNext?.addEventListener("click", () => {
+  document.getElementById("next-scenario").click();
 });
 
 document.getElementById("previous-scenario").addEventListener("click", () => {
@@ -2470,7 +2729,7 @@ document.querySelectorAll("#speed-control button").forEach((button) => {
 
 document.querySelectorAll(".nav-tab").forEach((button) => {
   button.addEventListener("click", () => {
-    showPage(button.dataset.pageTarget || "home");
+    navigateTo(button.dataset.viewTarget || button.dataset.pageTarget || "home");
     if (window.innerWidth <= 760) {
       document.body.classList.remove("sidebar-expanded");
       document.getElementById("side-toggle").setAttribute("aria-expanded", "false");
@@ -2479,8 +2738,19 @@ document.querySelectorAll(".nav-tab").forEach((button) => {
 });
 
 document.getElementById("brand-home").addEventListener("click", () => {
-  showPage("home");
+  navigateTo("home");
 });
+
+els.topbarBack?.addEventListener("click", () => {
+  navigateTo("home");
+});
+
+els.audioToggle?.addEventListener("click", () => {
+  state.audioMuted = !state.audioMuted;
+  updateAudioToggle();
+});
+
+els.submitAnswer?.addEventListener("click", submitPendingAnswer);
 
 document.getElementById("start-elite-playlist").addEventListener("click", startElitePlaylist);
 document.getElementById("apply-elite-filters").addEventListener("click", applyEliteFilters);
@@ -2493,7 +2763,7 @@ document.getElementById("side-toggle").addEventListener("click", () => {
 });
 
 document.getElementById("exit-game").addEventListener("click", () => {
-  showPage("modes");
+  navigateTo("home");
 });
 
 gate.signupForm.addEventListener("submit", (event) => {
@@ -2594,14 +2864,19 @@ document.addEventListener("mouseleave", (event) => {
 
 document.addEventListener("keydown", (event) => {
   if (["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement?.tagName)) return;
-  if (document.body.dataset.page !== "modes") return;
+  if (document.body.dataset.view !== "game") return;
   if (/^[1-5]$/.test(event.key) && !state.revealed) {
     const button = els.answers.querySelectorAll("button")[Number(event.key) - 1];
     if (button && !button.disabled) button.click();
   }
-  if (event.key === "Enter" && state.revealed) {
-    document.getElementById("next-scenario").click();
+  if (event.key === "Enter") {
+    if (state.revealed) document.getElementById("next-scenario").click();
+    else submitPendingAnswer();
   }
+});
+
+window.addEventListener("hashchange", () => {
+  navigateTo(window.location.hash.replace("#", "") || "home", { fromHash: true });
 });
 
 document.getElementById("invite-form").addEventListener("submit", async (event) => {
@@ -2678,6 +2953,7 @@ drawPreviewCharts();
 updateProgressUi();
 applyModeUi();
 renderScenario();
-showPage("home");
+updateAudioToggle();
+navigateTo(window.location.hash.replace("#", "") || "home", { fromHash: true, scroll: false });
 setInterval(updateMarketTape, 4000);
 setInterval(updateGameCards, 30000);
