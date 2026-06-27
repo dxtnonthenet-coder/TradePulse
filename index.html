@@ -58,7 +58,7 @@
       </div>
 
       <div class="side-progress-card" id="side-progress-card">
-        <span id="side-progress-rank">Rookie · Level 1</span>
+        <span id="side-progress-rank" title="">Rookie · Level 1</span>
         <strong id="side-progress-xp">0 / 500 XP</strong>
         <div><i id="side-progress-fill"></i></div>
         <small id="side-progress-next">Next rank: Scalper</small>
@@ -128,45 +128,27 @@
             </p>
           </div>
 
-          <div class="phone-row" aria-label="App preview screens">
-            <article class="phone">
-              <div class="phone-bar"><span>9:31</span><span>Replay</span><span>Hard</span></div>
-              <div class="phone-meta">NQ · Jun 14, 2024 · 9:45 AM</div>
-              <div class="mini-tabs"><span class="active">1m</span><span>5m</span><span>15m</span><span>1h</span></div>
-              <canvas class="mini-chart" width="320" height="220" data-preview="0"></canvas>
-              <div class="context-box">
-                <strong>Context</strong>
-                <p>CPI just released. Price swept highs and returned below VWAP.</p>
-              </div>
-              <div class="phone-answer">A Breakout continuation</div>
-              <div class="phone-answer">B Rejection back into range</div>
-              <div class="phone-answer">C Sweep highs then reverse</div>
-            </article>
-
-            <article class="phone center-phone">
-              <div class="phone-bar"><span>9:21</span><span>Result</span><span></span></div>
-              <div class="correct">Correct!</div>
-              <p class="prediction">You predicted: Sweep highs then reverse</p>
-              <canvas class="mini-chart" width="320" height="245" data-preview="1"></canvas>
-              <div class="reward-card">
-                <strong>+120 XP</strong>
-                <div><span>Correct bias</span><span>+50 XP</span></div>
-                <div><span>Correct timing</span><span>+40 XP</span></div>
-                <div><span>Perfect analysis</span><span>+30 XP</span></div>
-              </div>
-              <button class="phone-cta">Next Scenario</button>
-            </article>
-
-            <article class="phone">
-              <div class="phone-bar"><span>9:31</span><span>Trade Mode</span><span>Hard</span></div>
-              <div class="phone-meta">CL · May 28, 2024 · 11:15 AM</div>
-              <div class="mini-tabs"><span>1m</span><span class="active">5m</span><span>15m</span><span>1h</span></div>
-              <canvas class="mini-chart" width="320" height="220" data-preview="2"></canvas>
-              <label class="trade-input"><span>Entry</span><strong>78.25</strong></label>
-              <label class="trade-input"><span>Stop Loss</span><strong>77.95</strong></label>
-              <label class="trade-input"><span>Take Profit</span><strong>78.75</strong></label>
-              <button class="phone-cta">Start Replay</button>
-            </article>
+          <div class="lobby-feature-cards" aria-label="Featured training modes">
+            <button class="lobby-feature-card mode-start" data-mode="replay" type="button">
+              <span class="lobby-art replay-art">
+                <img src="assets/modes/replay-mode.jpg" alt="Replay Arena candlestick training preview">
+              </span>
+              <span class="lobby-card-copy">
+                <small>Most Played</small>
+                <strong>Replay Arena</strong>
+                <span><i></i> 1,284 training</span>
+              </span>
+            </button>
+            <button class="lobby-feature-card mode-start" data-mode="ranked" type="button">
+              <span class="lobby-art ranked-art">
+                <img src="assets/modes/ranked-battle.jpg" alt="Ranked Battle competitive training preview">
+              </span>
+              <span class="lobby-card-copy">
+                <small>Competitive</small>
+                <strong>Ranked Battle</strong>
+                <span><i></i> 632 competing</span>
+              </span>
+            </button>
           </div>
         </section>
 
@@ -208,15 +190,24 @@
       </header>
 
       <main>
+        <div class="free-plan-banner hidden" id="free-plan-banner">
+          <span id="free-plan-banner-copy">You're on the Free Plan — 3 plays remaining</span>
+          <button class="free-plan-upgrade nav-tab" data-page-target="plans" data-view-target="plans" type="button">Upgrade</button>
+        </div>
+
         <section class="game-mode-showcase page-section" data-page="home" data-view="home">
           <div class="game-mode-heading">
             <div>
               <p class="signal">Training Arena</p>
-              <h2>Choose your game mode</h2>
+              <h2>Trending training games</h2>
               <p>Every mode trains a different part of your market decision-making.</p>
             </div>
             <button class="show-all-modes nav-tab" data-page-target="home" data-view-target="home" type="button">Open Training Hub <span>↗</span></button>
           </div>
+          <label class="lobby-search" for="mode-search">
+            <i data-lucide="search"></i>
+            <input id="mode-search" type="search" placeholder="Search TradePulse modes" autocomplete="off" />
+          </label>
           <div class="game-mode-grid">
             <button class="game-mode-card replay-game mode-start" data-mode="replay" type="button">
               <span class="game-art">
@@ -293,6 +284,11 @@
               <span class="game-art"><img src="assets/modes/ranked-battle.jpg" alt="Advanced market consoles combining into one analysis" /><i class="art-scan"></i></span>
               <span class="game-copy"><small>Mastery</small><strong>Build the Thesis</strong><span>Score trend, location, momentum, liquidity, and action.</span></span>
               <span class="game-footer"><b><i></i> 372 building</b><em>Build Thesis ↗</em></span>
+            </button>
+            <button class="game-mode-card review-game mode-start coach-mode hidden" data-mode="review" type="button">
+              <span class="game-art"><img src="assets/modes/replay-mode.jpg" alt="Review queue replay library" /><i class="art-scan"></i></span>
+              <span class="game-copy"><small>Coach Review</small><strong>Review Queue</strong><span>Replay only scenarios you previously missed.</span></span>
+              <span class="game-footer"><b><i></i> <span id="review-queue-count">0</span> to review</b><em>Review Now ↗</em></span>
             </button>
           </div>
         </section>
@@ -377,6 +373,9 @@
                   <span id="scenario-meta">NQ · 09:45 ET · Hard</span>
                 </div>
                 <div class="scenario-side">
+                  <button class="bookmark-button" id="bookmark-scenario" type="button" aria-label="Bookmark scenario" title="Upgrade to Coach to bookmark scenarios">
+                    <i data-lucide="bookmark"></i>
+                  </button>
                   <div class="difficulty-badge" id="difficulty-badge">Hard · 29% accuracy</div>
                   <div class="timer" id="timer">15s</div>
                 </div>
@@ -623,7 +622,7 @@
             </article>
             <article class="featured-plan">
               <span>Coach</span>
-              <h3>$50/mo</h3>
+              <h3>$29.99/mo</h3>
               <ul>
                 <li>Everything in Player</li>
                 <li>Deeper educational reasoning after replays</li>
@@ -637,7 +636,7 @@
             </article>
             <article class="elite-plan-card">
               <span>Elite</span>
-              <h3>$100/mo</h3>
+              <h3>$49.99/mo</h3>
               <ul>
                 <li>Everything in Coach</li>
                 <li>Personalized weakness detection</li>
@@ -671,7 +670,7 @@
 
         <section class="elite-section page-section" id="elite" data-page="elite" data-view="elite">
           <div class="elite-hero">
-            <p class="signal">Elite Plan · $100/month</p>
+            <p class="signal">Elite Plan · $49.99/month</p>
             <h2>Your personal replay training system.</h2>
             <p>Elite does more than unlock games. It studies your performance, finds your weak spots, and builds a targeted practice path so every session has a purpose.</p>
             <button class="primary-button plan-button" data-plan="Elite">Choose Elite</button>
@@ -906,7 +905,7 @@
               <p>The Player plan unlocks unlimited access to the games, XP progression, streaks, leaderboards, achievements, and the full scenario pool.</p>
             </article>
             <article>
-              <h3>What does the $50 Coach plan add?</h3>
+              <h3>What does the $29.99 Coach plan add?</h3>
               <p>The Coach plan adds deeper educational reasoning, mistake review, and practice tips after each replay so users understand the pattern more clearly.</p>
             </article>
             <article>
@@ -921,7 +920,7 @@
             <div class="profile-avatar" id="profile-avatar">TP</div>
             <div>
               <p class="signal">Training Profile</p>
-              <h2 id="profile-name">Guest Trader</h2>
+              <h2><span id="profile-name">Guest Trader</span> <b class="plan-tier-badge plan-free" id="profile-plan-badge">Free</b></h2>
               <p id="profile-email">Create a profile to save your training data.</p>
             </div>
             <div class="profile-access">
@@ -1001,6 +1000,13 @@
               <div class="panel-title">Subscription</div>
               <h3 id="profile-subscription">Free</h3>
               <p id="profile-subscription-copy">Create a profile or start a trial to unlock more training.</p>
+              <label class="digest-toggle" id="digest-toggle-wrap" title="Coach Plan only">
+                <span>
+                  <strong>Weekly Digest</strong>
+                  <small>Email me a weekly training performance recap.</small>
+                </span>
+                <input id="weekly-digest-toggle" type="checkbox" />
+              </label>
               <button class="ghost-button hidden" id="manage-billing" type="button">Manage Or Cancel Subscription</button>
               <small class="profile-billing-note hidden" id="profile-billing-note">Cancellation, card changes, and invoices are handled securely through Stripe.</small>
               <button class="primary-button nav-tab" data-page-target="plans" type="button"><span>View Plans</span></button>
@@ -1036,6 +1042,41 @@
           <a href="/disclaimer.html">Education Disclaimer</a>
         </footer>
       </main>
+    </div>
+
+    <div class="learning-modal hidden" id="learning-modal" aria-hidden="true">
+      <div class="learning-backdrop"></div>
+      <section class="learning-card" role="dialog" aria-modal="true" aria-labelledby="learning-title">
+        <button class="learning-close" id="learning-close" type="button" aria-label="Close learning moment and continue">×</button>
+        <div class="learning-rail">
+          <span id="learning-step">01 / 06</span>
+          <strong>Learning Moment</strong>
+        </div>
+        <div class="learning-visual" id="learning-visual" aria-hidden="true">
+          <div class="learning-chart">
+            <span class="learn-zone upper"></span>
+            <span class="learn-zone lower"></span>
+            <span class="learn-vwap"></span>
+            <i class="learn-candle c1"></i>
+            <i class="learn-candle c2"></i>
+            <i class="learn-candle c3"></i>
+            <i class="learn-candle c4"></i>
+            <i class="learn-candle c5"></i>
+            <b class="learn-ping"></b>
+          </div>
+        </div>
+        <article class="learning-slide" id="learning-slide">
+          <p class="signal">What happened</p>
+          <h3 id="learning-title">Study the reveal</h3>
+          <p id="learning-body"></p>
+          <div class="learning-extra" id="learning-extra"></div>
+        </article>
+        <div class="learning-controls">
+          <button class="ghost-button" id="learning-prev" type="button">Back</button>
+          <div class="learning-dots" id="learning-dots"></div>
+          <button class="primary-button" id="learning-next" type="button">Next</button>
+        </div>
+      </section>
     </div>
 
     <div class="modal hidden" id="signup-modal">
@@ -1085,13 +1126,13 @@
           </article>
           <article class="featured-plan">
             <h3>Coach</h3>
-            <strong>$50/mo</strong>
+            <strong>$29.99/mo</strong>
             <p>Everything in Player plus deeper educational reasoning, mistake review, and practice tips.</p>
             <button class="primary-button plan-button" data-plan="Coach">Choose Coach</button>
           </article>
           <article class="elite-paywall-plan">
             <h3>Elite</h3>
-            <strong>$100/mo</strong>
+            <strong>$49.99/mo</strong>
             <p>Personalized weakness detection, custom drills, advanced analytics, mistake journal, and weekly progress planning.</p>
             <button class="primary-button plan-button" data-plan="Elite">Choose Elite</button>
           </article>
@@ -1111,6 +1152,27 @@
     </div>
 
     <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+
+    <div class="assistant-widget" id="assistant-widget">
+      <button class="assistant-fab" id="assistant-fab" type="button" aria-label="Open TradePulse Assistant">
+        <span class="assistant-dot" id="assistant-notification"></span>
+        <i data-lucide="message-circle"></i>
+      </button>
+      <section class="assistant-panel hidden" id="assistant-panel" aria-label="TradePulse Assistant">
+        <header>
+          <div>
+            <strong>TradePulse Assistant</strong>
+            <span><i></i> Online</span>
+          </div>
+          <button id="assistant-close" type="button" aria-label="Close assistant">×</button>
+        </header>
+        <div class="assistant-messages" id="assistant-messages"></div>
+        <form class="assistant-form" id="assistant-form">
+          <input id="assistant-input" placeholder="Ask about plans, XP, or games..." autocomplete="off" />
+          <button type="submit">Send</button>
+        </form>
+      </section>
+    </div>
 
     <script src="app.js"></script>
   </body>

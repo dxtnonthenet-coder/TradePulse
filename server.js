@@ -214,6 +214,35 @@ function saveSubscription(record) {
   return saved;
 }
 
+async function handleAssistantChat(payload) {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) throw new Error("Anthropic API key missing.");
+  const messages = Array.isArray(payload.messages) ? payload.messages : [];
+  const safeMessages = messages
+    .filter((message) => ["user", "assistant"].includes(message.role) && typeof message.content === "string")
+    .slice(-12)
+    .map((message) => ({ role: message.role, content: message.content.slice(0, 1200) }));
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": key,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 420,
+      system: "You are the TradePulse Assistant. TradePulse is a futures trading education replay game with Free, Player, Coach, and Elite plans; game modes include Replay Mode, Daily Challenge, Ranked Battle, Trade Mode, Spot the Setup, Candle Survival, No-Trade Challenge, Chart Detective, Build the Thesis, and Review Queue. Explain XP, streaks, leaderboards, bookmarks, plans, and training features clearly and concisely. Do not provide financial advice, trade alerts, broker execution guidance, or personalized investment recommendations. If asked unrelated questions, politely redirect to TradePulse or trading education practice.",
+      messages: safeMessages.length ? safeMessages : [{ role: "user", content: "Hello" }]
+    })
+  });
+
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error?.message || "Anthropic request failed.");
+  return data.content?.map((part) => part.text || "").join("").trim() || "I can help with TradePulse plans, games, XP, streaks, and training features.";
+}
+
 async function sendSubscriptionToSupabase(saved) {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -459,6 +488,42 @@ const server = http.createServer((req, res) => {
     const email = parsedUrl.searchParams.get("email");
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(publicSubscription(subscriptionForEmail(email))));
+    return;
+  }
+
+  if (req.method === "POST" && parsedUrl.pathname === "/api/digest-signup") {
+    readBody(req)
+      .then((body) => {
+        const data = JSON.parse(body || "{}");
+        const saved = saveSignup({
+          type: "weekly_digest",
+          name: data.name || "",
+          email: data.email || "",
+          plan: "Coach",
+          source: "TradePulse profile",
+          details: { enabled: Boolean(data.enabled) }
+        });
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, saved }));
+      })
+      .catch((error) => {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      });
+    return;
+  }
+
+  if (req.method === "POST" && parsedUrl.pathname === "/api/chat") {
+    readBody(req)
+      .then((body) => handleAssistantChat(JSON.parse(body || "{}")))
+      .then((message) => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, message }));
+      })
+      .catch((error) => {
+        res.writeHead(503, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      });
     return;
   }
 

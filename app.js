@@ -400,9 +400,9 @@ function applyMissedDayFreeze() {
   if (!p.lastLoginAt || !p.streak) return;
   const daysAway = Math.floor((Date.now() - Number(p.lastLoginAt)) / 86400000);
   if (daysAway <= 1) return;
-  if (Number(p.streakFreezes || 0) > 0) {
+  if (hasAccess("streakFreeze") && Number(p.streakFreezes || 0) > 0) {
     p.streakFreezes = Number(p.streakFreezes || 0) - 1;
-    showToast("Streak freeze used. Your streak survived the missed day.", "success");
+    showToast("Streak Freeze used — streak protected.", "success");
   } else {
     p.streak = 0;
   }
@@ -482,6 +482,9 @@ const state = {
   timerRaf: null,
   timerWarningPlayed: false,
   audioMuted: true,
+  learningSlides: [],
+  learningSlideIndex: 0,
+  subscriptionPlanStatus: "unknown",
   progress: JSON.parse(localStorage.getItem("tradePulseProgress") || "{}")
 };
 
@@ -543,6 +546,30 @@ els.audioToggle = document.getElementById("audio-toggle");
 els.topbarBack = document.getElementById("topbar-back");
 els.resultNext = document.getElementById("result-next");
 els.leaderboardFull = document.getElementById("leaderboard-full");
+els.learningModal = document.getElementById("learning-modal");
+els.learningStep = document.getElementById("learning-step");
+els.learningVisual = document.getElementById("learning-visual");
+els.learningTitle = document.getElementById("learning-title");
+els.learningBody = document.getElementById("learning-body");
+els.learningExtra = document.getElementById("learning-extra");
+els.learningDots = document.getElementById("learning-dots");
+els.learningPrev = document.getElementById("learning-prev");
+els.learningNext = document.getElementById("learning-next");
+els.learningClose = document.getElementById("learning-close");
+els.freePlanBanner = document.getElementById("free-plan-banner");
+els.freePlanBannerCopy = document.getElementById("free-plan-banner-copy");
+els.modeSearch = document.getElementById("mode-search");
+els.bookmarkScenario = document.getElementById("bookmark-scenario");
+els.profilePlanBadge = document.getElementById("profile-plan-badge");
+els.weeklyDigestToggle = document.getElementById("weekly-digest-toggle");
+els.digestToggleWrap = document.getElementById("digest-toggle-wrap");
+els.assistantFab = document.getElementById("assistant-fab");
+els.assistantPanel = document.getElementById("assistant-panel");
+els.assistantClose = document.getElementById("assistant-close");
+els.assistantMessages = document.getElementById("assistant-messages");
+els.assistantForm = document.getElementById("assistant-form");
+els.assistantInput = document.getElementById("assistant-input");
+els.assistantNotification = document.getElementById("assistant-notification");
 
 const gate = {
   signupModal: document.getElementById("signup-modal"),
@@ -629,6 +656,9 @@ function defaultProgress() {
     plan: null,
     streakFreezes: 0,
     freezeAwardedAtFive: false,
+    bookmarks: [],
+    digestEnabled: false,
+    traderArchetype: null,
     sessionAttemptStart: 0,
     lastSessionSummary: null
   };
@@ -932,9 +962,85 @@ function rankFromXp(xp) {
   return "Rookie";
 }
 
+function normalizePlan(plan) {
+  return String(plan || "free").toLowerCase();
+}
+
+function planDisplayName(plan = getUserPlan()) {
+  return {
+    free: "Free",
+    player: "Player",
+    coach: "Coach",
+    elite: "Elite"
+  }[normalizePlan(plan)] || "Free";
+}
+
+function getUserPlan() {
+  const p = progress();
+  const remote = p.subscriptionStatus;
+  if (remote?.active && remote.plan) return normalizePlan(remote.plan);
+  if (p.plan) return normalizePlan(p.plan);
+  if (isTrialActive()) return "player";
+  return "free";
+}
+
+function hasAccess(feature) {
+  const level = { free: 0, player: 1, coach: 2, elite: 3 }[getUserPlan()] || 0;
+  const required = {
+    paid: 1,
+    unlimited: 1,
+    coachReview: 2,
+    reviewQueue: 2,
+    weeklyDigest: 2,
+    bookmarks: 2,
+    thesis: 2,
+    eliteDashboard: 3,
+    streakFreeze: 3,
+    priorityScenarios: 3,
+    survival: 3,
+    elitePlaylist: 3,
+    eliteFilters: 3
+  }[feature] ?? 0;
+  return level >= required;
+}
+
+function requiredPlanForFeature(feature) {
+  return {
+    paid: "Player",
+    unlimited: "Player",
+    coachReview: "Coach",
+    reviewQueue: "Coach",
+    weeklyDigest: "Coach",
+    bookmarks: "Coach",
+    thesis: "Coach",
+    eliteDashboard: "Elite",
+    streakFreeze: "Elite",
+    priorityScenarios: "Elite",
+    survival: "Elite",
+    elitePlaylist: "Elite",
+    eliteFilters: "Elite"
+  }[feature] || "Player";
+}
+
+function openUpgradeModal(feature) {
+  const required = requiredPlanForFeature(feature);
+  const bullets = {
+    Player: ["Unlimited replay access", "Daily, Ranked, and Trade Mode", "XP, streaks, levels, and leaderboards"],
+    Coach: ["Review Queue for missed scenarios", "Deeper educational mistake review", "Weekly digest and scenario bookmarks"],
+    Elite: ["Elite analytics dashboard", "Streak Freeze Bank", "Priority scenario unlocks and gold leaderboard identity"]
+  }[required];
+  renderPaywallProgress();
+  const title = gate.paywallModal.querySelector("h2");
+  const subtitle = gate.paywallModal.querySelector(".muted");
+  const signal = gate.paywallModal.querySelector(".signal");
+  if (signal) signal.textContent = `${required} Plan Required`;
+  if (title) title.textContent = `Upgrade to ${required}`;
+  if (subtitle) subtitle.innerHTML = `<span class="upgrade-list">${bullets.map((item) => `<b>• ${item}</b>`).join("")}</span>`;
+  gate.paywallModal.classList.remove("hidden");
+}
+
 function hasCoachPlan() {
-  const plan = progress().plan;
-  return plan === "Coach" || plan === "Elite";
+  return hasAccess("coachReview");
 }
 
 function difficultyWinRate(scenario) {
@@ -969,6 +1075,7 @@ function accuracy() {
 
 function updateProgressUi() {
   const p = progress();
+  const plan = getUserPlan();
   const level = Math.max(1, Math.floor(p.xp / 500) + 1);
   const currentLevelXp = p.xp % 500;
 
@@ -987,11 +1094,21 @@ function updateProgressUi() {
   updateMarketTape();
   renderSidebarProgress();
   renderPaywallProgress();
+  updateFreePlanBanner();
+  updatePlanSurfaces();
   updateGameCards();
 }
 
 function renderSidebarProgress() {
   const p = progress();
+  if (getUserPlan() === "free") {
+    document.getElementById("side-progress-rank").textContent = "Free Plan";
+    document.getElementById("side-progress-rank").title = "Subscribe to earn XP";
+    document.getElementById("side-progress-xp").textContent = "XP locked";
+    document.getElementById("side-progress-fill").style.width = "0%";
+    document.getElementById("side-progress-next").textContent = "Subscribe to earn XP";
+    return;
+  }
   const level = Math.max(1, Math.floor(p.xp / 500) + 1);
   const currentLevelXp = p.xp % 500;
   const next = nextRankFromXp(p.xp);
@@ -1001,11 +1118,63 @@ function renderSidebarProgress() {
   document.getElementById("side-progress-next").textContent = next.xp <= p.xp ? "Top rank reached" : `Next rank: ${next.name}`;
 }
 
+function updateFreePlanBanner() {
+  if (!els.freePlanBanner) return;
+  const isFree = getUserPlan() === "free";
+  els.freePlanBanner.classList.toggle("hidden", !isFree);
+  if (!isFree) return;
+  const left = freePlaysLeft();
+  els.freePlanBanner.classList.toggle("used-up", left <= 0);
+  els.freePlanBannerCopy.textContent = left > 0
+    ? `You're on the Free Plan — ${left} play${left === 1 ? "" : "s"} remaining`
+    : "You've used all your free plays";
+  if (left <= 0 && !sessionStorage.getItem("tradePulseFreePlanPaywallShown")) {
+    sessionStorage.setItem("tradePulseFreePlanPaywallShown", "1");
+    setTimeout(() => openUpgradeModal("paid"), 250);
+  }
+}
+
+function updatePlanSurfaces() {
+  const plan = getUserPlan();
+  document.body.dataset.plan = plan;
+  document.querySelectorAll(".coach-mode").forEach((item) => item.classList.toggle("hidden", !hasAccess("reviewQueue")));
+  document.querySelectorAll(".plan-tier-badge").forEach((badge) => {
+    badge.className = `plan-tier-badge plan-${plan}`;
+    badge.textContent = planDisplayName(plan);
+  });
+  const reviewCount = progress().attempts.filter((attempt) => !attempt.correct).length;
+  document.getElementById("review-queue-count") && (document.getElementById("review-queue-count").textContent = reviewCount);
+  if (els.weeklyDigestToggle && els.digestToggleWrap) {
+    const allowed = hasAccess("weeklyDigest");
+    els.weeklyDigestToggle.disabled = !allowed;
+    els.weeklyDigestToggle.checked = Boolean(progress().digestEnabled);
+    els.digestToggleWrap.classList.toggle("locked", !allowed);
+    els.digestToggleWrap.title = allowed ? "Weekly digest enabled for Coach and Elite plans" : "Coach Plan only";
+  }
+  let freezeBank = document.getElementById("topbar-freeze-bank");
+  if (!freezeBank) {
+    freezeBank = document.createElement("div");
+    freezeBank.id = "topbar-freeze-bank";
+    freezeBank.className = "topbar-freeze-bank";
+    document.querySelector(".topbar-actions")?.prepend(freezeBank);
+  }
+  const freezes = Number(progress().streakFreezes || 0);
+  freezeBank.title = hasAccess("streakFreeze") ? `${freezes} Elite streak freeze${freezes === 1 ? "" : "s"} banked` : "Elite only";
+  freezeBank.classList.toggle("locked", !hasAccess("streakFreeze"));
+  freezeBank.innerHTML = [0, 1, 2].map((index) => `<span class="${hasAccess("streakFreeze") && index < freezes ? "active" : ""}">◆</span>`).join("");
+}
+
 function renderPaywallProgress() {
   if (!els.paywallProgress) return;
   const p = progress();
   const rank = rankFromXp(p.xp);
   const attempts = p.attempts.length;
+  const signal = gate.paywallModal?.querySelector(".signal");
+  const title = gate.paywallModal?.querySelector("h2");
+  const subtitle = gate.paywallModal?.querySelector(".muted");
+  if (signal) signal.textContent = getUserPlan() === "free" ? "Free Plan" : "Upgrade";
+  if (title) title.textContent = freePlaysLeft() <= 0 && getUserPlan() === "free" ? "You've used all your free plays" : "Choose your plan";
+  if (subtitle) subtitle.textContent = "Choose a plan to continue training. Billing is securely handled through Stripe.";
   els.paywallProgress.textContent = attempts
     ? `You've earned ${p.xp.toLocaleString()} XP and reached ${rank} rank. Keep your progress moving.`
     : "Start your first replay now and keep every XP point, rank, and streak you earn.";
@@ -1016,25 +1185,23 @@ function hasSignup() {
 }
 
 function hasPaidPlan() {
-  const plan = progress().plan;
-  return plan === "Player" || plan === "Coach" || plan === "Elite" || isTrialActive();
+  return hasAccess("paid");
 }
 
 function hasElitePlan() {
-  return progress().plan === "Elite";
+  return hasAccess("eliteDashboard");
 }
 
 function planLevel(plan) {
-  return { Free: 0, Player: 1, Coach: 2, Elite: 3 }[plan || "Free"] || 0;
+  return { free: 0, player: 1, coach: 2, elite: 3 }[normalizePlan(plan)] || 0;
 }
 
 function effectivePlan() {
-  if (progress().plan) return progress().plan;
-  if (isTrialActive()) return "Player";
-  return "Free";
+  return planDisplayName(getUserPlan());
 }
 
 function modeRequirement(mode) {
+  if (mode === "review") return "Coach";
   if (mode === "thesis") return "Coach";
   if (mode === "survival") return "Elite";
   return null;
@@ -1043,7 +1210,7 @@ function modeRequirement(mode) {
 function canUseMode(mode) {
   const required = modeRequirement(mode);
   if (!required) return true;
-  return planLevel(effectivePlan()) >= planLevel(required);
+  return planLevel(getUserPlan()) >= planLevel(required);
 }
 
 function isTrialActive() {
@@ -1053,7 +1220,7 @@ function isTrialActive() {
 
 function activeAccessLabel() {
   if (isTrialActive()) return "3-Day Trial";
-  return progress().plan || null;
+  return planDisplayName(getUserPlan());
 }
 
 function freePlaysLeft() {
@@ -1088,15 +1255,17 @@ function startMode(mode) {
   }
 
   if (!canUseMode(mode)) {
-    const required = modeRequirement(mode);
-    showToast(`${required} unlocks ${modeLabel(mode)}. Choose a plan to continue.`, "warning");
-    openPaywall();
+    openUpgradeModal(mode === "survival" ? "survival" : mode === "review" ? "reviewQueue" : "thesis");
     return;
   }
 
   state.activeMode = mode;
   resetModeState();
-  state.scenarioIndex = mode === "daily" ? dailyScenarioIndex() : nextScenarioForMode(mode);
+  state.scenarioIndex = mode === "daily"
+    ? dailyScenarioIndex()
+    : mode === "review"
+      ? reviewQueueScenarioIndex()
+      : nextScenarioForMode(mode);
   navigateTo("game");
   applyModeUi();
   renderScenario();
@@ -1112,8 +1281,19 @@ function modeLabel(mode) {
     survival: "Candle Survival",
     notrade: "No-Trade Challenge",
     detective: "Chart Detective",
-    thesis: "Build the Thesis"
+    thesis: "Build the Thesis",
+    review: "Review Queue"
   }[mode] || "this mode";
+}
+
+function reviewQueueScenarioIndex() {
+  const missed = progress().attempts.filter((attempt) => !attempt.correct);
+  if (!missed.length) return nextScenarioForMode("replay");
+  const target = missed[missed.length - 1].scenarioId;
+  for (let index = 0; index < Math.min(TOTAL_SCENARIO_COUNT, 50000); index += 1) {
+    if (getScenario(index).id === target) return index;
+  }
+  return nextScenarioForMode("replay");
 }
 
 function dayOfYear() {
@@ -1147,7 +1327,8 @@ function modeLiveCount(mode) {
     survival: 930,
     notrade: 410,
     detective: 580,
-    thesis: 370
+    thesis: 370,
+    review: 240
   }[mode] || 320;
   return base + (seed % 44);
 }
@@ -1156,21 +1337,39 @@ function updateGameCards() {
   document.querySelectorAll(".game-mode-card").forEach((card) => {
     const mode = card.dataset.mode || "replay";
     const required = modeRequirement(mode);
-    const locked = Boolean(required && !canUseMode(mode));
+    const freeUsed = getUserPlan() === "free" && freePlaysLeft() <= 0;
+    const earlyAccess = false;
+    const locked = freeUsed || earlyAccess || Boolean(required && !canUseMode(mode));
     card.classList.toggle("locked-mode", locked);
+    card.classList.toggle("free-locked", freeUsed);
+    card.classList.toggle("early-access-locked", earlyAccess && !freeUsed);
+    card.classList.toggle("elite-early-access", mode === "daily" && hasAccess("priorityScenarios"));
     card.setAttribute("aria-disabled", locked ? "true" : "false");
     const footer = card.querySelector(".game-footer b");
     const action = card.querySelector(".game-footer em");
     if (footer) {
-      if (locked) {
+      if (freeUsed) {
+        footer.innerHTML = `<i></i> Free plays used`;
+      } else if (earlyAccess) {
+        footer.innerHTML = `<i></i> Available in 1d 23h`;
+      } else if (mode === "daily" && hasAccess("priorityScenarios")) {
+        footer.innerHTML = `<i></i> EARLY ACCESS`;
+      } else if (locked) {
         footer.innerHTML = `<i></i> ${required} plan required`;
       } else if (mode === "daily") {
         footer.innerHTML = `<i></i> ${dailyCountdownText()}`;
+      } else if (mode === "review") {
+        const count = progress().attempts.filter((attempt) => !attempt.correct).length;
+        footer.innerHTML = `<i></i> ${count} to review`;
       } else {
         footer.innerHTML = `<i></i> ${modeLiveCount(mode).toLocaleString()} playing`;
       }
     }
-    if (action) action.textContent = locked ? `Unlock ${required} ↗` : action.textContent.replace(/^Unlock .+ ↗$/, "Play Now ↗");
+    if (action) {
+      if (freeUsed) action.textContent = "Upgrade ↗";
+      else if (earlyAccess) action.textContent = "Elite only ↗";
+      else action.textContent = locked ? `Unlock ${required} ↗` : action.textContent.replace(/^Unlock .+ ↗$/, "Play Now ↗");
+    }
   });
 }
 
@@ -1203,7 +1402,8 @@ function applyModeUi() {
     survival: ["Candle Survival", "Make a new decision as each group of candles develops."],
     notrade: ["No-Trade Challenge", "Decide whether the setup deserves action or should be skipped."],
     detective: ["Chart Detective", "Find the strongest clue that explains what happens next."],
-    thesis: ["Build the Thesis", "Assemble a complete market read instead of guessing one answer."]
+    thesis: ["Build the Thesis", "Assemble a complete market read instead of guessing one answer."],
+    review: ["Review Queue", "Replay only the scenarios you missed so mistakes turn into reps."]
   };
   const active = copy[state.activeMode] || copy.replay;
   gate.activeModeLabel.textContent = active[0];
@@ -1212,7 +1412,7 @@ function applyModeUi() {
   gate.tradeForm.classList.toggle("hidden", state.activeMode !== "trade");
   gate.thesisBuilder.classList.toggle("hidden", state.activeMode !== "thesis");
   gate.survivalStatus.classList.toggle("hidden", state.activeMode !== "survival");
-  gate.confidencePicker.classList.toggle("hidden", !["replay", "daily", "ranked", "notrade", "detective"].includes(state.activeMode));
+  gate.confidencePicker.classList.toggle("hidden", !["replay", "daily", "ranked", "notrade", "detective", "review"].includes(state.activeMode));
   gate.chartHotspots.classList.toggle("hidden", state.activeMode !== "spot" || state.revealed);
 
   const instructions = {
@@ -1224,7 +1424,8 @@ function applyModeUi() {
     survival: "The chart advances after every choice. Adapt as new candles appear.",
     notrade: "The best trade may be no trade. Protect discipline over activity.",
     detective: "Identify the clue that most strongly supports the replay outcome.",
-    thesis: "Complete all five parts of the thesis. Each component is scored separately."
+    thesis: "Complete all five parts of the thesis. Each component is scored separately.",
+    review: "This queue focuses on missed scenarios. Slow down and find the clue you skipped last time."
   };
   gate.modeInstruction.textContent = instructions[state.activeMode] || instructions.replay;
 }
@@ -1474,6 +1675,13 @@ function renderScenario() {
   if (state.activeMode === "detective") els.question.textContent = "Which clue matters most?";
   if (state.activeMode === "thesis") els.question.textContent = "Build the complete market thesis.";
   els.status.textContent = state.revealed ? "Future candles revealed" : "Future candles hidden";
+  if (els.bookmarkScenario) {
+    const saved = progress().bookmarks.includes(scenario.id);
+    els.bookmarkScenario.classList.toggle("saved", saved);
+    els.bookmarkScenario.title = hasAccess("bookmarks")
+      ? (saved ? "Remove bookmark" : "Bookmark scenario")
+      : "Upgrade to Coach to bookmark scenarios";
+  }
 
   applyModeUi();
   updateDifficultyMessage(scenario);
@@ -1514,7 +1722,8 @@ function modeName(mode = state.activeMode) {
     survival: "Candle Survival",
     notrade: "No-Trade Challenge",
     detective: "Chart Detective",
-    thesis: "Build the Thesis"
+    thesis: "Build the Thesis",
+    review: "Review Queue"
   };
   return names[mode] || "Replay Mode";
 }
@@ -1770,37 +1979,37 @@ function finishAttempt({ answer, correct, earned, correctAnswer, metadata = {} }
   const scenario = getScenario(state.scenarioIndex);
   const p = progress();
   const paid = hasPaidPlan();
+  const xpAwarded = getUserPlan() === "free" ? 0 : earned;
   playAnswerSound(correct);
   stopReplay();
   state.selected = answer;
   state.revealed = true;
-  p.xp += earned;
+  p.xp += xpAwarded;
   if (!paid) p.freePlaysUsed = Number(p.freePlaysUsed || 0) + 1;
   p.streak = correct ? p.streak + 1 : 0;
   p.topStreak = Math.max(p.topStreak, p.streak);
-  if (p.streak >= 5 && !p.freezeAwardedAtFive) {
+  if (hasAccess("streakFreeze") && p.streak > 0 && p.streak % 7 === 0 && Number(p.streakFreezes || 0) < 3) {
     p.streakFreezes = Number(p.streakFreezes || 0) + 1;
-    p.freezeAwardedAtFive = true;
-    showToast("Streak freeze banked. It can protect your streak once.", "success");
+    showToast("Streak Freeze banked — Elite streak protection ready.", "success");
   }
   const attempt = {
     scenarioId: scenario.id,
     answer,
     correct,
-    earned,
+    earned: xpAwarded,
     pattern: scenario.pattern,
     mode: state.activeMode,
     confidence: state.confidence,
     ...metadata
   };
   p.attempts.push(attempt);
-  p.completed[completionKey(scenario.id)] = { selected: answer, correct, earned, correctAnswer, confidence: state.confidence, ...metadata };
+  p.completed[completionKey(scenario.id)] = { selected: answer, correct, earned: xpAwarded, correctAnswer, confidence: state.confidence, ...metadata };
   p.nextByMode ||= {};
   p.nextByMode[state.activeMode] = findNextUnanswered(state.scenarioIndex + 1);
   saveProgress();
   updateProgressUi();
   renderStreakDots();
-  animateXpGain(earned, correct);
+  animateXpGain(xpAwarded, correct);
   if (metadata.comboMultiplier > 1) flashCombo(metadata.comboMultiplier);
   els.status.textContent = "Replay ready";
   renderAnswers();
@@ -2008,6 +2217,132 @@ function renderAnswerDistribution(scenario, completed) {
   });
 }
 
+function learningDistributionMarkup(scenario, completed) {
+  return optionDistribution(scenario, completed).map((item) => `
+    <div class="learning-dist-row ${item.correct ? "correct" : ""} ${item.selected ? "selected" : ""}">
+      <strong><span>${item.label}</span><b>${item.percent}%</b></strong>
+      <i><em style="width:${item.percent}%"></em></i>
+    </div>
+  `).join("");
+}
+
+function learningOptionReviewMarkup(scenario, completed) {
+  return resultOptionsForScenario(scenario, completed).map((option) => {
+    const verdict = option.correct ? "Worked" : option.selected ? "Your choice" : "Failed";
+    return `
+      <div class="learning-option ${option.correct ? "correct" : ""} ${option.selected ? "selected" : ""}">
+        <span>${option.correct ? "✓" : "×"}</span>
+        <div><strong>${option.label}<small>${verdict}</small></strong><p>${option.reason}</p></div>
+      </div>
+    `;
+  }).join("");
+}
+
+function buildLearningSlides(scenario, completed) {
+  const distribution = optionDistribution(scenario, completed);
+  const correctPercent = distribution.find((item) => item.correct)?.percent || difficultyWinRate(scenario);
+  const selected = resultOptionsForScenario(scenario, completed).find((option) => option.selected);
+  const selectedLabel = selected?.label || "your answer";
+  const coachTitle = hasCoachPlan() ? "Coach review" : "Coach review locked";
+  const coachBody = coachReviewText(scenario, false);
+  return [
+    {
+      kicker: "What happened",
+      title: "The reveal trapped the first read",
+      body: candleSequenceForScenario(scenario),
+      visual: "sequence"
+    },
+    {
+      kicker: "Why the correct read worked",
+      title: scenario.correctAnswer || "The higher-quality decision",
+      body: evidenceForScenario(scenario),
+      visual: "evidence"
+    },
+    {
+      kicker: "What clue did you miss?",
+      title: `The weak spot in "${selectedLabel}"`,
+      body: `${clueForScenario(scenario)} The lesson is to wait for location plus confirmation, not just a candle that looks convincing by itself.`,
+      visual: "clue"
+    },
+    {
+      kicker: "Why each alternative failed",
+      title: "Every choice had a reason",
+      body: "Review the answer map below. Green is the decision that matched the reveal. Red marks the answer you chose.",
+      visual: "options",
+      extra: learningOptionReviewMarkup(scenario, completed)
+    },
+    {
+      kicker: "Risk reasoning",
+      title: "What would invalidate this setup?",
+      body: invalidationForScenario(scenario),
+      visual: "risk"
+    },
+    {
+      kicker: "Crowd read",
+      title: `Only ${correctPercent}% usually get this right`,
+      body: `You picked a tempting answer. Use this distribution to see where most traders get pulled off the best read.`,
+      visual: "distribution",
+      extra: learningDistributionMarkup(scenario, completed)
+    },
+    {
+      kicker: coachTitle,
+      title: hasCoachPlan() ? "Run the next drill with a focus" : "Unlock deeper mistake review",
+      body: coachBody,
+      visual: hasCoachPlan() ? "coach" : "locked"
+    },
+    {
+      kicker: "Streak reminder",
+      title: "Come back for the next rep",
+      body: streakReminderText(),
+      visual: "streak"
+    }
+  ];
+}
+
+function renderLearningSlide() {
+  if (!els.learningModal || !state.learningSlides.length) return;
+  const index = Math.max(0, Math.min(state.learningSlideIndex, state.learningSlides.length - 1));
+  state.learningSlideIndex = index;
+  const slide = state.learningSlides[index];
+  els.learningStep.textContent = `${String(index + 1).padStart(2, "0")} / ${String(state.learningSlides.length).padStart(2, "0")}`;
+  els.learningTitle.textContent = slide.title;
+  els.learningTitle.previousElementSibling.textContent = slide.kicker;
+  els.learningBody.textContent = slide.body;
+  els.learningExtra.innerHTML = slide.extra || "";
+  els.learningVisual.dataset.visual = slide.visual;
+  els.learningPrev.disabled = index === 0;
+  els.learningNext.textContent = index === state.learningSlides.length - 1 ? "Continue →" : "Next";
+  els.learningDots.innerHTML = state.learningSlides.map((_, dotIndex) => (
+    `<button class="${dotIndex === index ? "active" : ""}" type="button" aria-label="Go to learning slide ${dotIndex + 1}"></button>`
+  )).join("");
+  els.learningDots.querySelectorAll("button").forEach((button, dotIndex) => {
+    button.addEventListener("click", () => {
+      state.learningSlideIndex = dotIndex;
+      renderLearningSlide();
+    });
+  });
+}
+
+function closeLearningMoment(advance = true) {
+  if (!els.learningModal || els.learningModal.classList.contains("hidden")) return;
+  els.learningModal.classList.add("hidden");
+  els.learningModal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("learning-open");
+  state.learningSlides = [];
+  state.learningSlideIndex = 0;
+  if (advance) document.getElementById("next-scenario").click();
+}
+
+function openLearningMoment(scenario, completed) {
+  if (!els.learningModal) return;
+  state.learningSlides = buildLearningSlides(scenario, completed);
+  state.learningSlideIndex = 0;
+  renderLearningSlide();
+  els.learningModal.classList.remove("hidden");
+  els.learningModal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("learning-open");
+}
+
 function coachReviewText(scenario, correct) {
   const clue = clueForScenario(scenario);
   if (!hasCoachPlan()) {
@@ -2111,11 +2446,11 @@ function showResult(correct, earned, completed = {}) {
   els.resultPanel.classList.remove("hidden");
   els.grade.textContent = correct ? "S" : "C";
   els.resultTitle.textContent = correct ? "Correct read" : "Study the reveal";
-  els.explanation.textContent = paid && (progress().plan === "Coach" || progress().plan === "Elite")
+  els.explanation.textContent = hasAccess("coachReview")
     ? `${scenario.explanation} Coach tip: review location, momentum, and whether price accepted or failed around the key level. Educational practice only, not financial advice.`
     : scenario.explanation;
   els.xpEarned.textContent = `+${earned} XP`;
-  gate.resultBreakdown.classList.remove("hidden");
+  gate.resultBreakdown.classList.add("hidden");
   document.getElementById("candle-sequence").textContent = candleSequenceForScenario(scenario);
   document.getElementById("why-correct").textContent = evidenceForScenario(scenario);
   renderOptionReview(scenario, completed);
@@ -2135,7 +2470,10 @@ function showResult(correct, earned, completed = {}) {
   document.getElementById("similar-pattern-label").textContent = `Try another ${scenario.pattern} drill`;
   renderResultClueMarker(scenario);
   applyModeUi();
-  if (!paid && freePlaysLeft() <= 0) {
+  if (!correct) {
+    setTimeout(() => openLearningMoment(scenario, completed), 420);
+  }
+  if (correct && !paid && freePlaysLeft() <= 0) {
     setTimeout(openPaywall, 800);
   }
 }
@@ -2256,6 +2594,7 @@ function submitThesisBuilder() {
 
 function renderLeaderboard() {
   const p = progress();
+  const plan = getUserPlan();
   const weeklyGain = Math.max(420, p.attempts.slice(-12).reduce((sum, attempt) => sum + (attempt.correct ? 180 : 45), 0) + p.streak * 90);
   const seed = stringSeed(p.signup?.email || p.inviteEmail || "weekly-board") + Math.floor(Date.now() / 3600000);
   const rand = seededRandom(seed);
@@ -2265,7 +2604,7 @@ function renderLeaderboard() {
     streak: Math.max(3, row.streak + Math.round(rand() * 4) - 2)
   }));
   const rows = [
-    { name: "You", gain: weeklyGain, rank: rankFromXp(p.xp), streak: Math.max(p.streak, p.topStreak), you: true },
+    { name: plan === "free" ? "Guest" : "You", gain: weeklyGain, rank: rankFromXp(p.xp), streak: Math.max(p.streak, p.topStreak), you: true, plan },
     ...competitors
   ].sort((a, b) => b.gain - a.gain);
   const medals = ["1", "2", "3"];
@@ -2276,10 +2615,11 @@ function renderLeaderboard() {
   rows.forEach((row, index) => {
     containers.forEach((container) => {
       const item = document.createElement("div");
-      item.className = `leader-row gainer-row ${row.you ? "you" : ""} ${index < 3 ? "top-gainer" : ""}`;
+      item.className = `leader-row gainer-row ${row.you ? "you" : ""} ${row.plan ? `plan-${row.plan}` : ""} ${index < 3 ? "top-gainer" : ""}`;
+      const crown = row.plan === "elite" ? "♛ " : "";
       item.innerHTML = `
         <strong class="gainer-rank">${medals[index] || index + 1}</strong>
-        <span class="gainer-name">${row.name}<br><small>${row.rank} · ${row.streak} day streak</small></span>
+        <span class="gainer-name">${crown}${row.name}<br><small>${row.rank} · ${row.streak} day streak</small></span>
         <strong class="gainer-points">+${row.gain.toLocaleString()} XP</strong>
       `;
       container.appendChild(item);
@@ -2422,7 +2762,7 @@ function profileAccess() {
   if (p.plan) {
     return {
       title: `${p.plan} Plan`,
-      detail: p.plan === "Elite" ? "$100/month active access" : p.plan === "Coach" ? "$50/month active access" : "$19.99/month active access"
+      detail: p.plan === "Elite" ? "$49.99/month active access" : p.plan === "Coach" ? "$29.99/month active access" : "$19.99/month active access"
     };
   }
 
@@ -2434,7 +2774,7 @@ function profileAccess() {
   }
 
   return {
-    title: "Free",
+    title: "Free Plan",
     detail: `${freePlaysLeft()} free play${freePlaysLeft() === 1 ? "" : "s"} left`
   };
 }
@@ -2474,6 +2814,11 @@ function renderProfile() {
   document.getElementById("profile-email").textContent = email;
   document.getElementById("profile-access").textContent = access.title;
   document.getElementById("profile-trial").textContent = access.detail;
+  if (els.profilePlanBadge) {
+    const plan = getUserPlan();
+    els.profilePlanBadge.className = `plan-tier-badge plan-${plan}`;
+    els.profilePlanBadge.textContent = planDisplayName(plan);
+  }
   document.getElementById("profile-rank").textContent = rankFromXp(p.xp);
   document.getElementById("profile-level").textContent = level;
   document.getElementById("profile-xp-label").textContent = `${currentLevelXp} / 500 XP`;
@@ -2490,7 +2835,7 @@ function renderProfile() {
   document.getElementById("profile-weakest").textContent = weakest ? `${weakest.pattern} · ${weakest.accuracy}%` : "Not enough data";
   document.getElementById("profile-subscription").textContent = access.title;
   document.getElementById("profile-subscription-copy").textContent =
-    access.title === "Free"
+    getUserPlan() === "free"
       ? "Start the 3-day trial or choose a plan to unlock unlimited training."
       : `Your current access is ${access.title}. ${access.detail}.`;
   document.getElementById("manage-billing").classList.toggle("hidden", !p.subscriptionStatus?.active);
@@ -2537,10 +2882,22 @@ function renderProfile() {
 function renderEliteDashboard() {
   const { data, rows } = eliteStats();
   const weakest = rows[0] || { pattern: "No data yet", accuracy: 0 };
-  const overallAccuracy = Math.round((data.filter((item) => item.correct).length / data.length) * 100);
+  const overallAccuracy = data.length ? Math.round((data.filter((item) => item.correct).length / data.length) * 100) : 0;
   const discipline = Math.max(45, Math.min(96, overallAccuracy + 14));
   const overtrade = Math.max(4, 100 - discipline);
   const eliteUnlocked = hasElitePlan();
+  const sessions = data.reduce((acc, item) => {
+    const key = item.session || "New York Open";
+    acc[key] = acc[key] || { total: 0, correct: 0 };
+    acc[key].total += 1;
+    if (item.correct) acc[key].correct += 1;
+    return acc;
+  }, {});
+  const bestSession = Object.entries(sessions)
+    .map(([name, stats]) => ({ name, rate: Math.round((stats.correct / stats.total) * 100) }))
+    .sort((a, b) => b.rate - a.rate)[0]?.name || "New York Open";
+  const communityAverageXp = 1240;
+  const archetype = progress().traderArchetype || (overallAccuracy >= 70 ? "Pattern Sniper" : overallAccuracy >= 45 ? "Structure Builder" : "Replay Grinder");
   document.getElementById("elite").classList.toggle("elite-locked-preview", !eliteUnlocked);
 
   document.getElementById("elite-weakest").textContent = weakest.pattern;
@@ -2578,8 +2935,15 @@ function renderEliteDashboard() {
     </div>
   `).join("") : `<div class="journal-item"><strong>No mistakes yet</strong><span>Answer more scenarios to build your mistake journal.</span></div>`;
 
-  document.getElementById("weekly-report").textContent =
-    `This week you completed ${data.length} scenarios with ${overallAccuracy}% accuracy. Recommended focus: ${weakest.pattern}. Next goal: raise this setup above 70%.`;
+  document.getElementById("weekly-report").innerHTML = `
+    <div class="elite-insight-grid">
+      <div><span>7-day accuracy trend</span><b class="elite-trend-line"><i style="height:34%"></i><i style="height:48%"></i><i style="height:42%"></i><i style="height:62%"></i><i style="height:56%"></i><i style="height:70%"></i><i style="height:${Math.max(18, overallAccuracy)}%"></i></b></div>
+      <div><span>Most missed pattern</span><strong>${weakest.pattern}</strong></div>
+      <div><span>Best session time</span><strong>${bestSession}</strong></div>
+      <div><span>Total XP vs community</span><strong>${progress().xp.toLocaleString()} / ${communityAverageXp.toLocaleString()}</strong></div>
+      <div><span>Your trader archetype</span><strong>${archetype}</strong></div>
+    </div>
+  `;
 
   const days = ["Day 1", "Day 2", "Day 3", "Day 4", "Day 5", "Day 6", "Day 7"];
   const topics = [weakest.pattern, "VWAP decision quality", "No-trade discipline", "Liquidity sweep review", "Ranked pressure test", "Trade Mode scoring", "Progress check"];
@@ -2590,7 +2954,7 @@ function renderEliteDashboard() {
 
 function startElitePlaylist() {
   if (!hasElitePlan()) {
-    openPaywall();
+    openUpgradeModal("elitePlaylist");
     return;
   }
 
@@ -2603,7 +2967,7 @@ function startElitePlaylist() {
 
 function applyEliteFilters() {
   if (!hasElitePlan()) {
-    openPaywall();
+    openUpgradeModal("eliteFilters");
     return;
   }
 
@@ -2631,6 +2995,23 @@ document.getElementById("next-scenario").addEventListener("click", () => {
 
 els.resultNext?.addEventListener("click", () => {
   document.getElementById("next-scenario").click();
+});
+
+els.learningClose?.addEventListener("click", () => closeLearningMoment(true));
+
+els.learningPrev?.addEventListener("click", () => {
+  if (state.learningSlideIndex <= 0) return;
+  state.learningSlideIndex -= 1;
+  renderLearningSlide();
+});
+
+els.learningNext?.addEventListener("click", () => {
+  if (state.learningSlideIndex >= state.learningSlides.length - 1) {
+    closeLearningMoment(true);
+    return;
+  }
+  state.learningSlideIndex += 1;
+  renderLearningSlide();
 });
 
 document.getElementById("previous-scenario").addEventListener("click", () => {
@@ -2755,6 +3136,56 @@ els.submitAnswer?.addEventListener("click", submitPendingAnswer);
 document.getElementById("start-elite-playlist").addEventListener("click", startElitePlaylist);
 document.getElementById("apply-elite-filters").addEventListener("click", applyEliteFilters);
 
+els.modeSearch?.addEventListener("input", () => {
+  const query = els.modeSearch.value.trim().toLowerCase();
+  document.querySelectorAll(".game-mode-card").forEach((card) => {
+    const text = card.textContent.toLowerCase();
+    card.classList.toggle("search-hidden", Boolean(query && !text.includes(query)));
+  });
+});
+
+els.bookmarkScenario?.addEventListener("click", () => {
+  if (!hasAccess("bookmarks")) {
+    showToast("Upgrade to Coach to bookmark scenarios.", "warning");
+    openUpgradeModal("bookmarks");
+    return;
+  }
+  const p = progress();
+  const scenario = getScenario(state.scenarioIndex);
+  p.bookmarks ||= [];
+  const exists = p.bookmarks.includes(scenario.id);
+  p.bookmarks = exists ? p.bookmarks.filter((id) => id !== scenario.id) : [...p.bookmarks, scenario.id];
+  saveProgress();
+  els.bookmarkScenario.classList.toggle("saved", !exists);
+  showToast(exists ? "Bookmark removed." : "Scenario bookmarked.", "success");
+});
+
+els.weeklyDigestToggle?.addEventListener("change", async () => {
+  if (!hasAccess("weeklyDigest")) {
+    els.weeklyDigestToggle.checked = false;
+    showToast("Weekly Digest is Coach Plan only.", "warning");
+    openUpgradeModal("weeklyDigest");
+    return;
+  }
+  const p = progress();
+  p.digestEnabled = els.weeklyDigestToggle.checked;
+  saveProgress();
+  try {
+    await fetch("/api/digest-signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: p.signup?.email || p.inviteEmail || "",
+        name: p.signup?.name || "",
+        enabled: p.digestEnabled
+      })
+    });
+    showToast(p.digestEnabled ? "Weekly Digest enabled." : "Weekly Digest disabled.", "success");
+  } catch {
+    showToast("Digest preference saved locally. Server sync failed.", "warning");
+  }
+});
+
 document.getElementById("side-toggle").addEventListener("click", () => {
   const isExpanded = document.body.classList.toggle("sidebar-expanded");
   document.getElementById("side-toggle").setAttribute("aria-expanded", String(isExpanded));
@@ -2842,6 +3273,82 @@ document.getElementById("share-button").addEventListener("click", async () => {
   }
 });
 
+function assistantMessages() {
+  try {
+    return JSON.parse(sessionStorage.getItem("tradePulseAssistantMessages") || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveAssistantMessages(messages) {
+  sessionStorage.setItem("tradePulseAssistantMessages", JSON.stringify(messages.slice(-20)));
+}
+
+function renderAssistantMessages(typing = false) {
+  if (!els.assistantMessages) return;
+  const messages = assistantMessages();
+  els.assistantMessages.innerHTML = messages.map((message) => `
+    <div class="assistant-bubble ${message.role === "user" ? "user" : "assistant"}">${message.content}</div>
+  `).join("") + (typing ? `<div class="assistant-bubble assistant typing"><i></i><i></i><i></i></div>` : "");
+  els.assistantMessages.scrollTop = els.assistantMessages.scrollHeight;
+}
+
+function seedAssistantGreeting() {
+  const messages = assistantMessages();
+  if (messages.length) return;
+  saveAssistantMessages([{
+    role: "assistant",
+    content: "Hey! I'm your TradePulse assistant. Ask me anything about the platform, your plan, or how the games work."
+  }]);
+}
+
+function openAssistant() {
+  seedAssistantGreeting();
+  renderAssistantMessages();
+  els.assistantPanel?.classList.remove("hidden");
+  els.assistantNotification?.classList.add("hidden");
+  sessionStorage.setItem("tradePulseAssistantOpened", "true");
+  setTimeout(() => els.assistantInput?.focus(), 50);
+}
+
+function closeAssistant() {
+  els.assistantPanel?.classList.add("hidden");
+}
+
+els.assistantFab?.addEventListener("click", openAssistant);
+els.assistantClose?.addEventListener("click", closeAssistant);
+
+els.assistantForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const text = els.assistantInput.value.trim();
+  if (!text) return;
+  const messages = [...assistantMessages(), { role: "user", content: text }];
+  saveAssistantMessages(messages);
+  els.assistantInput.value = "";
+  renderAssistantMessages(true);
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages })
+    });
+    const result = await response.json();
+    if (!response.ok || !result.ok) throw new Error(result.error || "Chat failed");
+    saveAssistantMessages([...messages, { role: "assistant", content: result.message }]);
+  } catch {
+    saveAssistantMessages([...messages, {
+      role: "assistant",
+      content: "Sorry, I'm having trouble connecting. Try again in a moment."
+    }]);
+  }
+  renderAssistantMessages();
+});
+
+if (els.assistantNotification && sessionStorage.getItem("tradePulseAssistantOpened")) {
+  els.assistantNotification.classList.add("hidden");
+}
+
 document.getElementById("close-return-recap")?.addEventListener("click", () => {
   els.returnRecap?.classList.add("hidden");
 });
@@ -2863,6 +3370,11 @@ document.addEventListener("mouseleave", (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !els.learningModal?.classList.contains("hidden")) {
+    closeLearningMoment(true);
+    return;
+  }
+  if (!els.learningModal?.classList.contains("hidden")) return;
   if (["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement?.tagName)) return;
   if (document.body.dataset.view !== "game") return;
   if (/^[1-5]$/.test(event.key) && !state.revealed) {
@@ -2943,11 +3455,9 @@ function prepareVisitScenarioSession() {
 }
 
 prepareVisitScenarioSession();
-if (localStorage.getItem("tradePulseSidebarExpanded") === "true" && window.innerWidth > 760) {
-  document.body.classList.add("sidebar-expanded");
-  document.getElementById("side-toggle").setAttribute("aria-expanded", "true");
-  document.getElementById("side-toggle").setAttribute("aria-label", "Collapse navigation");
-}
+document.body.classList.remove("sidebar-expanded");
+document.getElementById("side-toggle").setAttribute("aria-expanded", "false");
+document.getElementById("side-toggle").setAttribute("aria-label", "Expand navigation");
 refreshSubscriptionStatus();
 drawPreviewCharts();
 updateProgressUi();
