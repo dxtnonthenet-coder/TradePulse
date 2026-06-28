@@ -7794,3 +7794,130 @@ body.has-paid-plan .side-divider.subscriber-nav { display: block; }
   .pain-section { grid-template-columns: 1fr; }
   .demo-chart { height: 260px; }
 }
+
+/* Collision fix: force one stable desktop geometry after legacy styles. */
+@media (min-width: 861px) {
+  :root,
+  body,
+  body.sidebar-expanded {
+    --sidebar-width: 236px !important;
+  }
+
+  .side-nav {
+    display: flex !important;
+    width: 236px !important;
+    min-width: 236px !important;
+    max-width: 236px !important;
+    padding: 18px 14px !important;
+    overflow: hidden !important;
+  }
+
+  .side-link {
+    min-height: 46px !important;
+    padding: 0 10px 0 0 !important;
+  }
+
+  .side-icon {
+    flex: 0 0 42px !important;
+    width: 42px !important;
+    height: 42px !important;
+  }
+
+  .side-label {
+    display: block !important;
+    width: auto !important;
+    max-width: 150px !important;
+    opacity: 1 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .site-shell {
+    width: calc(100vw - 268px) !important;
+    max-width: 1440px !important;
+    margin-left: 252px !important;
+    margin-right: 16px !important;
+    padding-top: 86px !important;
+  }
+
+  .top-nav {
+    left: 252px !important;
+    width: calc(100vw - 268px) !important;
+    max-width: 1440px !important;
+    transform: none !important;
+    padding: 12px 0 !important;
+  }
+
+  .brand {
+    max-width: 320px !important;
+    overflow: hidden !important;
+  }
+
+  .brand-icon,
+  .top-nav .brand-icon {
+    flex: 0 0 46px !important;
+    width: 46px !important;
+    height: 46px !important;
+  }
+
+  .brand strong,
+  .top-nav .brand strong {
+    font-size: clamp(24px, 2vw, 34px) !important;
+    letter-spacing: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  .hero {
+    min-height: auto !important;
+    padding-top: 12px !important;
+  }
+
+  .hero-grid {
+    grid-template-columns: minmax(420px, 0.95fr) minmax(420px, 0.85fr) !important;
+    gap: clamp(28px, 4vw, 70px) !important;
+    min-height: auto !important;
+    padding: clamp(36px, 6vh, 76px) 0 42px !important;
+  }
+
+  .hero-copy h1 {
+    max-width: 700px !important;
+    font-size: clamp(52px, 5.4vw, 82px) !important;
+    line-height: 0.98 !important;
+  }
+
+  .hero-copy .lead {
+    max-width: 660px !important;
+    font-size: clamp(17px, 1.25vw, 22px) !important;
+  }
+
+  .hero-cta-row {
+    display: grid !important;
+    grid-template-columns: minmax(260px, 1fr) minmax(220px, 0.48fr) !important;
+    max-width: 780px !important;
+  }
+
+  .hero-replay-demo {
+    align-self: center !important;
+    max-width: 760px !important;
+    margin-left: auto !important;
+  }
+
+  .demo-chart {
+    height: clamp(260px, 29vw, 360px) !important;
+  }
+
+  .hero-performance {
+    max-width: 720px !important;
+  }
+}
+
+@media (max-width: 1180px) and (min-width: 861px) {
+  .hero-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hero-replay-demo {
+    max-width: 820px !important;
+    margin-left: 0 !important;
+  }
+}
