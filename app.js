@@ -485,12 +485,14 @@ const state = {
   learningSlides: [],
   learningSlideIndex: 0,
   subscriptionPlanStatus: "unknown",
+  billingPeriod: "monthly",
   progress: JSON.parse(localStorage.getItem("tradePulseProgress") || "{}")
 };
 
 let audioContext;
 let replayTimer;
 let tapeScenarioCount;
+const FREE_PLAY_LIMIT = 10;
 
 const els = {
   scenarioId: document.getElementById("scenario-id"),
@@ -570,6 +572,19 @@ els.assistantMessages = document.getElementById("assistant-messages");
 els.assistantForm = document.getElementById("assistant-form");
 els.assistantInput = document.getElementById("assistant-input");
 els.assistantNotification = document.getElementById("assistant-notification");
+els.waitlistCount = document.getElementById("waitlist-count");
+els.quickMarket = document.getElementById("quick-market");
+els.quickExperience = document.getElementById("quick-experience");
+els.quickStart = document.getElementById("quick-start");
+els.googleSignin = document.getElementById("google-signin");
+els.heroGoogleSignin = document.getElementById("hero-google-signin");
+els.copyShareCard = document.getElementById("copy-share-card");
+els.copyReferral = document.getElementById("copy-referral");
+els.copyChallenge = document.getElementById("copy-challenge");
+els.referralCode = document.getElementById("referral-code");
+els.shareCardRank = document.getElementById("share-card-rank");
+els.shareCardAccuracy = document.getElementById("share-card-accuracy");
+els.shareCardStreak = document.getElementById("share-card-streak");
 
 const gate = {
   signupModal: document.getElementById("signup-modal"),
@@ -726,6 +741,7 @@ async function startCheckout(plan, trial = false, triggerButton = null) {
       body: JSON.stringify({
         plan,
         trial,
+        billingPeriod: state.billingPeriod,
         name: p.signup?.name || "",
         email: p.signup?.email || p.inviteEmail || ""
       })
@@ -773,6 +789,69 @@ async function refreshSubscriptionStatus() {
   } catch (error) {
     console.warn("Subscription status refresh failed.", error);
     return null;
+  }
+}
+
+async function startGoogleSignin() {
+  if (location.protocol === "file:") {
+    showToast("Open the live site or localhost server to use Google sign-in.", "warning");
+    return;
+  }
+  try {
+    const response = await fetch("/api/auth-config");
+    const result = await response.json();
+    if (!result.googleConfigured || !result.googleUrl) {
+      showToast(result.message || "Google sign-in is not configured yet.", "warning");
+      return;
+    }
+    window.location.href = result.googleUrl;
+  } catch (error) {
+    showToast(`Google sign-in needs attention: ${error.message}`, "error");
+  }
+}
+
+async function handleGoogleAuthReturn() {
+  const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const accessToken = params.get("access_token");
+  const error = params.get("error_description") || params.get("error");
+  if (error) {
+    showToast(`Google sign-in failed: ${error}`, "error");
+    history.replaceState({}, "", window.location.pathname);
+    return;
+  }
+  if (!accessToken) return;
+  try {
+    const response = await fetch("/api/auth-user", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ access_token: accessToken })
+    });
+    const result = await response.json();
+    if (!result.ok) throw new Error(result.error || "Could not finish Google sign-in.");
+    const user = result.user;
+    const p = progress();
+    p.signup = {
+      name: user.name || "Google Trader",
+      email: user.email || "",
+      experience: p.signup?.experience || "Beginner",
+      market: p.signup?.market || "NQ",
+      provider: "google",
+      avatar: user.avatar || null
+    };
+    startFreshScenarioSession();
+    saveProgress();
+    await saveLead("google_signin", {
+      name: p.signup.name,
+      email: p.signup.email,
+      plan: planDisplayName(),
+      details: { provider: "google", mode: state.activeMode }
+    });
+    await refreshSubscriptionStatus();
+    showToast("Google sign-in complete. Your training profile is ready.", "success");
+    history.replaceState({}, "", window.location.pathname);
+    updateProgressUi();
+  } catch (error) {
+    showToast(`Google sign-in needs attention: ${error.message}`, "error");
   }
 }
 
@@ -1096,6 +1175,7 @@ function updateProgressUi() {
   renderPaywallProgress();
   updateFreePlanBanner();
   updatePlanSurfaces();
+  updateGrowthSurfaces();
   updateGameCards();
 }
 
@@ -1132,6 +1212,21 @@ function updateFreePlanBanner() {
     sessionStorage.setItem("tradePulseFreePlanPaywallShown", "1");
     setTimeout(() => openUpgradeModal("paid"), 250);
   }
+}
+
+function referralCode() {
+  const p = progress();
+  const seed = p.signup?.email || p.inviteEmail || p.signup?.name || "guest";
+  return `TP-${stringSeed(seed).toString(36).toUpperCase().slice(0, 5)}`;
+}
+
+function updateGrowthSurfaces() {
+  const p = progress();
+  const rank = getUserPlan() === "free" ? "Guest · Free Plan" : `${rankFromXp(p.xp)} · ${planDisplayName()}`;
+  if (els.referralCode) els.referralCode.textContent = referralCode();
+  if (els.shareCardRank) els.shareCardRank.textContent = rank;
+  if (els.shareCardAccuracy) els.shareCardAccuracy.textContent = `${accuracy()}%`;
+  if (els.shareCardStreak) els.shareCardStreak.textContent = Math.max(p.streak, p.topStreak);
 }
 
 function updatePlanSurfaces() {
@@ -1225,10 +1320,15 @@ function activeAccessLabel() {
 
 function freePlaysLeft() {
   const used = Number(progress().freePlaysUsed || 0);
-  return Math.max(0, 3 - used);
+  return Math.max(0, FREE_PLAY_LIMIT - used);
 }
 
 function openSignup() {
+  const p = progress();
+  const market = document.getElementById("signup-market");
+  const experience = document.getElementById("signup-experience");
+  if (market && p.signup?.market) market.value = p.signup.market;
+  if (experience && p.signup?.experience) experience.value = p.signup.experience;
   gate.signupModal.classList.remove("hidden");
 }
 
@@ -2836,7 +2936,7 @@ function renderProfile() {
   document.getElementById("profile-subscription").textContent = access.title;
   document.getElementById("profile-subscription-copy").textContent =
     getUserPlan() === "free"
-      ? "Start the 3-day trial or choose a plan to unlock unlimited training."
+      ? `${freePlaysLeft()} free play${freePlaysLeft() === 1 ? "" : "s"} left. Upgrade when you want unlimited training and deeper review.`
       : `Your current access is ${access.title}. ${access.detail}.`;
   document.getElementById("manage-billing").classList.toggle("hidden", !p.subscriptionStatus?.active);
   document.getElementById("profile-billing-note").classList.toggle("hidden", !p.subscriptionStatus?.active);
@@ -3197,6 +3297,19 @@ document.getElementById("exit-game").addEventListener("click", () => {
   navigateTo("home");
 });
 
+els.quickStart?.addEventListener("click", () => {
+  const p = progress();
+  p.signup ||= {};
+  p.signup.market = els.quickMarket?.value || p.signup.market || "NQ";
+  p.signup.experience = els.quickExperience?.value || p.signup.experience || "Beginner";
+  saveProgress();
+  startMode("replay");
+});
+
+[els.googleSignin, els.heroGoogleSignin].forEach((button) => {
+  button?.addEventListener("click", startGoogleSignin);
+});
+
 gate.signupForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const p = progress();
@@ -3271,6 +3384,37 @@ document.getElementById("share-button").addEventListener("click", async () => {
       document.getElementById("share-label").textContent = "Share";
     }, 1300);
   }
+});
+
+els.copyReferral?.addEventListener("click", async () => {
+  await navigator.clipboard.writeText(referralCode());
+  showToast("Referral code copied.", "success");
+});
+
+els.copyChallenge?.addEventListener("click", async () => {
+  const scenario = getScenario(state.scenarioIndex || 0);
+  const url = `${location.origin}${location.pathname}#challenge-${scenario.id}`;
+  await navigator.clipboard.writeText(url);
+  showToast("Challenge link copied.", "success");
+});
+
+els.copyShareCard?.addEventListener("click", async () => {
+  const p = progress();
+  const text = `TradePulse stats: ${accuracy()}% accuracy, ${Math.max(p.streak, p.topStreak)} day streak, ${rankFromXp(p.xp)} rank. Can you beat my replay score?`;
+  await navigator.clipboard.writeText(text);
+  showToast("Share card text copied.", "success");
+});
+
+document.querySelectorAll(".billing-option").forEach((button) => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll(".billing-option").forEach((item) => item.classList.remove("active"));
+    button.classList.add("active");
+    const period = button.dataset.billing || "monthly";
+    state.billingPeriod = period;
+    document.querySelectorAll(".plan-price").forEach((price) => {
+      price.textContent = price.dataset[period] || price.textContent;
+    });
+  });
 });
 
 function assistantMessages() {
@@ -3459,6 +3603,7 @@ document.body.classList.remove("sidebar-expanded");
 document.getElementById("side-toggle").setAttribute("aria-expanded", "false");
 document.getElementById("side-toggle").setAttribute("aria-label", "Expand navigation");
 refreshSubscriptionStatus();
+handleGoogleAuthReturn();
 drawPreviewCharts();
 updateProgressUi();
 applyModeUi();
@@ -3467,3 +3612,8 @@ updateAudioToggle();
 navigateTo(window.location.hash.replace("#", "") || "home", { fromHash: true, scroll: false });
 setInterval(updateMarketTape, 4000);
 setInterval(updateGameCards, 30000);
+setInterval(() => {
+  if (!els.waitlistCount) return;
+  const next = Number(els.waitlistCount.textContent.replace(/\D/g, "") || 1407) + (1 + Math.floor(Math.random() * 3));
+  els.waitlistCount.textContent = next.toLocaleString();
+}, 4500);

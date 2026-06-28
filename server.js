@@ -135,13 +135,38 @@ async function sendToSupabase(saved) {
   }
 }
 
-function stripePriceForPlan(plan) {
-  const prices = {
+function stripePriceForPlan(plan, billingPeriod = "monthly") {
+  const annual = billingPeriod === "annual";
+  const prices = annual ? {
+    Player: process.env.STRIPE_PRICE_PLAYER_ANNUAL,
+    Coach: process.env.STRIPE_PRICE_COACH_ANNUAL,
+    Elite: process.env.STRIPE_PRICE_ELITE_ANNUAL
+  } : {
     Player: process.env.STRIPE_PRICE_PLAYER,
     Coach: process.env.STRIPE_PRICE_COACH,
     Elite: process.env.STRIPE_PRICE_ELITE
   };
   return prices[plan];
+}
+
+function publicSiteUrl(req) {
+  const configured = process.env.PUBLIC_SITE_URL;
+  if (configured) return configured.replace(/\/$/, "");
+  const proto = req.headers["x-forwarded-proto"] || "http";
+  return `${proto}://${req.headers.host || "localhost:4173"}`;
+}
+
+function googleAuthUrl(req) {
+  const url = process.env.SUPABASE_URL;
+  const anonKey = process.env.SUPABASE_ANON_KEY;
+  if (!url || !anonKey) return null;
+  const redirectTo = `${publicSiteUrl(req)}/?auth=google`;
+  const params = new URLSearchParams({
+    provider: "google",
+    redirect_to: redirectTo,
+    apikey: anonKey
+  });
+  return `${url.replace(/\/$/, "")}/auth/v1/authorize?${params.toString()}`;
 }
 
 function planForStripePrice(priceId) {
@@ -243,6 +268,29 @@ async function handleAssistantChat(payload) {
   return data.content?.map((part) => part.text || "").join("").trim() || "I can help with TradePulse plans, games, XP, streaks, and training features.";
 }
 
+async function handleGoogleAuthUser(payload) {
+  const url = process.env.SUPABASE_URL;
+  const anonKey = process.env.SUPABASE_ANON_KEY;
+  const token = String(payload.access_token || "");
+  if (!url || !anonKey) throw new Error("Google sign-in is not configured yet.");
+  if (!token) throw new Error("Missing Google sign-in token.");
+
+  const response = await fetch(`${url.replace(/\/$/, "")}/auth/v1/user`, {
+    headers: {
+      apikey: anonKey,
+      Authorization: `Bearer ${token}`
+    }
+  });
+  const user = await response.json();
+  if (!response.ok) throw new Error(user.msg || user.error_description || "Could not verify Google sign-in.");
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Google Trader",
+    avatar: user.user_metadata?.avatar_url || null
+  };
+}
+
 async function sendSubscriptionToSupabase(saved) {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -318,11 +366,14 @@ function publicSubscription(record) {
 
 async function createCheckoutSession(payload) {
   const secret = process.env.STRIPE_SECRET_KEY;
-  const price = stripePriceForPlan(payload.plan);
+  const billingPeriod = payload.billingPeriod === "annual" ? "annual" : "monthly";
+  const price = stripePriceForPlan(payload.plan, billingPeriod);
   if (!secret || !price) {
     return {
       configured: false,
-      message: "Stripe is not configured yet. Add STRIPE_SECRET_KEY and price IDs to .env."
+      message: billingPeriod === "annual"
+        ? "Annual billing is not configured yet. Add annual Stripe price IDs or choose monthly."
+        : "Stripe is not configured yet. Add STRIPE_SECRET_KEY and price IDs to .env."
     };
   }
 
@@ -336,10 +387,12 @@ async function createCheckoutSession(payload) {
   params.set("payment_method_collection", "always");
   params.set("allow_promotion_codes", "true");
   params.set("metadata[plan]", payload.plan);
+  params.set("metadata[billingPeriod]", billingPeriod);
   params.set("metadata[email]", payload.email || "");
   params.set("metadata[name]", payload.name || "");
   params.set("metadata[source]", "tradepulse_prototype");
   params.set("subscription_data[metadata][plan]", payload.plan);
+  params.set("subscription_data[metadata][billingPeriod]", billingPeriod);
   params.set("subscription_data[metadata][email]", payload.email || "");
   params.set("subscription_data[metadata][name]", payload.name || "");
   if (payload.email) params.set("customer_email", payload.email);
@@ -488,6 +541,31 @@ const server = http.createServer((req, res) => {
     const email = parsedUrl.searchParams.get("email");
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(publicSubscription(subscriptionForEmail(email))));
+    return;
+  }
+
+  if (req.method === "GET" && parsedUrl.pathname === "/api/auth-config") {
+    const url = googleAuthUrl(req);
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({
+      googleConfigured: Boolean(url),
+      googleUrl: url,
+      message: url ? "Google sign-in ready." : "Add SUPABASE_URL and SUPABASE_ANON_KEY to enable Google sign-in."
+    }));
+    return;
+  }
+
+  if (req.method === "POST" && parsedUrl.pathname === "/api/auth-user") {
+    readBody(req)
+      .then((body) => handleGoogleAuthUser(JSON.parse(body || "{}")))
+      .then((user) => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, user }));
+      })
+      .catch((error) => {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      });
     return;
   }
 

@@ -43,6 +43,10 @@
           <span class="side-icon"><i data-lucide="trophy"></i></span>
           <span class="side-label">Leaderboard</span>
         </button>
+        <button class="side-link nav-tab" data-page-target="community" data-view-target="community" type="button" data-tooltip="Community">
+          <span class="side-icon"><i data-lucide="users"></i></span>
+          <span class="side-label">Community</span>
+        </button>
         <button class="side-link profile-tab nav-tab" data-page-target="profile" data-view-target="profile" type="button" data-tooltip="Profile">
           <span class="side-icon"><i data-lucide="id-card"></i></span>
           <span class="side-label">Profile</span>
@@ -109,8 +113,16 @@
             <p class="signal">Futures replay trainer</p>
             <h1>Train your market intuition. <span class="animated-headline">Master the replay.</span></h1>
             <p class="lead">
-              Built to help entry-level futures traders close the experience gap faster, sharpen pattern recognition, and stop missing the kind of replay lessons that can lead to better money decisions.
+              Replay real historical-style NQ, ES, CL, GC, and BTC moments blind. Make the call before the context is revealed, then learn exactly what the chart was trying to tell you.
             </p>
+            <div class="hero-cta-row">
+              <button class="primary-button mode-start" data-mode="replay" type="button">Start Blind Replay</button>
+              <button class="google-auth-button" id="hero-google-signin" type="button">
+                <span>G</span>
+                Sign in with Google
+              </button>
+            </div>
+            <p class="social-proof"><b id="waitlist-count">1,407</b> traders are already compressing screen time with TradePulse.</p>
             <div class="feature-list">
               <div><span class="mini-icon">A</span>Real market scenarios</div>
               <div><span class="mini-icon">T</span>Multiple timeframes</div>
@@ -187,11 +199,36 @@
             <p>Compare timeframes to spot compression, fakeouts, and breakout risk.</p>
           </article>
         </section>
+
+        <section class="onboarding-strip" id="onboarding-strip" aria-label="Quick start onboarding">
+          <div>
+            <p class="signal">3-step start</p>
+            <h2>Pick your market. Pick your level. Trade it blind.</h2>
+          </div>
+          <label>Market
+            <select id="quick-market">
+              <option>NQ</option>
+              <option>ES</option>
+              <option>CL</option>
+              <option>GC</option>
+              <option>BTC</option>
+            </select>
+          </label>
+          <label>Experience
+            <select id="quick-experience">
+              <option>Beginner</option>
+              <option>Learning futures</option>
+              <option>Intermediate</option>
+              <option>Advanced</option>
+            </select>
+          </label>
+          <button class="primary-button" id="quick-start" type="button">Play First Scenario</button>
+        </section>
       </header>
 
       <main>
         <div class="free-plan-banner hidden" id="free-plan-banner">
-          <span id="free-plan-banner-copy">You're on the Free Plan — 3 plays remaining</span>
+          <span id="free-plan-banner-copy">You're on the Free Plan — 10 plays remaining</span>
           <button class="free-plan-upgrade nav-tab" data-page-target="plans" data-view-target="plans" type="button">Upgrade</button>
         </div>
 
@@ -603,12 +640,16 @@
           <div class="section-heading">
             <p class="signal">Plans</p>
             <h2>Choose your training access</h2>
-            <p>Start with 3 days free. The trial defaults to Player unless you upgrade later.</p>
+            <p>Start with 10 free plays. Upgrade when you want unlimited replays, deeper review, and personalized training.</p>
+          </div>
+          <div class="billing-toggle" aria-label="Billing period">
+            <button class="billing-option active" data-billing="monthly" type="button">Monthly</button>
+            <button class="billing-option" data-billing="annual" type="button">Annual <span>2 months free</span></button>
           </div>
           <div class="plans-grid">
             <article>
               <span>Player</span>
-              <h3>$19.99/mo</h3>
+              <h3 class="plan-price" data-monthly="$19.99/mo" data-annual="$199/year">$19.99/mo</h3>
               <ul>
                 <li>Unlimited Replay Mode</li>
                 <li>Daily Challenge access</li>
@@ -621,8 +662,8 @@
               <button class="primary-button plan-button" data-plan="Player">Choose Player</button>
             </article>
             <article class="featured-plan">
-              <span>Coach</span>
-              <h3>$29.99/mo</h3>
+              <span>Coach <b class="popular-badge">Most Popular</b></span>
+              <h3 class="plan-price" data-monthly="$29.99/mo" data-annual="$299/year">$29.99/mo</h3>
               <ul>
                 <li>Everything in Player</li>
                 <li>Deeper educational reasoning after replays</li>
@@ -636,7 +677,7 @@
             </article>
             <article class="elite-plan-card">
               <span>Elite</span>
-              <h3>$49.99/mo</h3>
+              <h3 class="plan-price" data-monthly="$49.99/mo" data-annual="$499/year">$49.99/mo</h3>
               <ul>
                 <li>Everything in Coach</li>
                 <li>Personalized weakness detection</li>
@@ -650,6 +691,10 @@
               </ul>
               <button class="primary-button plan-button" data-plan="Elite">Choose Elite</button>
             </article>
+          </div>
+          <div class="plan-guarantee">
+            <strong>7-day money-back guarantee</strong>
+            <span>No questions asked. Try the training loop, then decide.</span>
           </div>
           <div class="plan-compare">
             <div class="panel-title">What’s Included</div>
@@ -898,7 +943,7 @@
             </article>
             <article>
               <h3>How many free plays do I get?</h3>
-              <p>You get 3 free plays total across all nine training games. After that, the subscription screen appears.</p>
+              <p>You get 10 free plays total across the training games. After that, the subscription screen appears.</p>
             </article>
             <article>
               <h3>What is included in the $19.99 plan?</h3>
@@ -915,6 +960,38 @@
           </div>
         </section>
 
+        <section class="growth-section page-section" id="community-growth" data-page="community" data-view="community">
+          <div class="section-heading">
+            <p class="signal">Community Loops</p>
+            <h2>Challenge friends. Flex your stats. Climb the season.</h2>
+            <p>TradePulse gets stronger when traders compare reads on the exact same replay.</p>
+          </div>
+          <div class="growth-grid">
+            <article class="panel share-card-preview">
+              <span class="season-badge">Season 01</span>
+              <h3 id="share-card-rank">Guest · Free Plan</h3>
+              <p><strong id="share-card-accuracy">0%</strong> accuracy · <strong id="share-card-streak">0</strong> day streak</p>
+              <button class="primary-button" id="copy-share-card" type="button">Copy Share Card</button>
+            </article>
+            <article class="panel">
+              <div class="panel-title">Referral Code</div>
+              <p>Give a friend your code. When referrals are live, each paid signup can credit free training time.</p>
+              <div class="referral-code" id="referral-code">TP-GUEST</div>
+              <button class="ghost-button" id="copy-referral" type="button">Copy Referral</button>
+            </article>
+            <article class="panel">
+              <div class="panel-title">Challenge Link</div>
+              <p>Share your current replay and see who reads the market better.</p>
+              <button class="primary-button" id="copy-challenge" type="button">Copy Challenge Link</button>
+            </article>
+            <article class="panel">
+              <div class="panel-title">Discord Community</div>
+              <p>Join the trading room for scenario drops, leaderboard talk, and launch updates.</p>
+              <a class="primary-button discord-link" href="https://discord.gg/tradepulse" target="_blank" rel="noreferrer">Open Discord</a>
+            </article>
+          </div>
+        </section>
+
         <section class="profile-section page-section" id="profile" data-page="profile" data-view="profile">
           <div class="profile-hero panel">
             <div class="profile-avatar" id="profile-avatar">TP</div>
@@ -926,7 +1003,7 @@
             <div class="profile-access">
               <span>Current Access</span>
               <strong id="profile-access">Free</strong>
-              <small id="profile-trial">3 free plays available</small>
+              <small id="profile-trial">10 free plays available</small>
             </div>
           </div>
 
@@ -1084,7 +1161,12 @@
         <button class="modal-close" id="close-signup" type="button" aria-label="Close free access form">×</button>
         <p class="signal">Free Access</p>
         <h2>Create your training profile</h2>
-        <p class="muted">Enter your details to unlock 3 free plays across all nine training games.</p>
+        <p class="muted">Enter your details or use Google to unlock 10 free plays across the training games.</p>
+        <button class="google-auth-button full" id="google-signin" type="button">
+          <span>G</span>
+          Continue with Google
+        </button>
+        <div class="divider-text"><span>or</span></div>
         <label>Full name <input id="signup-name" required placeholder="Your name" /></label>
         <label>Email <input id="signup-email" required type="email" placeholder="you@example.com" /></label>
         <label>Trading experience
@@ -1107,7 +1189,7 @@
           </select>
         </label>
         <p class="safe-note">Education only. No trade alerts, personalized recommendations, broker execution, or financial advice.</p>
-        <button class="primary-button" type="submit">Unlock 3 Free Plays</button>
+        <button class="primary-button" type="submit">Unlock 10 Free Plays</button>
       </form>
     </div>
 
@@ -1144,7 +1226,7 @@
 
     <div class="exit-intent hidden" id="exit-intent">
       <div>
-        <strong>Before you go — your 3 free plays are waiting.</strong>
+        <strong>Before you go — your 10 free plays are waiting.</strong>
         <span>Build your first replay score in under two minutes.</span>
       </div>
       <button class="primary-button" id="exit-claim" type="button">Claim Free Plays</button>
