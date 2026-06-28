@@ -1,0 +1,620 @@
+{
+  "id": "nq-vwap-reclaim-011",
+  "market": "NQ",
+  "timeframe": "1m",
+  "date": "2025-11-11 13:40 ET",
+  "session": "New York Open",
+  "difficulty": "Medium",
+  "pauseAtCandle": 49,
+  "pattern": "VWAP Reclaim",
+  "patternTags": [
+    "vwap_reclaim",
+    "trend",
+    "risk"
+  ],
+  "context": "A real-style market replay is paused at a decision point. Date and outcome are hidden until reveal.",
+  "hint": "Watch for vwap reclaim behavior around the reference level before making the call.",
+  "candles": [
+    {
+      "time": "09:30",
+      "open": 19821,
+      "high": 19825.15,
+      "low": 19817.66,
+      "close": 19822.53,
+      "volume": 1583
+    },
+    {
+      "time": "09:31",
+      "open": 19822.53,
+      "high": 19826.61,
+      "low": 19820.23,
+      "close": 19824.14,
+      "volume": 1653
+    },
+    {
+      "time": "09:32",
+      "open": 19824.14,
+      "high": 19827.87,
+      "low": 19820.7,
+      "close": 19824.75,
+      "volume": 1249
+    },
+    {
+      "time": "09:33",
+      "open": 19824.75,
+      "high": 19826.93,
+      "low": 19820.55,
+      "close": 19824.39,
+      "volume": 1641
+    },
+    {
+      "time": "09:34",
+      "open": 19824.39,
+      "high": 19828.83,
+      "low": 19822.23,
+      "close": 19826.46,
+      "volume": 1409
+    },
+    {
+      "time": "09:35",
+      "open": 19826.46,
+      "high": 19830.3,
+      "low": 19824.32,
+      "close": 19825.58,
+      "volume": 1242
+    },
+    {
+      "time": "09:36",
+      "open": 19825.58,
+      "high": 19827.68,
+      "low": 19824.13,
+      "close": 19826.56,
+      "volume": 1170
+    },
+    {
+      "time": "09:37",
+      "open": 19826.56,
+      "high": 19829.66,
+      "low": 19824.06,
+      "close": 19825.02,
+      "volume": 458
+    },
+    {
+      "time": "09:38",
+      "open": 19825.02,
+      "high": 19827.52,
+      "low": 19822.61,
+      "close": 19823.67,
+      "volume": 439
+    },
+    {
+      "time": "09:39",
+      "open": 19823.67,
+      "high": 19826.33,
+      "low": 19821.61,
+      "close": 19822.57,
+      "volume": 639
+    },
+    {
+      "time": "09:40",
+      "open": 19822.57,
+      "high": 19826.31,
+      "low": 19818.26,
+      "close": 19821.07,
+      "volume": 823
+    },
+    {
+      "time": "09:41",
+      "open": 19821.07,
+      "high": 19824.8,
+      "low": 19815.82,
+      "close": 19818.56,
+      "volume": 551
+    },
+    {
+      "time": "09:42",
+      "open": 19818.56,
+      "high": 19821.53,
+      "low": 19815.1,
+      "close": 19816.99,
+      "volume": 677
+    },
+    {
+      "time": "09:43",
+      "open": 19816.99,
+      "high": 19819.11,
+      "low": 19814.21,
+      "close": 19816.66,
+      "volume": 480
+    },
+    {
+      "time": "09:44",
+      "open": 19816.66,
+      "high": 19818.24,
+      "low": 19813.71,
+      "close": 19816.94,
+      "volume": 682
+    },
+    {
+      "time": "09:45",
+      "open": 19816.94,
+      "high": 19819.45,
+      "low": 19811.13,
+      "close": 19814.62,
+      "volume": 584
+    },
+    {
+      "time": "09:46",
+      "open": 19814.62,
+      "high": 19815.97,
+      "low": 19809.39,
+      "close": 19812.01,
+      "volume": 1547
+    },
+    {
+      "time": "09:47",
+      "open": 19812.01,
+      "high": 19815.88,
+      "low": 19810.45,
+      "close": 19811.46,
+      "volume": 817
+    },
+    {
+      "time": "09:48",
+      "open": 19811.46,
+      "high": 19812.97,
+      "low": 19807.41,
+      "close": 19809.15,
+      "volume": 1102
+    },
+    {
+      "time": "09:49",
+      "open": 19809.15,
+      "high": 19810.93,
+      "low": 19807.63,
+      "close": 19808.98,
+      "volume": 443
+    },
+    {
+      "time": "09:50",
+      "open": 19808.98,
+      "high": 19811.78,
+      "low": 19805.43,
+      "close": 19807.24,
+      "volume": 538
+    },
+    {
+      "time": "09:51",
+      "open": 19807.24,
+      "high": 19809.33,
+      "low": 19801.68,
+      "close": 19805.51,
+      "volume": 420
+    },
+    {
+      "time": "09:52",
+      "open": 19805.51,
+      "high": 19810.68,
+      "low": 19803.14,
+      "close": 19807.31,
+      "volume": 1527
+    },
+    {
+      "time": "09:53",
+      "open": 19807.31,
+      "high": 19809.52,
+      "low": 19805.33,
+      "close": 19806.69,
+      "volume": 926
+    },
+    {
+      "time": "09:54",
+      "open": 19806.69,
+      "high": 19808.76,
+      "low": 19805.59,
+      "close": 19807.1,
+      "volume": 1430
+    },
+    {
+      "time": "09:55",
+      "open": 19807.1,
+      "high": 19810.94,
+      "low": 19805.21,
+      "close": 19807.06,
+      "volume": 775
+    },
+    {
+      "time": "09:56",
+      "open": 19807.06,
+      "high": 19808.65,
+      "low": 19805.24,
+      "close": 19807.4,
+      "volume": 948
+    },
+    {
+      "time": "09:57",
+      "open": 19807.4,
+      "high": 19810.79,
+      "low": 19805.07,
+      "close": 19808.74,
+      "volume": 1380
+    },
+    {
+      "time": "09:58",
+      "open": 19808.74,
+      "high": 19812.25,
+      "low": 19804.9,
+      "close": 19810.96,
+      "volume": 1237
+    },
+    {
+      "time": "09:59",
+      "open": 19810.96,
+      "high": 19817.01,
+      "low": 19806.98,
+      "close": 19813.91,
+      "volume": 863
+    },
+    {
+      "time": "09:00",
+      "open": 19813.91,
+      "high": 19819.45,
+      "low": 19811.19,
+      "close": 19816.66,
+      "volume": 1046
+    },
+    {
+      "time": "09:01",
+      "open": 19816.66,
+      "high": 19820.83,
+      "low": 19813.28,
+      "close": 19817.9,
+      "volume": 827
+    },
+    {
+      "time": "09:02",
+      "open": 19817.9,
+      "high": 19820.52,
+      "low": 19815.79,
+      "close": 19817.59,
+      "volume": 1502
+    },
+    {
+      "time": "09:03",
+      "open": 19817.59,
+      "high": 19822.35,
+      "low": 19816.59,
+      "close": 19818.6,
+      "volume": 1148
+    },
+    {
+      "time": "09:04",
+      "open": 19818.6,
+      "high": 19824.09,
+      "low": 19815.74,
+      "close": 19820.19,
+      "volume": 1685
+    },
+    {
+      "time": "09:05",
+      "open": 19820.19,
+      "high": 19825.61,
+      "low": 19819.07,
+      "close": 19822.16,
+      "volume": 1378
+    },
+    {
+      "time": "09:06",
+      "open": 19822.16,
+      "high": 19824.11,
+      "low": 19819.52,
+      "close": 19821.47,
+      "volume": 1542
+    },
+    {
+      "time": "09:07",
+      "open": 19821.47,
+      "high": 19825.83,
+      "low": 19820.39,
+      "close": 19822.2,
+      "volume": 1127
+    },
+    {
+      "time": "09:08",
+      "open": 19822.2,
+      "high": 19825.13,
+      "low": 19819.91,
+      "close": 19822.11,
+      "volume": 1297
+    },
+    {
+      "time": "09:09",
+      "open": 19822.11,
+      "high": 19826.67,
+      "low": 19818.73,
+      "close": 19823.2,
+      "volume": 1015
+    },
+    {
+      "time": "09:10",
+      "open": 19823.2,
+      "high": 19825.01,
+      "low": 19819.21,
+      "close": 19822.72,
+      "volume": 989
+    },
+    {
+      "time": "09:11",
+      "open": 19822.72,
+      "high": 19826.3,
+      "low": 19821.27,
+      "close": 19822.59,
+      "volume": 1187
+    },
+    {
+      "time": "09:12",
+      "open": 19822.59,
+      "high": 19824.18,
+      "low": 19817.24,
+      "close": 19820.67,
+      "volume": 1194
+    },
+    {
+      "time": "09:13",
+      "open": 19820.67,
+      "high": 19822.93,
+      "low": 19817.38,
+      "close": 19820.9,
+      "volume": 517
+    },
+    {
+      "time": "09:14",
+      "open": 19820.9,
+      "high": 19822.07,
+      "low": 19817.01,
+      "close": 19819.99,
+      "volume": 1544
+    },
+    {
+      "time": "09:15",
+      "open": 19819.99,
+      "high": 19823.64,
+      "low": 19816.93,
+      "close": 19818.21,
+      "volume": 1309
+    },
+    {
+      "time": "09:16",
+      "open": 19818.21,
+      "high": 19819.78,
+      "low": 19815.01,
+      "close": 19816.64,
+      "volume": 2598
+    },
+    {
+      "time": "09:17",
+      "open": 19816.64,
+      "high": 19821,
+      "low": 19814.18,
+      "close": 19817.09,
+      "volume": 2187
+    },
+    {
+      "time": "09:18",
+      "open": 19817.09,
+      "high": 19818.76,
+      "low": 19813.55,
+      "close": 19814.8,
+      "volume": 1956
+    },
+    {
+      "time": "09:19",
+      "open": 19814.8,
+      "high": 19816.82,
+      "low": 19810.32,
+      "close": 19813.41,
+      "volume": 2073
+    },
+    {
+      "time": "09:20",
+      "open": 19813.41,
+      "high": 19816.38,
+      "low": 19810.58,
+      "close": 19813.83,
+      "volume": 1754
+    },
+    {
+      "time": "09:21",
+      "open": 19813.83,
+      "high": 19820.05,
+      "low": 19810.95,
+      "close": 19817.09,
+      "volume": 2260
+    },
+    {
+      "time": "09:22",
+      "open": 19817.09,
+      "high": 19822.77,
+      "low": 19815,
+      "close": 19820.58,
+      "volume": 2542
+    },
+    {
+      "time": "09:23",
+      "open": 19820.58,
+      "high": 19825.47,
+      "low": 19817.55,
+      "close": 19823.42,
+      "volume": 2234
+    },
+    {
+      "time": "09:24",
+      "open": 19823.42,
+      "high": 19830.49,
+      "low": 19819.56,
+      "close": 19827.19,
+      "volume": 1843
+    },
+    {
+      "time": "09:25",
+      "open": 19827.19,
+      "high": 19831.44,
+      "low": 19826.19,
+      "close": 19830,
+      "volume": 1640
+    },
+    {
+      "time": "09:26",
+      "open": 19830,
+      "high": 19833.78,
+      "low": 19828.37,
+      "close": 19832.78,
+      "volume": 608
+    },
+    {
+      "time": "09:27",
+      "open": 19832.78,
+      "high": 19840.11,
+      "low": 19831.7,
+      "close": 19836.86,
+      "volume": 430
+    },
+    {
+      "time": "09:28",
+      "open": 19836.86,
+      "high": 19843.86,
+      "low": 19835.01,
+      "close": 19840,
+      "volume": 946
+    },
+    {
+      "time": "09:29",
+      "open": 19840,
+      "high": 19848.3,
+      "low": 19836.4,
+      "close": 19844.89,
+      "volume": 910
+    },
+    {
+      "time": "09:30",
+      "open": 19844.89,
+      "high": 19851.1,
+      "low": 19841.02,
+      "close": 19849.67,
+      "volume": 593
+    },
+    {
+      "time": "09:31",
+      "open": 19849.67,
+      "high": 19856.58,
+      "low": 19847.07,
+      "close": 19853.57,
+      "volume": 1580
+    },
+    {
+      "time": "09:32",
+      "open": 19853.57,
+      "high": 19858.43,
+      "low": 19849.64,
+      "close": 19856.07,
+      "volume": 1654
+    },
+    {
+      "time": "09:33",
+      "open": 19856.07,
+      "high": 19864.04,
+      "low": 19854.67,
+      "close": 19860.25,
+      "volume": 828
+    },
+    {
+      "time": "09:34",
+      "open": 19860.25,
+      "high": 19869.52,
+      "low": 19858.12,
+      "close": 19865.6,
+      "volume": 819
+    },
+    {
+      "time": "09:35",
+      "open": 19865.6,
+      "high": 19872.55,
+      "low": 19862.19,
+      "close": 19868.59,
+      "volume": 1639
+    },
+    {
+      "time": "09:36",
+      "open": 19868.59,
+      "high": 19875.46,
+      "low": 19866.37,
+      "close": 19873.56,
+      "volume": 1182
+    },
+    {
+      "time": "09:37",
+      "open": 19873.56,
+      "high": 19878.75,
+      "low": 19871.8,
+      "close": 19875.94,
+      "volume": 1287
+    },
+    {
+      "time": "09:38",
+      "open": 19875.94,
+      "high": 19879.06,
+      "low": 19874.57,
+      "close": 19877.86,
+      "volume": 1430
+    },
+    {
+      "time": "09:39",
+      "open": 19877.86,
+      "high": 19881.16,
+      "low": 19874.41,
+      "close": 19879.63,
+      "volume": 1371
+    },
+    {
+      "time": "09:40",
+      "open": 19879.63,
+      "high": 19886.56,
+      "low": 19876.33,
+      "close": 19882.88,
+      "volume": 581
+    },
+    {
+      "time": "09:41",
+      "open": 19882.88,
+      "high": 19886.02,
+      "low": 19881.28,
+      "close": 19884.45,
+      "volume": 1289
+    }
+  ],
+  "answer": {
+    "direction": "long",
+    "label": "Long continuation/reclaim"
+  },
+  "choices": [
+    {
+      "id": "long",
+      "label": "Long",
+      "text": "Long continuation/reclaim"
+    },
+    {
+      "id": "short",
+      "label": "Short",
+      "text": "Short rejection/reversal"
+    },
+    {
+      "id": "flat",
+      "label": "Flat",
+      "text": "Stay flat / no clean edge"
+    }
+  ],
+  "explanation": "VWAP Reclaim was the key read. The reveal rewarded long bias because price confirmed on the correct side after the decision candle.",
+  "coachExplanation": "Coach note: isolate the first clue after the pause. For VWAP Reclaim, the high-value tell is whether price accepts beyond the level or snaps back through it with volume. Build the decision around acceptance, not candle color alone.",
+  "invalidation": "A close back below the reclaim level would invalidate the long read.",
+  "seed": 11
+}

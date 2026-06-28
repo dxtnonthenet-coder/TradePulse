@@ -4,60 +4,48 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TradePulse</title>
+    <meta name="description" content="Replay real futures moments blind. Make your call, reveal the move, and train your chart eye with TradePulse." />
+    <meta name="theme-color" content="#0e1117" />
+    <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://unpkg.com/lucide@latest" defer></script>
   </head>
   <body>
     <aside class="side-nav" id="side-nav" aria-label="TradePulse navigation">
-      <button class="side-toggle" id="side-toggle" type="button" aria-label="Expand navigation" aria-expanded="false">
-        <span class="side-icon"><i data-lucide="menu"></i></span>
-        <span class="side-label">Menu</span>
-      </button>
-
       <div class="side-nav-links">
         <button class="side-link start-side-link nav-tab" data-page-target="home" data-view-target="home" type="button" data-tooltip="Start Training">
           <span class="side-icon"><i data-lucide="play"></i></span>
-          <span class="side-label">Start Training</span>
+          <span class="side-label">Play</span>
         </button>
-        <button class="side-link elite-side-link nav-tab" data-page-target="elite" data-view-target="elite" type="button" data-tooltip="Elite">
-          <span class="side-icon"><i data-lucide="gem"></i></span>
-          <span class="side-label">Elite</span>
+        <button class="side-link daily-tab mode-start" data-mode="daily" type="button" data-tooltip="Daily Challenge">
+          <span class="side-icon"><i data-lucide="calendar-days"></i></span>
+          <span class="side-label">Daily Challenge</span>
         </button>
-        <div class="side-divider"></div>
-        <div class="side-section-label">Learn</div>
-        <button class="side-link futures-tab nav-tab" data-page-target="futures" data-view-target="futures" type="button" data-tooltip="Why Futures?">
-          <span class="side-icon"><i data-lucide="landmark"></i></span>
-          <span class="side-label">Why Futures?</span>
-        </button>
-        <button class="side-link roadmap-tab nav-tab" data-page-target="roadmap" data-view-target="roadmap" type="button" data-tooltip="Build Path">
-          <span class="side-icon"><i data-lucide="route"></i></span>
-          <span class="side-label">Build Path</span>
-        </button>
-        <button class="side-link faq-tab nav-tab" data-page-target="faq" data-view-target="faq" type="button" data-tooltip="Questions">
-          <span class="side-icon"><i data-lucide="circle-help"></i></span>
-          <span class="side-label">Questions</span>
-        </button>
-        <div class="side-divider"></div>
-        <div class="side-section-label">Account</div>
         <button class="side-link leaderboard-tab nav-tab" data-page-target="leaderboard" data-view-target="leaderboard" type="button" data-tooltip="Leaderboard">
           <span class="side-icon"><i data-lucide="trophy"></i></span>
           <span class="side-label">Leaderboard</span>
         </button>
-        <button class="side-link nav-tab" data-page-target="community" data-view-target="community" type="button" data-tooltip="Community">
-          <span class="side-icon"><i data-lucide="users"></i></span>
-          <span class="side-label">Community</span>
-        </button>
-        <button class="side-link profile-tab nav-tab" data-page-target="profile" data-view-target="profile" type="button" data-tooltip="Profile">
-          <span class="side-icon"><i data-lucide="id-card"></i></span>
-          <span class="side-label">Profile</span>
-        </button>
         <button class="side-link plans-tab nav-tab" data-page-target="plans" data-view-target="plans" type="button" data-tooltip="View Plans">
           <span class="side-icon"><i data-lucide="badge-dollar-sign"></i></span>
-          <span class="side-label">View Plans</span>
+          <span class="side-label">Plans</span>
         </button>
-        <button class="side-link" id="share-button" type="button" data-tooltip="Share">
-          <span class="side-icon"><i data-lucide="share-2"></i></span>
-          <span class="side-label" id="share-label">Share</span>
+        <button class="side-link profile-tab nav-tab" data-page-target="profile" data-view-target="profile" type="button" data-tooltip="Login or Profile">
+          <span class="side-icon"><i data-lucide="log-in"></i></span>
+          <span class="side-label" id="side-profile-label">Login</span>
+        </button>
+        <div class="side-divider subscriber-nav"></div>
+        <div class="side-section-label subscriber-nav">Learn</div>
+        <button class="side-link futures-tab nav-tab subscriber-nav" data-page-target="futures" data-view-target="futures" type="button" data-tooltip="Why Futures?">
+          <span class="side-icon"><i data-lucide="landmark"></i></span>
+          <span class="side-label">Why Futures?</span>
+        </button>
+        <button class="side-link roadmap-tab nav-tab subscriber-nav" data-page-target="roadmap" data-view-target="roadmap" type="button" data-tooltip="Build Path">
+          <span class="side-icon"><i data-lucide="route"></i></span>
+          <span class="side-label">Build Path</span>
+        </button>
+        <button class="side-link elite-side-link nav-tab subscriber-nav" data-page-target="elite" data-view-target="elite" type="button" data-tooltip="Elite">
+          <span class="side-icon"><i data-lucide="crown"></i></span>
+          <span class="side-label">Elite</span>
         </button>
       </div>
 
@@ -110,19 +98,20 @@
 
         <section class="hero-grid">
           <div class="hero-copy">
-            <p class="signal">Futures replay trainer</p>
-            <h1>Train your market intuition. <span class="animated-headline">Master the replay.</span></h1>
+            <p class="signal">Replay real futures moments blind</p>
+            <h1>Train your chart eye. <span class="animated-headline">Master the Replay.</span></h1>
             <p class="lead">
-              Replay real historical-style NQ, ES, CL, GC, and BTC moments blind. Make the call before the context is revealed, then learn exactly what the chart was trying to tell you.
+              Replay real NQ and ES futures moments blind. No date. No context. Just price. Make your call, see what actually happened, and compress months of screen time into sharper decision reps.
             </p>
             <div class="hero-cta-row">
-              <button class="primary-button mode-start" data-mode="replay" type="button">Start Blind Replay</button>
+              <button class="primary-button hero-primary-cta" id="start-free-replay" type="button">Start Free - No Signup Needed</button>
               <button class="google-auth-button" id="hero-google-signin" type="button">
                 <span>G</span>
                 Sign in with Google
               </button>
             </div>
-            <p class="social-proof"><b id="waitlist-count">1,407</b> traders are already compressing screen time with TradePulse.</p>
+            <p class="cta-note">10 free replays. No credit card. Instant access.</p>
+            <p class="social-proof"><b id="waitlist-count">1,489</b> traders already training.</p>
             <div class="feature-list">
               <div><span class="mini-icon">A</span>Real market scenarios</div>
               <div><span class="mini-icon">T</span>Multiple timeframes</div>
@@ -140,28 +129,48 @@
             </p>
           </div>
 
-          <div class="lobby-feature-cards" aria-label="Featured training modes">
-            <button class="lobby-feature-card mode-start" data-mode="replay" type="button">
-              <span class="lobby-art replay-art">
-                <img src="assets/modes/replay-mode.jpg" alt="Replay Arena candlestick training preview">
-              </span>
-              <span class="lobby-card-copy">
-                <small>Most Played</small>
-                <strong>Replay Arena</strong>
-                <span><i></i> 1,284 training</span>
-              </span>
-            </button>
-            <button class="lobby-feature-card mode-start" data-mode="ranked" type="button">
-              <span class="lobby-art ranked-art">
-                <img src="assets/modes/ranked-battle.jpg" alt="Ranked Battle competitive training preview">
-              </span>
-              <span class="lobby-card-copy">
-                <small>Competitive</small>
-                <strong>Ranked Battle</strong>
-                <span><i></i> 632 competing</span>
-              </span>
-            </button>
+          <div class="hero-replay-demo" aria-label="Animated blind replay preview">
+            <div class="demo-terminal-top">
+              <span>NQ · ??/??/????</span>
+              <strong>20s</strong>
+            </div>
+            <div class="demo-chart">
+              <i class="demo-candle up c1"></i>
+              <i class="demo-candle up c2"></i>
+              <i class="demo-candle down c3"></i>
+              <i class="demo-candle up c4"></i>
+              <i class="demo-candle down c5"></i>
+              <i class="demo-candle down c6"></i>
+              <i class="demo-candle up c7"></i>
+              <i class="demo-candle reveal c8"></i>
+              <b class="demo-pause-line"></b>
+              <span class="demo-vwap">VWAP</span>
+            </div>
+            <div class="demo-actions">
+              <span>LONG</span>
+              <span>SHORT</span>
+              <span>FLAT</span>
+            </div>
+            <p>A real NQ moment. Hidden date. 20 seconds. Make your call.</p>
           </div>
+        </section>
+
+        <section class="pain-section" aria-label="Why TradePulse exists">
+          <article>
+            <i data-lucide="monitor-x"></i>
+            <h3>You paper trade and it feels nothing like real price action.</h3>
+            <p>TradePulse puts you inside replay moments where you have to decide under pressure.</p>
+          </article>
+          <article>
+            <i data-lucide="video-off"></i>
+            <h3>You watch setups on YouTube but freeze when it is live.</h3>
+            <p>Repetition builds pattern memory before your capital is involved.</p>
+          </article>
+          <article>
+            <i data-lucide="brain-circuit"></i>
+            <h3>You know the theory but hesitate when it matters.</h3>
+            <p>Every reveal shows the clue, the mistake, and the next drill.</p>
+          </article>
         </section>
 
         <section class="market-intel" aria-label="TradePulse market training intelligence preview">
@@ -333,6 +342,9 @@
               <span class="game-copy"><small>Coach Review</small><strong>Review Queue</strong><span>Replay only scenarios you previously missed.</span></span>
               <span class="game-footer"><b><i></i> <span id="review-queue-count">0</span> to review</b><em>Review Now ↗</em></span>
             </button>
+          </div>
+          <div class="mode-search-empty hidden" id="mode-search-empty">
+            No matching modes. Try Replay, Daily, Ranked, Trade, Review, or Pattern.
           </div>
         </section>
 
@@ -1127,6 +1139,7 @@
           <span>© 2026 TradePulse</span>
           <a href="/privacy.html">Privacy</a>
           <a href="/terms.html">Terms</a>
+          <a href="/refund.html">Refund Policy</a>
           <a href="/disclaimer.html">Education Disclaimer</a>
         </footer>
       </main>

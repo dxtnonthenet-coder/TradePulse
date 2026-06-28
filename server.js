@@ -29,6 +29,8 @@ const publicFiles = new Set([
   "privacy.html",
   "terms.html",
   "disclaimer.html",
+  "refund.html",
+  "manifest.json",
   "assets/modes/replay-mode.jpg",
   "assets/modes/daily-challenge.jpg",
   "assets/modes/ranked-battle.jpg",

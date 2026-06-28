@@ -792,6 +792,7 @@ function defaultProgress() {
     referralCredits: 0,
     digestEnabled: false,
     traderArchetype: null,
+    anonymousAccess: false,
     sessionAttemptStart: 0,
     lastSessionSummary: null,
     weeklyAccuracySnapshots: []
@@ -1379,6 +1380,9 @@ function updateGrowthSurfaces() {
 function updatePlanSurfaces() {
   const plan = getUserPlan();
   document.body.dataset.plan = plan;
+  document.body.classList.toggle("has-paid-plan", plan !== "free");
+  const sideProfileLabel = document.getElementById("side-profile-label");
+  if (sideProfileLabel) sideProfileLabel.textContent = hasProfileSession() ? "Profile" : "Login";
   document.querySelectorAll(".coach-mode").forEach((item) => item.classList.toggle("hidden", !hasAccess("reviewQueue")));
   document.querySelectorAll(".plan-tier-badge").forEach((badge) => {
     badge.className = `plan-tier-badge plan-${plan}`;
@@ -1423,7 +1427,7 @@ function renderPaywallProgress() {
 }
 
 function hasSignup() {
-  return Boolean(progress().signup?.email);
+  return Boolean(progress().signup?.email || progress().anonymousAccess);
 }
 
 function hasPaidPlan() {
@@ -3407,6 +3411,15 @@ document.querySelectorAll(".mode-start").forEach((button) => {
   button.addEventListener("click", () => startMode(button.dataset.mode || "replay"));
 });
 
+document.getElementById("start-free-replay")?.addEventListener("click", () => {
+  const p = progress();
+  p.anonymousAccess = true;
+  p.marketPreference ||= "NQ";
+  p.experienceLevel ||= "Beginner";
+  saveProgress();
+  startMode("replay");
+});
+
 document.querySelectorAll("#confidence-picker button").forEach((button) => {
   button.addEventListener("click", () => {
     state.confidence = button.dataset.confidence;
@@ -3500,7 +3513,7 @@ document.querySelectorAll(".nav-tab").forEach((button) => {
     navigateTo(button.dataset.viewTarget || button.dataset.pageTarget || "home");
     if (window.innerWidth <= 760) {
       document.body.classList.remove("sidebar-expanded");
-      document.getElementById("side-toggle").setAttribute("aria-expanded", "false");
+      document.getElementById("side-toggle")?.setAttribute("aria-expanded", "false");
     }
   });
 });
@@ -3525,10 +3538,14 @@ document.getElementById("apply-elite-filters").addEventListener("click", applyEl
 
 els.modeSearch?.addEventListener("input", () => {
   const query = els.modeSearch.value.trim().toLowerCase();
+  let visibleCount = 0;
   document.querySelectorAll(".game-mode-card").forEach((card) => {
     const text = card.textContent.toLowerCase();
-    card.classList.toggle("search-hidden", Boolean(query && !text.includes(query)));
+    const hidden = Boolean(query && !text.includes(query));
+    card.classList.toggle("search-hidden", hidden);
+    if (!hidden) visibleCount += 1;
   });
+  document.getElementById("mode-search-empty")?.classList.toggle("hidden", visibleCount > 0);
 });
 
 els.bookmarkScenario?.addEventListener("click", () => {
@@ -3573,10 +3590,10 @@ els.weeklyDigestToggle?.addEventListener("change", async () => {
   }
 });
 
-document.getElementById("side-toggle").addEventListener("click", () => {
+document.getElementById("side-toggle")?.addEventListener("click", () => {
   const isExpanded = document.body.classList.toggle("sidebar-expanded");
-  document.getElementById("side-toggle").setAttribute("aria-expanded", String(isExpanded));
-  document.getElementById("side-toggle").setAttribute("aria-label", isExpanded ? "Collapse navigation" : "Expand navigation");
+  document.getElementById("side-toggle")?.setAttribute("aria-expanded", String(isExpanded));
+  document.getElementById("side-toggle")?.setAttribute("aria-label", isExpanded ? "Collapse navigation" : "Expand navigation");
   localStorage.setItem("tradePulseSidebarExpanded", String(isExpanded));
 });
 
@@ -3946,8 +3963,8 @@ if (els.betaBanner && !localStorage.getItem("tradePulseBetaDismissed")) {
   els.betaBanner.classList.remove("hidden");
 }
 document.body.classList.remove("sidebar-expanded");
-document.getElementById("side-toggle").setAttribute("aria-expanded", "false");
-document.getElementById("side-toggle").setAttribute("aria-label", "Expand navigation");
+document.getElementById("side-toggle")?.setAttribute("aria-expanded", "false");
+document.getElementById("side-toggle")?.setAttribute("aria-label", "Expand navigation");
 refreshSubscriptionStatus();
 handleGoogleAuthReturn();
 loadScenarioLibrary();

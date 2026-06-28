@@ -1,282 +1,1402 @@
 [
   {
-    "id": "nq-2025-01-14-vwap-trap",
-    "file": "nq-2025-01-14-vwap-trap.json",
+    "id": "nq-vwap-reclaim-001",
     "market": "NQ",
-    "timeframe": "1m",
-    "difficulty": "hard",
-    "session": "NewYork",
-    "patternTags": [
-      "vwap_trap",
-      "liquidity_sweep",
-      "failed_breakout"
-    ],
-    "title": "NQ Opening Sweep Trap"
-  },
-  {
-    "id": "es-2025-01-22-reclaim",
-    "file": "es-2025-01-22-reclaim.json",
-    "market": "ES",
     "timeframe": "5m",
-    "difficulty": "medium",
-    "session": "NewYork",
+    "difficulty": "Easy",
+    "session": "New York Open",
+    "pattern": "VWAP Reclaim",
     "patternTags": [
       "vwap_reclaim",
-      "trend_continuation",
-      "retest_hold"
+      "vwap",
+      "range"
     ],
-    "title": "ES VWAP Reclaim"
+    "file": "nq-vwap-reclaim-001.json"
   },
   {
-    "id": "cl-2025-02-05-news-whip",
-    "file": "cl-2025-02-05-news-whip.json",
-    "market": "CL",
-    "timeframe": "1m",
-    "difficulty": "hard",
-    "session": "NewYork",
-    "patternTags": [
-      "news_whipsaw",
-      "two_sided_sweep",
-      "no_trade"
-    ],
-    "title": "CL Inventory Whipsaw"
-  },
-  {
-    "id": "gc-2025-02-12-compression",
-    "file": "gc-2025-02-12-compression.json",
-    "market": "GC",
-    "timeframe": "5m",
-    "difficulty": "medium",
-    "session": "NewYork",
-    "patternTags": [
-      "compression_break",
-      "breakout",
-      "higher_timeframe"
-    ],
-    "title": "GC Compression Break"
-  },
-  {
-    "id": "btc-2025-02-18-range-fakeout",
-    "file": "btc-2025-02-18-range-fakeout.json",
-    "market": "BTC",
-    "timeframe": "5m",
-    "difficulty": "hard",
-    "session": "NewYork",
-    "patternTags": [
-      "failed_breakout",
-      "range_fakeout",
-      "liquidity_sweep"
-    ],
-    "title": "BTC Range Fakeout"
-  },
-  {
-    "id": "nq-2025-03-03-opening-drive",
-    "file": "nq-2025-03-03-opening-drive.json",
+    "id": "nq-vwap-reclaim-002",
     "market": "NQ",
     "timeframe": "1m",
-    "difficulty": "easy",
-    "session": "NewYork",
+    "difficulty": "Easy",
+    "session": "Midday Rotation",
+    "pattern": "VWAP Reclaim",
     "patternTags": [
-      "opening_drive",
-      "momentum",
-      "trend_day"
+      "vwap_reclaim",
+      "trend",
+      "risk"
     ],
-    "title": "NQ Opening Drive"
+    "file": "nq-vwap-reclaim-002.json"
   },
   {
-    "id": "es-2025-03-11-prior-high",
-    "file": "es-2025-03-11-prior-high.json",
-    "market": "ES",
-    "timeframe": "5m",
-    "difficulty": "medium",
-    "session": "NewYork",
-    "patternTags": [
-      "prior_day_high",
-      "retest_hold",
-      "continuation"
-    ],
-    "title": "ES Prior High Retest"
-  },
-  {
-    "id": "cl-2025-03-19-supply-reject",
-    "file": "cl-2025-03-19-supply-reject.json",
-    "market": "CL",
-    "timeframe": "5m",
-    "difficulty": "medium",
-    "session": "NewYork",
-    "patternTags": [
-      "supply_zone",
-      "lower_high",
-      "rejection"
-    ],
-    "title": "CL Supply Zone Reject"
-  },
-  {
-    "id": "gc-2025-04-02-cpi-expansion",
-    "file": "gc-2025-04-02-cpi-expansion.json",
-    "market": "GC",
+    "id": "nq-vwap-reclaim-003",
+    "market": "NQ",
     "timeframe": "1m",
-    "difficulty": "hard",
-    "session": "NewYork",
+    "difficulty": "Easy",
+    "session": "Power Hour",
+    "pattern": "VWAP Reclaim",
     "patternTags": [
-      "cpi",
-      "news_expansion",
+      "vwap_reclaim",
+      "liquidity",
       "momentum"
     ],
-    "title": "GC CPI Expansion"
+    "file": "nq-vwap-reclaim-003.json"
   },
   {
-    "id": "btc-2025-04-08-asia-sweep",
-    "file": "btc-2025-04-08-asia-sweep.json",
-    "market": "BTC",
-    "timeframe": "5m",
-    "difficulty": "medium",
-    "session": "Asia",
+    "id": "nq-vwap-reclaim-004",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Easy",
+    "session": "London Open",
+    "pattern": "VWAP Reclaim",
     "patternTags": [
-      "asia_session",
-      "liquidity_sweep",
-      "reclaim"
+      "vwap_reclaim",
+      "vwap",
+      "range"
     ],
-    "title": "BTC Asia Low Sweep"
+    "file": "nq-vwap-reclaim-004.json"
   },
   {
-    "id": "nq-2025-04-16-lunch-chop",
-    "file": "nq-2025-04-16-lunch-chop.json",
+    "id": "nq-vwap-reclaim-005",
     "market": "NQ",
     "timeframe": "5m",
-    "difficulty": "easy",
-    "session": "NewYork",
+    "difficulty": "Easy",
+    "session": "Event Window",
+    "pattern": "VWAP Reclaim",
     "patternTags": [
-      "lunch_chop",
-      "no_trade",
-      "discipline"
+      "vwap_reclaim",
+      "trend",
+      "risk"
     ],
-    "title": "NQ Lunch Chop"
+    "file": "nq-vwap-reclaim-005.json"
   },
   {
-    "id": "es-2025-04-24-failed-breakdown",
-    "file": "es-2025-04-24-failed-breakdown.json",
-    "market": "ES",
+    "id": "nq-vwap-reclaim-006",
+    "market": "NQ",
     "timeframe": "1m",
-    "difficulty": "medium",
-    "session": "NewYork",
+    "difficulty": "Medium",
+    "session": "New York Open",
+    "pattern": "VWAP Reclaim",
     "patternTags": [
-      "failed_breakdown",
-      "demand_reclaim",
-      "trap"
+      "vwap_reclaim",
+      "liquidity",
+      "momentum"
     ],
-    "title": "ES Failed Breakdown"
+    "file": "nq-vwap-reclaim-006.json"
   },
   {
-    "id": "cl-2025-05-01-opening-range",
-    "file": "cl-2025-05-01-opening-range.json",
-    "market": "CL",
+    "id": "nq-vwap-reclaim-007",
+    "market": "NQ",
     "timeframe": "1m",
-    "difficulty": "hard",
-    "session": "NewYork",
+    "difficulty": "Medium",
+    "session": "Midday Rotation",
+    "pattern": "VWAP Reclaim",
     "patternTags": [
-      "opening_range",
-      "liquidity_sweep",
-      "reversal"
+      "vwap_reclaim",
+      "vwap",
+      "range"
     ],
-    "title": "CL Opening Range Trap"
+    "file": "nq-vwap-reclaim-007.json"
   },
   {
-    "id": "gc-2025-05-09-london-reversal",
-    "file": "gc-2025-05-09-london-reversal.json",
-    "market": "GC",
+    "id": "nq-vwap-reclaim-008",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "Power Hour",
+    "pattern": "VWAP Reclaim",
+    "patternTags": [
+      "vwap_reclaim",
+      "trend",
+      "risk"
+    ],
+    "file": "nq-vwap-reclaim-008.json"
+  },
+  {
+    "id": "nq-vwap-reclaim-009",
+    "market": "NQ",
     "timeframe": "5m",
-    "difficulty": "medium",
-    "session": "London",
+    "difficulty": "Medium",
+    "session": "London Open",
+    "pattern": "VWAP Reclaim",
     "patternTags": [
-      "london_session",
+      "vwap_reclaim",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "nq-vwap-reclaim-009.json"
+  },
+  {
+    "id": "nq-vwap-reclaim-010",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "Event Window",
+    "pattern": "VWAP Reclaim",
+    "patternTags": [
+      "vwap_reclaim",
+      "vwap",
+      "range"
+    ],
+    "file": "nq-vwap-reclaim-010.json"
+  },
+  {
+    "id": "nq-vwap-reclaim-011",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "New York Open",
+    "pattern": "VWAP Reclaim",
+    "patternTags": [
+      "vwap_reclaim",
+      "trend",
+      "risk"
+    ],
+    "file": "nq-vwap-reclaim-011.json"
+  },
+  {
+    "id": "nq-vwap-reclaim-012",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Hard",
+    "session": "Midday Rotation",
+    "pattern": "VWAP Reclaim",
+    "patternTags": [
+      "vwap_reclaim",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "nq-vwap-reclaim-012.json"
+  },
+  {
+    "id": "nq-vwap-reclaim-013",
+    "market": "NQ",
+    "timeframe": "5m",
+    "difficulty": "Hard",
+    "session": "Power Hour",
+    "pattern": "VWAP Reclaim",
+    "patternTags": [
+      "vwap_reclaim",
+      "vwap",
+      "range"
+    ],
+    "file": "nq-vwap-reclaim-013.json"
+  },
+  {
+    "id": "nq-vwap-reclaim-014",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Hard",
+    "session": "London Open",
+    "pattern": "VWAP Reclaim",
+    "patternTags": [
+      "vwap_reclaim",
+      "trend",
+      "risk"
+    ],
+    "file": "nq-vwap-reclaim-014.json"
+  },
+  {
+    "id": "nq-vwap-reclaim-015",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Hard",
+    "session": "Event Window",
+    "pattern": "VWAP Reclaim",
+    "patternTags": [
+      "vwap_reclaim",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "nq-vwap-reclaim-015.json"
+  },
+  {
+    "id": "nq-liquidity-sweep-016",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Easy",
+    "session": "New York Open",
+    "pattern": "Liquidity Sweep",
+    "patternTags": [
+      "liquidity_sweep",
+      "vwap",
+      "range"
+    ],
+    "file": "nq-liquidity-sweep-016.json"
+  },
+  {
+    "id": "nq-liquidity-sweep-017",
+    "market": "NQ",
+    "timeframe": "5m",
+    "difficulty": "Easy",
+    "session": "Midday Rotation",
+    "pattern": "Liquidity Sweep",
+    "patternTags": [
+      "liquidity_sweep",
+      "trend",
+      "risk"
+    ],
+    "file": "nq-liquidity-sweep-017.json"
+  },
+  {
+    "id": "nq-liquidity-sweep-018",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Easy",
+    "session": "Power Hour",
+    "pattern": "Liquidity Sweep",
+    "patternTags": [
+      "liquidity_sweep",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "nq-liquidity-sweep-018.json"
+  },
+  {
+    "id": "nq-liquidity-sweep-019",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Easy",
+    "session": "London Open",
+    "pattern": "Liquidity Sweep",
+    "patternTags": [
+      "liquidity_sweep",
+      "vwap",
+      "range"
+    ],
+    "file": "nq-liquidity-sweep-019.json"
+  },
+  {
+    "id": "nq-liquidity-sweep-020",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "Event Window",
+    "pattern": "Liquidity Sweep",
+    "patternTags": [
+      "liquidity_sweep",
+      "trend",
+      "risk"
+    ],
+    "file": "nq-liquidity-sweep-020.json"
+  },
+  {
+    "id": "nq-liquidity-sweep-021",
+    "market": "NQ",
+    "timeframe": "5m",
+    "difficulty": "Medium",
+    "session": "New York Open",
+    "pattern": "Liquidity Sweep",
+    "patternTags": [
+      "liquidity_sweep",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "nq-liquidity-sweep-021.json"
+  },
+  {
+    "id": "nq-liquidity-sweep-022",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "Midday Rotation",
+    "pattern": "Liquidity Sweep",
+    "patternTags": [
+      "liquidity_sweep",
+      "vwap",
+      "range"
+    ],
+    "file": "nq-liquidity-sweep-022.json"
+  },
+  {
+    "id": "nq-liquidity-sweep-023",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "Power Hour",
+    "pattern": "Liquidity Sweep",
+    "patternTags": [
+      "liquidity_sweep",
+      "trend",
+      "risk"
+    ],
+    "file": "nq-liquidity-sweep-023.json"
+  },
+  {
+    "id": "nq-liquidity-sweep-024",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "London Open",
+    "pattern": "Liquidity Sweep",
+    "patternTags": [
+      "liquidity_sweep",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "nq-liquidity-sweep-024.json"
+  },
+  {
+    "id": "nq-liquidity-sweep-025",
+    "market": "NQ",
+    "timeframe": "5m",
+    "difficulty": "Medium",
+    "session": "Event Window",
+    "pattern": "Liquidity Sweep",
+    "patternTags": [
+      "liquidity_sweep",
+      "vwap",
+      "range"
+    ],
+    "file": "nq-liquidity-sweep-025.json"
+  },
+  {
+    "id": "nq-liquidity-sweep-026",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Hard",
+    "session": "New York Open",
+    "pattern": "Liquidity Sweep",
+    "patternTags": [
+      "liquidity_sweep",
+      "trend",
+      "risk"
+    ],
+    "file": "nq-liquidity-sweep-026.json"
+  },
+  {
+    "id": "nq-liquidity-sweep-027",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Hard",
+    "session": "Midday Rotation",
+    "pattern": "Liquidity Sweep",
+    "patternTags": [
+      "liquidity_sweep",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "nq-liquidity-sweep-027.json"
+  },
+  {
+    "id": "nq-liquidity-sweep-028",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Hard",
+    "session": "Power Hour",
+    "pattern": "Liquidity Sweep",
+    "patternTags": [
+      "liquidity_sweep",
+      "vwap",
+      "range"
+    ],
+    "file": "nq-liquidity-sweep-028.json"
+  },
+  {
+    "id": "nq-liquidity-sweep-029",
+    "market": "NQ",
+    "timeframe": "5m",
+    "difficulty": "Hard",
+    "session": "London Open",
+    "pattern": "Liquidity Sweep",
+    "patternTags": [
+      "liquidity_sweep",
+      "trend",
+      "risk"
+    ],
+    "file": "nq-liquidity-sweep-029.json"
+  },
+  {
+    "id": "nq-liquidity-sweep-030",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Easy",
+    "session": "Event Window",
+    "pattern": "Liquidity Sweep",
+    "patternTags": [
+      "liquidity_sweep",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "nq-liquidity-sweep-030.json"
+  },
+  {
+    "id": "nq-failed-breakout-031",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Easy",
+    "session": "New York Open",
+    "pattern": "Failed Breakout",
+    "patternTags": [
       "failed_breakout",
-      "supply_zone"
+      "vwap",
+      "range"
     ],
-    "title": "GC London Reversal"
+    "file": "nq-failed-breakout-031.json"
   },
   {
-    "id": "btc-2025-05-15-breakout-hold",
-    "file": "btc-2025-05-15-breakout-hold.json",
-    "market": "BTC",
-    "timeframe": "5m",
-    "difficulty": "easy",
-    "session": "NewYork",
-    "patternTags": [
-      "breakout",
-      "retest_hold",
-      "continuation"
-    ],
-    "title": "BTC Breakout Hold"
-  },
-  {
-    "id": "nq-2025-05-22-vwap-rejection",
-    "file": "nq-2025-05-22-vwap-rejection.json",
+    "id": "nq-failed-breakout-032",
     "market": "NQ",
     "timeframe": "1m",
-    "difficulty": "medium",
-    "session": "NewYork",
+    "difficulty": "Easy",
+    "session": "Midday Rotation",
+    "pattern": "Failed Breakout",
     "patternTags": [
-      "vwap_rejection",
-      "lower_high",
-      "trend_continuation"
+      "failed_breakout",
+      "trend",
+      "risk"
     ],
-    "title": "NQ VWAP Rejection"
+    "file": "nq-failed-breakout-032.json"
   },
   {
-    "id": "es-2025-06-04-fomc-chop",
-    "file": "es-2025-06-04-fomc-chop.json",
+    "id": "nq-failed-breakout-033",
+    "market": "NQ",
+    "timeframe": "5m",
+    "difficulty": "Easy",
+    "session": "Power Hour",
+    "pattern": "Failed Breakout",
+    "patternTags": [
+      "failed_breakout",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "nq-failed-breakout-033.json"
+  },
+  {
+    "id": "nq-failed-breakout-034",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "London Open",
+    "pattern": "Failed Breakout",
+    "patternTags": [
+      "failed_breakout",
+      "vwap",
+      "range"
+    ],
+    "file": "nq-failed-breakout-034.json"
+  },
+  {
+    "id": "nq-failed-breakout-035",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "Event Window",
+    "pattern": "Failed Breakout",
+    "patternTags": [
+      "failed_breakout",
+      "trend",
+      "risk"
+    ],
+    "file": "nq-failed-breakout-035.json"
+  },
+  {
+    "id": "nq-failed-breakout-036",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "New York Open",
+    "pattern": "Failed Breakout",
+    "patternTags": [
+      "failed_breakout",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "nq-failed-breakout-036.json"
+  },
+  {
+    "id": "nq-failed-breakout-037",
+    "market": "NQ",
+    "timeframe": "5m",
+    "difficulty": "Medium",
+    "session": "Midday Rotation",
+    "pattern": "Failed Breakout",
+    "patternTags": [
+      "failed_breakout",
+      "vwap",
+      "range"
+    ],
+    "file": "nq-failed-breakout-037.json"
+  },
+  {
+    "id": "nq-failed-breakout-038",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "Power Hour",
+    "pattern": "Failed Breakout",
+    "patternTags": [
+      "failed_breakout",
+      "trend",
+      "risk"
+    ],
+    "file": "nq-failed-breakout-038.json"
+  },
+  {
+    "id": "nq-failed-breakout-039",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "London Open",
+    "pattern": "Failed Breakout",
+    "patternTags": [
+      "failed_breakout",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "nq-failed-breakout-039.json"
+  },
+  {
+    "id": "nq-failed-breakout-040",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "Event Window",
+    "pattern": "Failed Breakout",
+    "patternTags": [
+      "failed_breakout",
+      "vwap",
+      "range"
+    ],
+    "file": "nq-failed-breakout-040.json"
+  },
+  {
+    "id": "es-failed-breakout-041",
+    "market": "ES",
+    "timeframe": "5m",
+    "difficulty": "Hard",
+    "session": "New York Open",
+    "pattern": "Failed Breakout",
+    "patternTags": [
+      "failed_breakout",
+      "trend",
+      "risk"
+    ],
+    "file": "es-failed-breakout-041.json"
+  },
+  {
+    "id": "es-failed-breakout-042",
     "market": "ES",
     "timeframe": "1m",
-    "difficulty": "hard",
-    "session": "NewYork",
+    "difficulty": "Hard",
+    "session": "Midday Rotation",
+    "pattern": "Failed Breakout",
     "patternTags": [
-      "fomc",
-      "news_whipsaw",
-      "no_trade"
+      "failed_breakout",
+      "liquidity",
+      "momentum"
     ],
-    "title": "ES FOMC Chop"
+    "file": "es-failed-breakout-042.json"
   },
   {
-    "id": "cl-2025-06-10-demand-reclaim",
-    "file": "cl-2025-06-10-demand-reclaim.json",
+    "id": "es-failed-breakout-043",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "Hard",
+    "session": "Power Hour",
+    "pattern": "Failed Breakout",
+    "patternTags": [
+      "failed_breakout",
+      "vwap",
+      "range"
+    ],
+    "file": "es-failed-breakout-043.json"
+  },
+  {
+    "id": "es-failed-breakout-044",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "Easy",
+    "session": "London Open",
+    "pattern": "Failed Breakout",
+    "patternTags": [
+      "failed_breakout",
+      "trend",
+      "risk"
+    ],
+    "file": "es-failed-breakout-044.json"
+  },
+  {
+    "id": "es-failed-breakout-045",
+    "market": "ES",
+    "timeframe": "5m",
+    "difficulty": "Easy",
+    "session": "Event Window",
+    "pattern": "Failed Breakout",
+    "patternTags": [
+      "failed_breakout",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "es-failed-breakout-045.json"
+  },
+  {
+    "id": "es-opening-range-break-046",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "Easy",
+    "session": "New York Open",
+    "pattern": "Opening Range Break",
+    "patternTags": [
+      "opening_range_break",
+      "vwap",
+      "range"
+    ],
+    "file": "es-opening-range-break-046.json"
+  },
+  {
+    "id": "es-opening-range-break-047",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "Easy",
+    "session": "Midday Rotation",
+    "pattern": "Opening Range Break",
+    "patternTags": [
+      "opening_range_break",
+      "trend",
+      "risk"
+    ],
+    "file": "es-opening-range-break-047.json"
+  },
+  {
+    "id": "es-opening-range-break-048",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "Easy",
+    "session": "Power Hour",
+    "pattern": "Opening Range Break",
+    "patternTags": [
+      "opening_range_break",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "es-opening-range-break-048.json"
+  },
+  {
+    "id": "es-opening-range-break-049",
+    "market": "ES",
+    "timeframe": "5m",
+    "difficulty": "Medium",
+    "session": "London Open",
+    "pattern": "Opening Range Break",
+    "patternTags": [
+      "opening_range_break",
+      "vwap",
+      "range"
+    ],
+    "file": "es-opening-range-break-049.json"
+  },
+  {
+    "id": "es-opening-range-break-050",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "Event Window",
+    "pattern": "Opening Range Break",
+    "patternTags": [
+      "opening_range_break",
+      "trend",
+      "risk"
+    ],
+    "file": "es-opening-range-break-050.json"
+  },
+  {
+    "id": "es-opening-range-break-051",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "New York Open",
+    "pattern": "Opening Range Break",
+    "patternTags": [
+      "opening_range_break",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "es-opening-range-break-051.json"
+  },
+  {
+    "id": "es-opening-range-break-052",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "Midday Rotation",
+    "pattern": "Opening Range Break",
+    "patternTags": [
+      "opening_range_break",
+      "vwap",
+      "range"
+    ],
+    "file": "es-opening-range-break-052.json"
+  },
+  {
+    "id": "es-opening-range-break-053",
+    "market": "ES",
+    "timeframe": "5m",
+    "difficulty": "Medium",
+    "session": "Power Hour",
+    "pattern": "Opening Range Break",
+    "patternTags": [
+      "opening_range_break",
+      "trend",
+      "risk"
+    ],
+    "file": "es-opening-range-break-053.json"
+  },
+  {
+    "id": "es-opening-range-break-054",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "London Open",
+    "pattern": "Opening Range Break",
+    "patternTags": [
+      "opening_range_break",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "es-opening-range-break-054.json"
+  },
+  {
+    "id": "es-opening-range-break-055",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "Hard",
+    "session": "Event Window",
+    "pattern": "Opening Range Break",
+    "patternTags": [
+      "opening_range_break",
+      "vwap",
+      "range"
+    ],
+    "file": "es-opening-range-break-055.json"
+  },
+  {
+    "id": "es-opening-range-break-056",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "Hard",
+    "session": "New York Open",
+    "pattern": "Opening Range Break",
+    "patternTags": [
+      "opening_range_break",
+      "trend",
+      "risk"
+    ],
+    "file": "es-opening-range-break-056.json"
+  },
+  {
+    "id": "es-opening-range-break-057",
+    "market": "ES",
+    "timeframe": "5m",
+    "difficulty": "Hard",
+    "session": "Midday Rotation",
+    "pattern": "Opening Range Break",
+    "patternTags": [
+      "opening_range_break",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "es-opening-range-break-057.json"
+  },
+  {
+    "id": "es-opening-range-break-058",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "Hard",
+    "session": "Power Hour",
+    "pattern": "Opening Range Break",
+    "patternTags": [
+      "opening_range_break",
+      "vwap",
+      "range"
+    ],
+    "file": "es-opening-range-break-058.json"
+  },
+  {
+    "id": "es-opening-range-break-059",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "Easy",
+    "session": "London Open",
+    "pattern": "Opening Range Break",
+    "patternTags": [
+      "opening_range_break",
+      "trend",
+      "risk"
+    ],
+    "file": "es-opening-range-break-059.json"
+  },
+  {
+    "id": "es-opening-range-break-060",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "Easy",
+    "session": "Event Window",
+    "pattern": "Opening Range Break",
+    "patternTags": [
+      "opening_range_break",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "es-opening-range-break-060.json"
+  },
+  {
+    "id": "es-news-reaction-061",
+    "market": "ES",
+    "timeframe": "5m",
+    "difficulty": "Easy",
+    "session": "New York Open",
+    "pattern": "News Reaction",
+    "patternTags": [
+      "news_reaction",
+      "vwap",
+      "range"
+    ],
+    "file": "es-news-reaction-061.json"
+  },
+  {
+    "id": "es-news-reaction-062",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "Easy",
+    "session": "Midday Rotation",
+    "pattern": "News Reaction",
+    "patternTags": [
+      "news_reaction",
+      "trend",
+      "risk"
+    ],
+    "file": "es-news-reaction-062.json"
+  },
+  {
+    "id": "es-news-reaction-063",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "Power Hour",
+    "pattern": "News Reaction",
+    "patternTags": [
+      "news_reaction",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "es-news-reaction-063.json"
+  },
+  {
+    "id": "es-news-reaction-064",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "London Open",
+    "pattern": "News Reaction",
+    "patternTags": [
+      "news_reaction",
+      "vwap",
+      "range"
+    ],
+    "file": "es-news-reaction-064.json"
+  },
+  {
+    "id": "es-news-reaction-065",
+    "market": "ES",
+    "timeframe": "5m",
+    "difficulty": "Medium",
+    "session": "Event Window",
+    "pattern": "News Reaction",
+    "patternTags": [
+      "news_reaction",
+      "trend",
+      "risk"
+    ],
+    "file": "es-news-reaction-065.json"
+  },
+  {
+    "id": "es-news-reaction-066",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "New York Open",
+    "pattern": "News Reaction",
+    "patternTags": [
+      "news_reaction",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "es-news-reaction-066.json"
+  },
+  {
+    "id": "es-news-reaction-067",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "Midday Rotation",
+    "pattern": "News Reaction",
+    "patternTags": [
+      "news_reaction",
+      "vwap",
+      "range"
+    ],
+    "file": "es-news-reaction-067.json"
+  },
+  {
+    "id": "es-news-reaction-068",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "Power Hour",
+    "pattern": "News Reaction",
+    "patternTags": [
+      "news_reaction",
+      "trend",
+      "risk"
+    ],
+    "file": "es-news-reaction-068.json"
+  },
+  {
+    "id": "es-news-reaction-069",
+    "market": "ES",
+    "timeframe": "5m",
+    "difficulty": "Hard",
+    "session": "London Open",
+    "pattern": "News Reaction",
+    "patternTags": [
+      "news_reaction",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "es-news-reaction-069.json"
+  },
+  {
+    "id": "es-news-reaction-070",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "Hard",
+    "session": "Event Window",
+    "pattern": "News Reaction",
+    "patternTags": [
+      "news_reaction",
+      "vwap",
+      "range"
+    ],
+    "file": "es-news-reaction-070.json"
+  },
+  {
+    "id": "cl-trend-continuation-071",
+    "market": "CL",
+    "timeframe": "1m",
+    "difficulty": "Hard",
+    "session": "New York Open",
+    "pattern": "Trend Continuation",
+    "patternTags": [
+      "trend_continuation",
+      "trend",
+      "risk"
+    ],
+    "file": "cl-trend-continuation-071.json"
+  },
+  {
+    "id": "cl-trend-continuation-072",
+    "market": "CL",
+    "timeframe": "1m",
+    "difficulty": "Hard",
+    "session": "Midday Rotation",
+    "pattern": "Trend Continuation",
+    "patternTags": [
+      "trend_continuation",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "cl-trend-continuation-072.json"
+  },
+  {
+    "id": "cl-trend-continuation-073",
     "market": "CL",
     "timeframe": "5m",
-    "difficulty": "medium",
-    "session": "NewYork",
+    "difficulty": "Easy",
+    "session": "Power Hour",
+    "pattern": "Trend Continuation",
     "patternTags": [
-      "demand_zone",
-      "failed_breakdown",
-      "reclaim"
+      "trend_continuation",
+      "vwap",
+      "range"
     ],
-    "title": "CL Demand Reclaim"
+    "file": "cl-trend-continuation-073.json"
   },
   {
-    "id": "gc-2025-06-18-trend-pullback",
-    "file": "gc-2025-06-18-trend-pullback.json",
+    "id": "cl-trend-continuation-074",
+    "market": "CL",
+    "timeframe": "1m",
+    "difficulty": "Easy",
+    "session": "London Open",
+    "pattern": "Trend Continuation",
+    "patternTags": [
+      "trend_continuation",
+      "trend",
+      "risk"
+    ],
+    "file": "cl-trend-continuation-074.json"
+  },
+  {
+    "id": "cl-trend-continuation-075",
+    "market": "CL",
+    "timeframe": "1m",
+    "difficulty": "Easy",
+    "session": "Event Window",
+    "pattern": "Trend Continuation",
+    "patternTags": [
+      "trend_continuation",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "cl-trend-continuation-075.json"
+  },
+  {
+    "id": "cl-trend-continuation-076",
+    "market": "CL",
+    "timeframe": "1m",
+    "difficulty": "Easy",
+    "session": "New York Open",
+    "pattern": "Trend Continuation",
+    "patternTags": [
+      "trend_continuation",
+      "vwap",
+      "range"
+    ],
+    "file": "cl-trend-continuation-076.json"
+  },
+  {
+    "id": "cl-trend-continuation-077",
+    "market": "CL",
+    "timeframe": "5m",
+    "difficulty": "Medium",
+    "session": "Midday Rotation",
+    "pattern": "Trend Continuation",
+    "patternTags": [
+      "trend_continuation",
+      "trend",
+      "risk"
+    ],
+    "file": "cl-trend-continuation-077.json"
+  },
+  {
+    "id": "cl-trend-continuation-078",
+    "market": "CL",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "Power Hour",
+    "pattern": "Trend Continuation",
+    "patternTags": [
+      "trend_continuation",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "cl-trend-continuation-078.json"
+  },
+  {
+    "id": "cl-trend-continuation-079",
+    "market": "CL",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "London Open",
+    "pattern": "Trend Continuation",
+    "patternTags": [
+      "trend_continuation",
+      "vwap",
+      "range"
+    ],
+    "file": "cl-trend-continuation-079.json"
+  },
+  {
+    "id": "cl-trend-continuation-080",
+    "market": "CL",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "Event Window",
+    "pattern": "Trend Continuation",
+    "patternTags": [
+      "trend_continuation",
+      "trend",
+      "risk"
+    ],
+    "file": "cl-trend-continuation-080.json"
+  },
+  {
+    "id": "gc-mean-reversion-081",
     "market": "GC",
     "timeframe": "5m",
-    "difficulty": "easy",
-    "session": "NewYork",
+    "difficulty": "Medium",
+    "session": "New York Open",
+    "pattern": "Mean Reversion",
     "patternTags": [
-      "trend_day",
-      "pullback",
-      "continuation"
+      "mean_reversion",
+      "liquidity",
+      "momentum"
     ],
-    "title": "GC Trend Pullback"
+    "file": "gc-mean-reversion-081.json"
   },
   {
-    "id": "nq-2025-06-25-afternoon-fakeout",
-    "file": "nq-2025-06-25-afternoon-fakeout.json",
-    "market": "NQ",
+    "id": "gc-mean-reversion-082",
+    "market": "GC",
     "timeframe": "1m",
-    "difficulty": "hard",
-    "session": "NewYork",
+    "difficulty": "Medium",
+    "session": "Midday Rotation",
+    "pattern": "Mean Reversion",
     "patternTags": [
-      "range_fakeout",
-      "liquidity_sweep",
-      "reversal"
+      "mean_reversion",
+      "vwap",
+      "range"
     ],
-    "title": "NQ Afternoon Fakeout"
+    "file": "gc-mean-reversion-082.json"
+  },
+  {
+    "id": "gc-mean-reversion-083",
+    "market": "GC",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "Power Hour",
+    "pattern": "Mean Reversion",
+    "patternTags": [
+      "mean_reversion",
+      "trend",
+      "risk"
+    ],
+    "file": "gc-mean-reversion-083.json"
+  },
+  {
+    "id": "gc-mean-reversion-084",
+    "market": "GC",
+    "timeframe": "1m",
+    "difficulty": "Hard",
+    "session": "London Open",
+    "pattern": "Mean Reversion",
+    "patternTags": [
+      "mean_reversion",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "gc-mean-reversion-084.json"
+  },
+  {
+    "id": "gc-mean-reversion-085",
+    "market": "GC",
+    "timeframe": "5m",
+    "difficulty": "Hard",
+    "session": "Event Window",
+    "pattern": "Mean Reversion",
+    "patternTags": [
+      "mean_reversion",
+      "vwap",
+      "range"
+    ],
+    "file": "gc-mean-reversion-085.json"
+  },
+  {
+    "id": "gc-mean-reversion-086",
+    "market": "GC",
+    "timeframe": "1m",
+    "difficulty": "Hard",
+    "session": "New York Open",
+    "pattern": "Mean Reversion",
+    "patternTags": [
+      "mean_reversion",
+      "trend",
+      "risk"
+    ],
+    "file": "gc-mean-reversion-086.json"
+  },
+  {
+    "id": "gc-mean-reversion-087",
+    "market": "GC",
+    "timeframe": "1m",
+    "difficulty": "Easy",
+    "session": "Midday Rotation",
+    "pattern": "Mean Reversion",
+    "patternTags": [
+      "mean_reversion",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "gc-mean-reversion-087.json"
+  },
+  {
+    "id": "gc-mean-reversion-088",
+    "market": "GC",
+    "timeframe": "1m",
+    "difficulty": "Easy",
+    "session": "Power Hour",
+    "pattern": "Mean Reversion",
+    "patternTags": [
+      "mean_reversion",
+      "vwap",
+      "range"
+    ],
+    "file": "gc-mean-reversion-088.json"
+  },
+  {
+    "id": "gc-mean-reversion-089",
+    "market": "GC",
+    "timeframe": "5m",
+    "difficulty": "Easy",
+    "session": "London Open",
+    "pattern": "Mean Reversion",
+    "patternTags": [
+      "mean_reversion",
+      "trend",
+      "risk"
+    ],
+    "file": "gc-mean-reversion-089.json"
+  },
+  {
+    "id": "gc-mean-reversion-090",
+    "market": "GC",
+    "timeframe": "1m",
+    "difficulty": "Easy",
+    "session": "Event Window",
+    "pattern": "Mean Reversion",
+    "patternTags": [
+      "mean_reversion",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "gc-mean-reversion-090.json"
+  },
+  {
+    "id": "btc-trap-setup-091",
+    "market": "BTC",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "New York Open",
+    "pattern": "Trap Setup",
+    "patternTags": [
+      "trap_setup",
+      "vwap",
+      "range"
+    ],
+    "file": "btc-trap-setup-091.json"
+  },
+  {
+    "id": "btc-trap-setup-092",
+    "market": "BTC",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "Midday Rotation",
+    "pattern": "Trap Setup",
+    "patternTags": [
+      "trap_setup",
+      "trend",
+      "risk"
+    ],
+    "file": "btc-trap-setup-092.json"
+  },
+  {
+    "id": "btc-trap-setup-093",
+    "market": "BTC",
+    "timeframe": "5m",
+    "difficulty": "Medium",
+    "session": "Power Hour",
+    "pattern": "Trap Setup",
+    "patternTags": [
+      "trap_setup",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "btc-trap-setup-093.json"
+  },
+  {
+    "id": "btc-trap-setup-094",
+    "market": "BTC",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "London Open",
+    "pattern": "Trap Setup",
+    "patternTags": [
+      "trap_setup",
+      "vwap",
+      "range"
+    ],
+    "file": "btc-trap-setup-094.json"
+  },
+  {
+    "id": "btc-trap-setup-095",
+    "market": "BTC",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "Event Window",
+    "pattern": "Trap Setup",
+    "patternTags": [
+      "trap_setup",
+      "trend",
+      "risk"
+    ],
+    "file": "btc-trap-setup-095.json"
+  },
+  {
+    "id": "btc-trap-setup-096",
+    "market": "BTC",
+    "timeframe": "1m",
+    "difficulty": "Medium",
+    "session": "New York Open",
+    "pattern": "Trap Setup",
+    "patternTags": [
+      "trap_setup",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "btc-trap-setup-096.json"
+  },
+  {
+    "id": "btc-trap-setup-097",
+    "market": "BTC",
+    "timeframe": "5m",
+    "difficulty": "Medium",
+    "session": "Midday Rotation",
+    "pattern": "Trap Setup",
+    "patternTags": [
+      "trap_setup",
+      "vwap",
+      "range"
+    ],
+    "file": "btc-trap-setup-097.json"
+  },
+  {
+    "id": "btc-trap-setup-098",
+    "market": "BTC",
+    "timeframe": "1m",
+    "difficulty": "Hard",
+    "session": "Power Hour",
+    "pattern": "Trap Setup",
+    "patternTags": [
+      "trap_setup",
+      "trend",
+      "risk"
+    ],
+    "file": "btc-trap-setup-098.json"
+  },
+  {
+    "id": "btc-trap-setup-099",
+    "market": "BTC",
+    "timeframe": "1m",
+    "difficulty": "Hard",
+    "session": "London Open",
+    "pattern": "Trap Setup",
+    "patternTags": [
+      "trap_setup",
+      "liquidity",
+      "momentum"
+    ],
+    "file": "btc-trap-setup-099.json"
+  },
+  {
+    "id": "btc-trap-setup-100",
+    "market": "BTC",
+    "timeframe": "1m",
+    "difficulty": "Hard",
+    "session": "Event Window",
+    "pattern": "Trap Setup",
+    "patternTags": [
+      "trap_setup",
+      "vwap",
+      "range"
+    ],
+    "file": "btc-trap-setup-100.json"
   }
 ]
