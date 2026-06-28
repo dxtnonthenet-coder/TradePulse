@@ -763,7 +763,10 @@ function navigateTo(viewName = "home", options = {}) {
   if (!options.fromHash && window.location.hash !== `#${view}`) {
     history.pushState({ view }, "", `#${view}`);
   }
-  if (options.scroll !== false) window.scrollTo({ top: 0, behavior: "smooth" });
+  if (options.scroll !== false) {
+    const topTarget = view === "home" ? document.querySelector(".hero") : null;
+    (topTarget || document.documentElement).scrollIntoView({ block: "start", behavior: "smooth" });
+  }
 }
 
 function showPage(page) {

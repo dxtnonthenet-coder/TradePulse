@@ -7853,6 +7853,11 @@ body.has-paid-plan .side-divider.subscriber-nav { display: block; }
     overflow: hidden !important;
   }
 
+  .brand:focus:not(:focus-visible) {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
   .brand-icon,
   .top-nav .brand-icon {
     flex: 0 0 46px !important;
@@ -7873,41 +7878,42 @@ body.has-paid-plan .side-divider.subscriber-nav { display: block; }
   }
 
   .hero-grid {
-    grid-template-columns: minmax(420px, 0.95fr) minmax(420px, 0.85fr) !important;
-    gap: clamp(28px, 4vw, 70px) !important;
+    grid-template-columns: minmax(380px, 0.82fr) minmax(420px, 0.9fr) !important;
+    gap: clamp(28px, 3.2vw, 56px) !important;
     min-height: auto !important;
-    padding: clamp(36px, 6vh, 76px) 0 42px !important;
+    padding: clamp(26px, 4vh, 48px) 0 34px !important;
   }
 
   .hero-copy h1 {
-    max-width: 700px !important;
-    font-size: clamp(52px, 5.4vw, 82px) !important;
-    line-height: 0.98 !important;
+    max-width: 560px !important;
+    font-size: clamp(42px, 4.15vw, 64px) !important;
+    line-height: 1.02 !important;
   }
 
   .hero-copy .lead {
-    max-width: 660px !important;
-    font-size: clamp(17px, 1.25vw, 22px) !important;
+    max-width: 600px !important;
+    font-size: clamp(15px, 1.02vw, 18px) !important;
+    line-height: 1.55 !important;
   }
 
   .hero-cta-row {
     display: grid !important;
-    grid-template-columns: minmax(260px, 1fr) minmax(220px, 0.48fr) !important;
-    max-width: 780px !important;
+    grid-template-columns: minmax(240px, 1fr) minmax(190px, 0.44fr) !important;
+    max-width: 680px !important;
   }
 
   .hero-replay-demo {
     align-self: center !important;
-    max-width: 760px !important;
+    max-width: 640px !important;
     margin-left: auto !important;
   }
 
   .demo-chart {
-    height: clamp(260px, 29vw, 360px) !important;
+    height: clamp(240px, 25vw, 320px) !important;
   }
 
   .hero-performance {
-    max-width: 720px !important;
+    max-width: 620px !important;
   }
 }
 
