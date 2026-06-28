@@ -227,6 +227,12 @@
       </header>
 
       <main>
+        <div class="beta-banner hidden" id="beta-banner">
+          <span>TradePulse is in Beta — your feedback shapes what gets built next.</span>
+          <button type="button" id="open-feedback">Share feedback →</button>
+          <button type="button" id="dismiss-beta" aria-label="Dismiss beta banner">×</button>
+        </div>
+
         <div class="free-plan-banner hidden" id="free-plan-banner">
           <span id="free-plan-banner-copy">You're on the Free Plan — 10 plays remaining</span>
           <button class="free-plan-upgrade nav-tab" data-page-target="plans" data-view-target="plans" type="button">Upgrade</button>
@@ -558,6 +564,11 @@
                   <span>Practice this pattern again</span>
                   <strong id="similar-pattern-label">Try a similar scenario</strong>
                   <i>→</i>
+                </button>
+                <button class="save-review-button hidden" id="save-review-queue" type="button">
+                  <span>Missed this setup?</span>
+                  <strong>Save to Review Queue</strong>
+                  <i>＋</i>
                 </button>
               </div>
 
@@ -1231,6 +1242,28 @@
       </div>
       <button class="primary-button" id="exit-claim" type="button">Claim Free Plays</button>
       <button class="exit-close" id="exit-close" type="button" aria-label="Dismiss exit reminder">×</button>
+    </div>
+
+    <div class="modal hidden" id="feedback-modal">
+      <div class="modal-card feedback-card">
+        <button class="modal-close" id="close-feedback" type="button" aria-label="Close feedback">×</button>
+        <p class="signal">Beta feedback</p>
+        <h2>What should TradePulse improve?</h2>
+        <form id="feedback-form">
+          <label>Rating
+            <select id="feedback-rating">
+              <option>Love it</option>
+              <option>Good but needs work</option>
+              <option>Confusing</option>
+              <option>Found a bug</option>
+            </select>
+          </label>
+          <label>Your note
+            <textarea id="feedback-message" rows="5" placeholder="Tell me what felt good, what broke, or what you want next..." required></textarea>
+          </label>
+          <button class="primary-button" type="submit">Send feedback</button>
+        </form>
+      </div>
     </div>
 
     <div class="toast-stack" id="toast-stack" aria-live="polite"></div>

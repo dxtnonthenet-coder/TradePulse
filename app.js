@@ -331,7 +331,114 @@ function personalizedScenario(index) {
   };
 }
 
+function humanDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value || "Date hidden";
+  return date.toLocaleString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short"
+  });
+}
+
+function titleFromTag(tag = "market_read") {
+  return tag.split("_").map((part) => `${part[0]?.toUpperCase() || ""}${part.slice(1)}`).join(" ");
+}
+
+function answerFromDirection(direction) {
+  return { long: "Long", short: "Short", flat: "Flat" }[direction] || "Flat";
+}
+
+function biasFromDirection(direction) {
+  return { long: "continuation", short: "reversal", flat: "chop" }[direction] || "chop";
+}
+
+function normalizeExternalScenario(raw, fallbackIndex = 0) {
+  const primaryTag = raw.patternTags?.[0] || "market_read";
+  const difficulty = `${raw.difficulty || "medium"}`.replace(/^./, (char) => char.toUpperCase());
+  return {
+    ...raw,
+    scenarioCode: `Real Replay ${String(fallbackIndex + 1).padStart(2, "0")}`,
+    title: raw.title || `${raw.market} ${titleFromTag(primaryTag)}`,
+    time: "Date hidden until reveal",
+    revealedTime: `${raw.market} · ${humanDate(raw.date)}`,
+    difficulty,
+    tags: raw.patternTags?.map(titleFromTag) || [titleFromTag(primaryTag)],
+    question: "What is the best call at the decision point?",
+    context: raw.contextHint || "Read the structure before the future candles are revealed.",
+    answers: ["Long", "Short", "Flat"],
+    correctAnswer: answerFromDirection(raw.answer?.direction),
+    direction: raw.answer?.direction || "flat",
+    explanation: raw.explanation || "The reveal showed which side accepted or failed around the key level.",
+    coachExplanation: raw.coachExplanation || "Coach read: focus on location, acceptance, and the first pullback after the key level.",
+    pattern: titleFromTag(primaryTag),
+    seed: stringSeed(raw.id || `${raw.market}-${fallbackIndex}`),
+    bias: biasFromDirection(raw.answer?.direction),
+    isRealReplay: true,
+    pauseAtCandle: Number(raw.pauseAtCandle || 42)
+  };
+}
+
+async function loadScenarioFile(index) {
+  if (!externalScenarioState.index.length) return null;
+  const slot = ((index % externalScenarioState.index.length) + externalScenarioState.index.length) % externalScenarioState.index.length;
+  if (externalScenarioState.cache.has(slot)) return externalScenarioState.cache.get(slot);
+  if (externalScenarioState.loading.has(slot)) return externalScenarioState.loading.get(slot);
+  const entry = externalScenarioState.index[slot];
+  const promise = fetch(`data/scenarios/${entry.file}`)
+    .then((response) => {
+      if (!response.ok) throw new Error(`Scenario ${entry.file} failed to load`);
+      return response.json();
+    })
+    .then((data) => {
+      const scenario = normalizeExternalScenario(data, slot);
+      externalScenarioState.cache.set(slot, scenario);
+      return scenario;
+    })
+    .catch((error) => {
+      console.warn(error.message);
+      return null;
+    })
+    .finally(() => externalScenarioState.loading.delete(slot));
+  externalScenarioState.loading.set(slot, promise);
+  return promise;
+}
+
+async function loadScenarioLibrary() {
+  if (location.protocol === "file:") return;
+  try {
+    const response = await fetch("data/scenarios/index.json");
+    if (!response.ok) throw new Error("Scenario index not available");
+    externalScenarioState.index = await response.json();
+    externalScenarioState.ready = true;
+    await Promise.all([0, 1, 2].map(loadScenarioFile));
+    renderScenario();
+    updateGameCards();
+  } catch (error) {
+    console.warn("Using built-in scenario fallback.", error.message);
+  }
+}
+
 function getScenario(index) {
+  if (externalScenarioState.ready && externalScenarioState.index.length) {
+    const slot = ((index % externalScenarioState.index.length) + externalScenarioState.index.length) % externalScenarioState.index.length;
+    if (externalScenarioState.cache.has(slot)) return externalScenarioState.cache.get(slot);
+    loadScenarioFile(slot).then((scenario) => {
+      if (scenario && slot === state.scenarioIndex % externalScenarioState.index.length) renderScenario();
+    });
+    return normalizeExternalScenario({
+      ...(externalScenarioState.index[slot] || {}),
+      date: "",
+      answer: { direction: "flat" },
+      contextHint: "Loading real replay candles...",
+      explanation: "Scenario data is loading.",
+      coachExplanation: "Coach data is loading.",
+      candles: []
+    }, slot);
+  }
   if (index < SHARED_SCENARIO_COUNT) return scenarios[index];
   return personalizedScenario(index);
 }
@@ -493,6 +600,12 @@ let audioContext;
 let replayTimer;
 let tapeScenarioCount;
 const FREE_PLAY_LIMIT = 10;
+const externalScenarioState = {
+  index: [],
+  cache: new Map(),
+  loading: new Map(),
+  ready: false
+};
 
 const els = {
   scenarioId: document.getElementById("scenario-id"),
@@ -585,6 +698,9 @@ els.referralCode = document.getElementById("referral-code");
 els.shareCardRank = document.getElementById("share-card-rank");
 els.shareCardAccuracy = document.getElementById("share-card-accuracy");
 els.shareCardStreak = document.getElementById("share-card-streak");
+els.saveReviewQueue = document.getElementById("save-review-queue");
+els.betaBanner = document.getElementById("beta-banner");
+els.feedbackModal = document.getElementById("feedback-modal");
 
 const gate = {
   signupModal: document.getElementById("signup-modal"),
@@ -672,10 +788,13 @@ function defaultProgress() {
     streakFreezes: 0,
     freezeAwardedAtFive: false,
     bookmarks: [],
+    reviewQueue: [],
+    referralCredits: 0,
     digestEnabled: false,
     traderArchetype: null,
     sessionAttemptStart: 0,
-    lastSessionSummary: null
+    lastSessionSummary: null,
+    weeklyAccuracySnapshots: []
   };
 }
 
@@ -1220,6 +1339,34 @@ function referralCode() {
   return `TP-${stringSeed(seed).toString(36).toUpperCase().slice(0, 5)}`;
 }
 
+function captureReferralFromUrl() {
+  const ref = new URLSearchParams(window.location.search).get("ref");
+  if (!ref) return;
+  const p = progress();
+  p.referredBy = ref.slice(0, 80);
+  saveProgress();
+}
+
+async function syncReferralSignup() {
+  const p = progress();
+  if (!p.referredBy || p.referralSynced || location.protocol === "file:") return;
+  try {
+    await fetch("/api/referral", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        code: p.referredBy,
+        email: p.signup?.email || p.inviteEmail || "",
+        name: p.signup?.name || ""
+      })
+    });
+    p.referralSynced = true;
+    saveProgress();
+  } catch {
+    console.warn("Referral saved locally only.");
+  }
+}
+
 function updateGrowthSurfaces() {
   const p = progress();
   const rank = getUserPlan() === "free" ? "Guest · Free Plan" : `${rankFromXp(p.xp)} · ${planDisplayName()}`;
@@ -1237,7 +1384,7 @@ function updatePlanSurfaces() {
     badge.className = `plan-tier-badge plan-${plan}`;
     badge.textContent = planDisplayName(plan);
   });
-  const reviewCount = progress().attempts.filter((attempt) => !attempt.correct).length;
+  const reviewCount = Math.max(progress().reviewQueue?.length || 0, progress().attempts.filter((attempt) => !attempt.correct).length);
   document.getElementById("review-queue-count") && (document.getElementById("review-queue-count").textContent = reviewCount);
   if (els.weeklyDigestToggle && els.digestToggleWrap) {
     const allowed = hasAccess("weeklyDigest");
@@ -1387,13 +1534,48 @@ function modeLabel(mode) {
 }
 
 function reviewQueueScenarioIndex() {
-  const missed = progress().attempts.filter((attempt) => !attempt.correct);
+  const p = progress();
+  const queue = Array.isArray(p.reviewQueue) ? p.reviewQueue : [];
+  const missed = p.attempts.filter((attempt) => !attempt.correct);
   if (!missed.length) return nextScenarioForMode("replay");
-  const target = missed[missed.length - 1].scenarioId;
+  const weakest = weakestPatternTag();
+  const prioritized = [
+    ...queue.map((scenarioId) => missed.find((attempt) => attempt.scenarioId === scenarioId)).filter(Boolean),
+    ...missed
+  ].sort((a, b) => {
+    const aTags = a.patternTags || [a.pattern || ""];
+    const bTags = b.patternTags || [b.pattern || ""];
+    return Number(bTags.includes(weakest)) - Number(aTags.includes(weakest));
+  });
+  const target = prioritized[0]?.scenarioId || missed[missed.length - 1].scenarioId;
   for (let index = 0; index < Math.min(TOTAL_SCENARIO_COUNT, 50000); index += 1) {
     if (getScenario(index).id === target) return index;
   }
   return nextScenarioForMode("replay");
+}
+
+function scenarioPatternTags(scenario) {
+  return Array.isArray(scenario.patternTags) && scenario.patternTags.length
+    ? scenario.patternTags
+    : Array.isArray(scenario.tags)
+      ? scenario.tags.map((tag) => String(tag).toLowerCase().replace(/\s+/g, "_"))
+      : [];
+}
+
+function futureCandleCount(scenario = getScenario(state.scenarioIndex)) {
+  if (Array.isArray(scenario.candles) && scenario.candles.length) {
+    return Math.max(0, scenario.candles.length - Number(scenario.pauseAtCandle || 42));
+  }
+  return 18;
+}
+
+function pauseCandleIndex(scenario = getScenario(state.scenarioIndex)) {
+  return Number(scenario.pauseAtCandle || 42);
+}
+
+function replayDateLabel(scenario) {
+  const visibleDate = scenario.revealedTime || humanDate(scenario.date || scenario.time);
+  return state.revealed ? visibleDate : "Date hidden until reveal";
 }
 
 function dayOfYear() {
@@ -1403,7 +1585,10 @@ function dayOfYear() {
 }
 
 function dailyScenarioIndex() {
-  return dayOfYear() % Math.min(SHARED_SCENARIO_COUNT, scenarios.length);
+  const count = externalScenarioState.ready && externalScenarioState.index.length
+    ? externalScenarioState.index.length
+    : Math.min(SHARED_SCENARIO_COUNT, scenarios.length);
+  return dayOfYear() % count;
 }
 
 function dailyCountdownText() {
@@ -1459,7 +1644,7 @@ function updateGameCards() {
       } else if (mode === "daily") {
         footer.innerHTML = `<i></i> ${dailyCountdownText()}`;
       } else if (mode === "review") {
-        const count = progress().attempts.filter((attempt) => !attempt.correct).length;
+        const count = Math.max(progress().reviewQueue?.length || 0, progress().attempts.filter((attempt) => !attempt.correct).length);
         footer.innerHTML = `<i></i> ${count} to review`;
       } else {
         footer.innerHTML = `<i></i> ${modeLiveCount(mode).toLocaleString()} playing`;
@@ -1549,6 +1734,19 @@ function seededRandom(seed) {
 }
 
 function makeCandles(scenario, timeframe, revealAmount = 0) {
+  if (Array.isArray(scenario.candles) && scenario.candles.length) {
+    const pauseAt = Number(scenario.pauseAtCandle || 42);
+    const future = revealAmount === true ? scenario.candles.length - pauseAt : Math.max(0, Number(revealAmount) || 0);
+    return scenario.candles.slice(0, Math.min(scenario.candles.length, pauseAt + future)).map((candle, index) => ({
+      open: Number(candle.open),
+      high: Number(candle.high),
+      low: Number(candle.low),
+      close: Number(candle.close),
+      volume: Number(candle.volume || 0),
+      time: candle.time,
+      future: index >= pauseAt
+    }));
+  }
   const multipliers = { "1m": 1, "5m": 1.7, "15m": 3.1, "1h": 5.7, "4h": 7.4 };
   const visible = 42;
   const future = revealAmount === true ? 18 : Math.max(0, Math.min(18, Number(revealAmount) || 0));
@@ -1586,11 +1784,14 @@ function drawChartOn(canvas, scenario, timeframe, revealAmount = 0, compact = fa
   const ctx = canvas.getContext("2d");
   const width = canvas.width;
   const height = canvas.height;
-  const revealCount = revealAmount === true ? 18 : Math.max(0, Math.min(18, Number(revealAmount) || 0));
+  const futureTotal = futureCandleCount(scenario);
+  const pauseAt = pauseCandleIndex(scenario);
+  const revealCount = revealAmount === true ? futureTotal : Math.max(0, Math.min(futureTotal, Number(revealAmount) || 0));
   const candles = makeCandles(scenario, timeframe, revealCount);
   const pad = compact ? { top: 18, right: 8, bottom: 18, left: 8 } : { top: 34, right: 68, bottom: 44, left: 54 };
   const plotW = width - pad.left - pad.right;
-  const plotH = height - pad.top - pad.bottom;
+  const volumeH = compact ? 0 : 74;
+  const plotH = height - pad.top - pad.bottom - volumeH;
   const highs = candles.map((c) => c.high);
   const lows = candles.map((c) => c.low);
   const max = Math.max(...highs);
@@ -1648,8 +1849,24 @@ function drawChartOn(canvas, scenario, timeframe, revealAmount = 0, compact = fa
 
   ctx.globalAlpha = 1;
 
-  if (!compact && revealCount < 18) {
-    const hiddenX = pad.left + (42 + revealCount) * xStep;
+  if (!compact) {
+    const maxVolume = Math.max(...candles.map((candle) => Number(candle.volume || 1)), 1);
+    const volTop = pad.top + plotH + 14;
+    candles.forEach((candle, index) => {
+      const x = pad.left + index * xStep + xStep / 2;
+      const barH = Math.max(2, (Number(candle.volume || 1) / maxVolume) * (volumeH - 20));
+      ctx.globalAlpha = candle.future ? 0.78 : 0.42;
+      ctx.fillStyle = candle.close >= candle.open ? "#56d66d" : "#e44646";
+      ctx.fillRect(x - candleW / 2, volTop + volumeH - 18 - barH, candleW, barH);
+    });
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#6f858d";
+    ctx.font = "14px Inter, system-ui";
+    ctx.fillText("Volume", pad.left, volTop + 13);
+  }
+
+  if (!compact && revealCount < futureTotal) {
+    const hiddenX = pad.left + (pauseAt + revealCount) * xStep;
     ctx.fillStyle = "rgba(5, 9, 13, 0.72)";
     ctx.fillRect(hiddenX, pad.top, width - pad.right - hiddenX, plotH);
     ctx.strokeStyle = "#f6c34e";
@@ -1660,13 +1877,16 @@ function drawChartOn(canvas, scenario, timeframe, revealAmount = 0, compact = fa
     ctx.fillStyle = "#eef7f1";
     ctx.font = "25px Inter, system-ui";
     const labelX = Math.min(hiddenX + 24, width - pad.right - 238);
-    ctx.fillText(revealCount ? `${18 - revealCount} candles locked` : "Future candles locked", labelX, pad.top + 52);
+    ctx.fillText(revealCount ? `${futureTotal - revealCount} candles locked` : "Future candles locked", labelX, pad.top + 52);
   }
 
   if (!compact) {
     ctx.fillStyle = "#eef7f1";
     ctx.font = "28px Inter, system-ui";
-    ctx.fillText(`${scenario.market} ${timeframe}`, pad.left, 30);
+    ctx.fillText(`${scenario.market} · ${timeframe} · ${scenario.session || sessionName(scenario)}`, pad.left, 30);
+    ctx.fillStyle = state.revealed ? "#56d66d" : "#9db5b9";
+    ctx.font = "16px Inter, system-ui";
+    ctx.fillText(replayDateLabel(scenario), pad.left + 330, 30);
     ctx.fillStyle = "#386cff";
     ctx.font = "18px Inter, system-ui";
     ctx.fillText("VWAP", width - pad.right - 88, yFor(vwap) - 9);
@@ -1708,11 +1928,12 @@ function drawPreviewCharts() {
 }
 
 function updateReplayControls() {
-  document.getElementById("candle-counter").textContent = `${state.revealCount} / 18`;
+  const maxFuture = futureCandleCount();
+  document.getElementById("candle-counter").textContent = `${state.revealCount} / ${maxFuture}`;
   document.getElementById("replay-play").textContent = state.replayPlaying ? "Ⅱ" : "▶";
   document.getElementById("replay-step-back").disabled = state.revealCount <= 0;
-  document.getElementById("replay-step-forward").disabled = !state.revealed || state.revealCount >= 18;
-  document.getElementById("replay-play").disabled = !state.revealed || state.revealCount >= 18;
+  document.getElementById("replay-step-forward").disabled = !state.revealed || state.revealCount >= maxFuture;
+  document.getElementById("replay-play").disabled = !state.revealed || state.revealCount >= maxFuture;
   document.querySelectorAll("#speed-control button").forEach((button) => {
     button.classList.toggle("active", Number(button.dataset.speed) === state.replaySpeed);
   });
@@ -1726,7 +1947,8 @@ function stopReplay() {
 }
 
 function playReplay() {
-  if (!state.revealed || state.revealCount >= 18) return;
+  const maxFuture = futureCandleCount();
+  if (!state.revealed || state.revealCount >= maxFuture) return;
   if (state.replayPlaying) {
     stopReplay();
     updateReplayControls();
@@ -1737,15 +1959,15 @@ function playReplay() {
   updateReplayControls();
   const interval = Math.max(90, 620 / state.replaySpeed);
   replayTimer = setInterval(() => {
-    state.revealCount = Math.min(18, state.revealCount + 1);
+    state.revealCount = Math.min(maxFuture, state.revealCount + 1);
     drawChart();
-    if (state.revealCount >= 18) stopReplay();
+    if (state.revealCount >= maxFuture) stopReplay();
   }, interval);
 }
 
 function animateReplay(from = 0) {
   stopReplay();
-  state.revealCount = Math.max(0, Math.min(18, from));
+  state.revealCount = Math.max(0, Math.min(futureCandleCount(), from));
   drawChart();
   playReplay();
 }
@@ -1753,8 +1975,9 @@ function animateReplay(from = 0) {
 function renderScenario() {
   const scenario = getScenario(state.scenarioIndex);
   const completed = completedScenario(scenario);
+  const maxFuture = futureCandleCount(scenario);
   state.revealed = Boolean(completed);
-  state.revealCount = state.revealed ? 18 : 0;
+  state.revealCount = state.revealed ? maxFuture : 0;
   state.selected = completed?.selected || null;
   state.pendingAnswer = null;
   state.confidence = completed?.confidence || state.confidence || "medium";
@@ -1763,7 +1986,7 @@ function renderScenario() {
 
   els.scenarioId.textContent = scenario.scenarioCode;
   els.title.textContent = scenario.title;
-  els.meta.textContent = `${scenario.market} · ${scenario.time} · ${scenario.difficulty}`;
+  els.meta.textContent = `${scenario.market} · ${replayDateLabel(scenario)} · ${scenario.difficulty}`;
   els.context.textContent = scenario.context;
   els.tags.textContent = scenario.tags.join(" · ");
   els.question.textContent = scenario.question;
@@ -1841,7 +2064,8 @@ function renderScenarioPills(scenario) {
   els.scenarioPills.innerHTML = `
     <span><i data-lucide="activity"></i>${scenario.market}</span>
     <span class="difficulty-pill ${difficulty}"><i data-lucide="gauge"></i>${scenario.difficulty}</span>
-    <span><i data-lucide="clock-3"></i>${sessionName(scenario)}</span>
+    <span><i data-lucide="clock-3"></i>${scenario.session || sessionName(scenario)}</span>
+    <span><i data-lucide="scan-line"></i>Key level event</span>
     <span><i data-lucide="gamepad-2"></i>${modeName()}</span>
   `;
   if (window.lucide) window.lucide.createIcons();
@@ -2098,11 +2322,17 @@ function finishAttempt({ answer, correct, earned, correctAnswer, metadata = {} }
     correct,
     earned: xpAwarded,
     pattern: scenario.pattern,
+    patternTags: scenarioPatternTags(scenario),
+    session: scenario.session || sessionName(scenario),
     mode: state.activeMode,
     confidence: state.confidence,
     ...metadata
   };
   p.attempts.push(attempt);
+  if (!correct) {
+    p.reviewQueue ||= [];
+    if (!p.reviewQueue.includes(scenario.id)) p.reviewQueue.push(scenario.id);
+  }
   p.completed[completionKey(scenario.id)] = { selected: answer, correct, earned: xpAwarded, correctAnswer, confidence: state.confidence, ...metadata };
   p.nextByMode ||= {};
   p.nextByMode[state.activeMode] = findNextUnanswered(state.scenarioIndex + 1);
@@ -2252,6 +2482,13 @@ function renderResultClueMarker(scenario) {
 }
 
 function findSimilarScenarioIndex(scenario) {
+  const tags = scenarioPatternTags(scenario);
+  for (let offset = 1; offset <= 5000; offset += 1) {
+    const index = (state.scenarioIndex + offset) % TOTAL_SCENARIO_COUNT;
+    const candidate = getScenario(index);
+    const overlap = scenarioPatternTags(candidate).filter((tag) => tags.includes(tag)).length;
+    if (candidate.id !== scenario.id && overlap >= 2 && !isScenarioAnswered(index, state.activeMode)) return index;
+  }
   for (let offset = 1; offset <= 5000; offset += 1) {
     const index = (state.scenarioIndex + offset) % TOTAL_SCENARIO_COUNT;
     const candidate = getScenario(index);
@@ -2448,6 +2685,7 @@ function coachReviewText(scenario, correct) {
   if (!hasCoachPlan()) {
     return "Coach unlocks the deeper mistake review layer: exact clue priority, why the weak answer was tempting, and the drill to run next.";
   }
+  if (scenario.coachExplanation) return scenario.coachExplanation;
   if (correct) {
     return `Coach read: good decision. You weighted the strongest evidence correctly: ${clue} Next, repeat this pattern on a different timeframe so the read becomes automatic.`;
   }
@@ -2568,6 +2806,12 @@ function showResult(correct, earned, completed = {}) {
   renderLevelUpNudge();
   renderSessionSummary();
   document.getElementById("similar-pattern-label").textContent = `Try another ${scenario.pattern} drill`;
+  if (els.saveReviewQueue) {
+    els.saveReviewQueue.classList.toggle("hidden", correct);
+    const saved = progress().reviewQueue?.includes(scenario.id);
+    els.saveReviewQueue.classList.toggle("saved", Boolean(saved));
+    els.saveReviewQueue.querySelector("strong").textContent = saved ? "Saved to Review Queue" : "Save to Review Queue";
+  }
   renderResultClueMarker(scenario);
   applyModeUi();
   if (!correct) {
@@ -2834,6 +3078,34 @@ function actualPatternStats() {
     correct: value.correct,
     accuracy: Math.round((value.correct / value.total) * 100)
   }));
+}
+
+function patternTagStats() {
+  const attempts = progress().attempts;
+  const byTag = attempts.reduce((acc, item) => {
+    const tags = Array.isArray(item.patternTags) && item.patternTags.length
+      ? item.patternTags
+      : [String(item.pattern || "pattern_recognition").toLowerCase().replace(/\s+/g, "_")];
+    tags.forEach((tag) => {
+      acc[tag] ||= { total: 0, correct: 0 };
+      acc[tag].total += 1;
+      if (item.correct) acc[tag].correct += 1;
+    });
+    return acc;
+  }, {});
+  return Object.entries(byTag).map(([tag, value]) => ({
+    tag,
+    label: titleFromTag(tag),
+    total: value.total,
+    correct: value.correct,
+    accuracy: Math.round((value.correct / value.total) * 100)
+  }));
+}
+
+function weakestPatternTag() {
+  return patternTagStats()
+    .filter((row) => row.total > 0)
+    .sort((a, b) => a.accuracy - b.accuracy || b.total - a.total)[0]?.tag || "";
 }
 
 function profileAccess() {
@@ -3181,6 +3453,21 @@ document.getElementById("similar-scenario").addEventListener("click", () => {
   renderScenario();
   document.getElementById("trainer").scrollIntoView({ behavior: "smooth", block: "start" });
 });
+
+els.saveReviewQueue?.addEventListener("click", () => {
+  const p = progress();
+  const scenario = getScenario(state.scenarioIndex);
+  p.reviewQueue ||= [];
+  if (!p.reviewQueue.includes(scenario.id)) {
+    p.reviewQueue.push(scenario.id);
+    saveProgress();
+    showToast("Saved to Review Queue.", "success");
+  } else {
+    showToast("Already in Review Queue.", "success");
+  }
+  els.saveReviewQueue.classList.add("saved");
+  els.saveReviewQueue.querySelector("strong").textContent = "Saved to Review Queue";
+});
 document.getElementById("replay-restart").addEventListener("click", () => {
   stopReplay();
   state.revealCount = 0;
@@ -3194,7 +3481,7 @@ document.getElementById("replay-step-back").addEventListener("click", () => {
 document.getElementById("replay-step-forward").addEventListener("click", () => {
   stopReplay();
   if (!state.revealed) return;
-  state.revealCount = Math.min(18, state.revealCount + 1);
+  state.revealCount = Math.min(futureCandleCount(), state.revealCount + 1);
   drawChart();
 });
 document.getElementById("replay-play").addEventListener("click", playReplay);
@@ -3331,6 +3618,7 @@ gate.signupForm.addEventListener("submit", (event) => {
       mode: state.activeMode
     }
   });
+  syncReferralSignup();
   closeModals();
   refreshSubscriptionStatus();
   startMode(state.activeMode);
@@ -3403,6 +3691,48 @@ els.copyShareCard?.addEventListener("click", async () => {
   const text = `TradePulse stats: ${accuracy()}% accuracy, ${Math.max(p.streak, p.topStreak)} day streak, ${rankFromXp(p.xp)} rank. Can you beat my replay score?`;
   await navigator.clipboard.writeText(text);
   showToast("Share card text copied.", "success");
+});
+
+document.getElementById("dismiss-beta")?.addEventListener("click", () => {
+  localStorage.setItem("tradePulseBetaDismissed", "1");
+  els.betaBanner?.classList.add("hidden");
+});
+
+document.getElementById("open-feedback")?.addEventListener("click", () => {
+  els.feedbackModal?.classList.remove("hidden");
+});
+
+document.getElementById("close-feedback")?.addEventListener("click", () => {
+  els.feedbackModal?.classList.add("hidden");
+});
+
+document.getElementById("feedback-form")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = event.currentTarget.querySelector("button");
+  checkoutButtonLoading(button, true, "Sending...");
+  try {
+    const payload = {
+      email: progress().signup?.email || progress().inviteEmail || "",
+      page: state.currentView,
+      rating: document.getElementById("feedback-rating").value,
+      message: document.getElementById("feedback-message").value
+    };
+    if (location.protocol !== "file:") {
+      const response = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error("Could not save feedback");
+    }
+    showToast("Feedback sent. Thank you.", "success");
+    document.getElementById("feedback-message").value = "";
+    els.feedbackModal?.classList.add("hidden");
+  } catch {
+    showToast("Feedback saved locally failed to sync. Try again in a moment.", "warning");
+  } finally {
+    checkoutButtonLoading(button, false);
+  }
 });
 
 document.querySelectorAll(".billing-option").forEach((button) => {
@@ -3521,6 +3851,15 @@ document.addEventListener("keydown", (event) => {
   if (!els.learningModal?.classList.contains("hidden")) return;
   if (["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement?.tagName)) return;
   if (document.body.dataset.view !== "game") return;
+  if (event.key === "Escape") {
+    navigateTo("home");
+    return;
+  }
+  if (event.code === "Space") {
+    event.preventDefault();
+    playReplay();
+    return;
+  }
   if (/^[1-5]$/.test(event.key) && !state.revealed) {
     const button = els.answers.querySelectorAll("button")[Number(event.key) - 1];
     if (button && !button.disabled) button.click();
@@ -3528,6 +3867,9 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
     if (state.revealed) document.getElementById("next-scenario").click();
     else submitPendingAnswer();
+  }
+  if (event.key.toLowerCase() === "n" && state.revealed) {
+    document.getElementById("next-scenario").click();
   }
 });
 
@@ -3599,11 +3941,16 @@ function prepareVisitScenarioSession() {
 }
 
 prepareVisitScenarioSession();
+captureReferralFromUrl();
+if (els.betaBanner && !localStorage.getItem("tradePulseBetaDismissed")) {
+  els.betaBanner.classList.remove("hidden");
+}
 document.body.classList.remove("sidebar-expanded");
 document.getElementById("side-toggle").setAttribute("aria-expanded", "false");
 document.getElementById("side-toggle").setAttribute("aria-label", "Expand navigation");
 refreshSubscriptionStatus();
 handleGoogleAuthReturn();
+loadScenarioLibrary();
 drawPreviewCharts();
 updateProgressUi();
 applyModeUi();

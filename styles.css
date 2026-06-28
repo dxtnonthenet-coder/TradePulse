@@ -4526,6 +4526,61 @@ body.playing .trainer-section {
   transform: translateX(4px);
 }
 
+.save-review-button {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  min-height: 64px;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgba(86, 214, 109, 0.34);
+  border-radius: 5px;
+  background:
+    linear-gradient(90deg, rgba(86, 214, 109, 0.14), rgba(88, 199, 255, 0.06)),
+    #07141a;
+  color: #eaffef;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: inset 3px 0 0 var(--green);
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.save-review-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(86, 214, 109, 0.68);
+  box-shadow: inset 3px 0 0 var(--green), 0 14px 34px rgba(86, 214, 109, 0.12);
+}
+
+.save-review-button.saved {
+  border-color: rgba(246, 195, 78, 0.52);
+  box-shadow: inset 3px 0 0 var(--gold);
+}
+
+.save-review-button span,
+.save-review-button strong {
+  grid-column: 1;
+}
+
+.save-review-button span {
+  color: #9bb4ae;
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.save-review-button strong {
+  margin-top: 3px;
+  font-size: 13px;
+}
+
+.save-review-button i {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  color: var(--green);
+  font-size: 22px;
+  font-style: normal;
+}
+
 .result-clue-marker {
   position: absolute;
   z-index: 6;
@@ -6759,6 +6814,63 @@ body.learning-open {
   color: #ffd89b;
   font-size: 13px;
   font-weight: 850;
+}
+
+.beta-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border: 1px solid rgba(246, 195, 78, 0.34);
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(246, 195, 78, 0.16), rgba(86, 214, 109, 0.06)), #111912;
+  color: #ffe6a6;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.beta-banner button {
+  border: 0;
+  border-radius: 8px;
+  padding: 7px 10px;
+  background: rgba(246, 195, 78, 0.16);
+  color: #ffe7a8;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.beta-banner button:last-child {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.feedback-card form {
+  display: grid;
+  gap: 12px;
+}
+
+.feedback-card label {
+  display: grid;
+  gap: 7px;
+  color: #9db5b9;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.feedback-card select,
+.feedback-card textarea {
+  width: 100%;
+  border: 1px solid rgba(145, 183, 193, 0.22);
+  border-radius: 8px;
+  background: #081119;
+  color: #f5fffb;
+  padding: 12px;
+  font: inherit;
 }
 
 .free-plan-banner.used-up {

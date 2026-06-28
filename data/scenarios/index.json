@@ -1,0 +1,282 @@
+[
+  {
+    "id": "nq-2025-01-14-vwap-trap",
+    "file": "nq-2025-01-14-vwap-trap.json",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "hard",
+    "session": "NewYork",
+    "patternTags": [
+      "vwap_trap",
+      "liquidity_sweep",
+      "failed_breakout"
+    ],
+    "title": "NQ Opening Sweep Trap"
+  },
+  {
+    "id": "es-2025-01-22-reclaim",
+    "file": "es-2025-01-22-reclaim.json",
+    "market": "ES",
+    "timeframe": "5m",
+    "difficulty": "medium",
+    "session": "NewYork",
+    "patternTags": [
+      "vwap_reclaim",
+      "trend_continuation",
+      "retest_hold"
+    ],
+    "title": "ES VWAP Reclaim"
+  },
+  {
+    "id": "cl-2025-02-05-news-whip",
+    "file": "cl-2025-02-05-news-whip.json",
+    "market": "CL",
+    "timeframe": "1m",
+    "difficulty": "hard",
+    "session": "NewYork",
+    "patternTags": [
+      "news_whipsaw",
+      "two_sided_sweep",
+      "no_trade"
+    ],
+    "title": "CL Inventory Whipsaw"
+  },
+  {
+    "id": "gc-2025-02-12-compression",
+    "file": "gc-2025-02-12-compression.json",
+    "market": "GC",
+    "timeframe": "5m",
+    "difficulty": "medium",
+    "session": "NewYork",
+    "patternTags": [
+      "compression_break",
+      "breakout",
+      "higher_timeframe"
+    ],
+    "title": "GC Compression Break"
+  },
+  {
+    "id": "btc-2025-02-18-range-fakeout",
+    "file": "btc-2025-02-18-range-fakeout.json",
+    "market": "BTC",
+    "timeframe": "5m",
+    "difficulty": "hard",
+    "session": "NewYork",
+    "patternTags": [
+      "failed_breakout",
+      "range_fakeout",
+      "liquidity_sweep"
+    ],
+    "title": "BTC Range Fakeout"
+  },
+  {
+    "id": "nq-2025-03-03-opening-drive",
+    "file": "nq-2025-03-03-opening-drive.json",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "easy",
+    "session": "NewYork",
+    "patternTags": [
+      "opening_drive",
+      "momentum",
+      "trend_day"
+    ],
+    "title": "NQ Opening Drive"
+  },
+  {
+    "id": "es-2025-03-11-prior-high",
+    "file": "es-2025-03-11-prior-high.json",
+    "market": "ES",
+    "timeframe": "5m",
+    "difficulty": "medium",
+    "session": "NewYork",
+    "patternTags": [
+      "prior_day_high",
+      "retest_hold",
+      "continuation"
+    ],
+    "title": "ES Prior High Retest"
+  },
+  {
+    "id": "cl-2025-03-19-supply-reject",
+    "file": "cl-2025-03-19-supply-reject.json",
+    "market": "CL",
+    "timeframe": "5m",
+    "difficulty": "medium",
+    "session": "NewYork",
+    "patternTags": [
+      "supply_zone",
+      "lower_high",
+      "rejection"
+    ],
+    "title": "CL Supply Zone Reject"
+  },
+  {
+    "id": "gc-2025-04-02-cpi-expansion",
+    "file": "gc-2025-04-02-cpi-expansion.json",
+    "market": "GC",
+    "timeframe": "1m",
+    "difficulty": "hard",
+    "session": "NewYork",
+    "patternTags": [
+      "cpi",
+      "news_expansion",
+      "momentum"
+    ],
+    "title": "GC CPI Expansion"
+  },
+  {
+    "id": "btc-2025-04-08-asia-sweep",
+    "file": "btc-2025-04-08-asia-sweep.json",
+    "market": "BTC",
+    "timeframe": "5m",
+    "difficulty": "medium",
+    "session": "Asia",
+    "patternTags": [
+      "asia_session",
+      "liquidity_sweep",
+      "reclaim"
+    ],
+    "title": "BTC Asia Low Sweep"
+  },
+  {
+    "id": "nq-2025-04-16-lunch-chop",
+    "file": "nq-2025-04-16-lunch-chop.json",
+    "market": "NQ",
+    "timeframe": "5m",
+    "difficulty": "easy",
+    "session": "NewYork",
+    "patternTags": [
+      "lunch_chop",
+      "no_trade",
+      "discipline"
+    ],
+    "title": "NQ Lunch Chop"
+  },
+  {
+    "id": "es-2025-04-24-failed-breakdown",
+    "file": "es-2025-04-24-failed-breakdown.json",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "medium",
+    "session": "NewYork",
+    "patternTags": [
+      "failed_breakdown",
+      "demand_reclaim",
+      "trap"
+    ],
+    "title": "ES Failed Breakdown"
+  },
+  {
+    "id": "cl-2025-05-01-opening-range",
+    "file": "cl-2025-05-01-opening-range.json",
+    "market": "CL",
+    "timeframe": "1m",
+    "difficulty": "hard",
+    "session": "NewYork",
+    "patternTags": [
+      "opening_range",
+      "liquidity_sweep",
+      "reversal"
+    ],
+    "title": "CL Opening Range Trap"
+  },
+  {
+    "id": "gc-2025-05-09-london-reversal",
+    "file": "gc-2025-05-09-london-reversal.json",
+    "market": "GC",
+    "timeframe": "5m",
+    "difficulty": "medium",
+    "session": "London",
+    "patternTags": [
+      "london_session",
+      "failed_breakout",
+      "supply_zone"
+    ],
+    "title": "GC London Reversal"
+  },
+  {
+    "id": "btc-2025-05-15-breakout-hold",
+    "file": "btc-2025-05-15-breakout-hold.json",
+    "market": "BTC",
+    "timeframe": "5m",
+    "difficulty": "easy",
+    "session": "NewYork",
+    "patternTags": [
+      "breakout",
+      "retest_hold",
+      "continuation"
+    ],
+    "title": "BTC Breakout Hold"
+  },
+  {
+    "id": "nq-2025-05-22-vwap-rejection",
+    "file": "nq-2025-05-22-vwap-rejection.json",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "medium",
+    "session": "NewYork",
+    "patternTags": [
+      "vwap_rejection",
+      "lower_high",
+      "trend_continuation"
+    ],
+    "title": "NQ VWAP Rejection"
+  },
+  {
+    "id": "es-2025-06-04-fomc-chop",
+    "file": "es-2025-06-04-fomc-chop.json",
+    "market": "ES",
+    "timeframe": "1m",
+    "difficulty": "hard",
+    "session": "NewYork",
+    "patternTags": [
+      "fomc",
+      "news_whipsaw",
+      "no_trade"
+    ],
+    "title": "ES FOMC Chop"
+  },
+  {
+    "id": "cl-2025-06-10-demand-reclaim",
+    "file": "cl-2025-06-10-demand-reclaim.json",
+    "market": "CL",
+    "timeframe": "5m",
+    "difficulty": "medium",
+    "session": "NewYork",
+    "patternTags": [
+      "demand_zone",
+      "failed_breakdown",
+      "reclaim"
+    ],
+    "title": "CL Demand Reclaim"
+  },
+  {
+    "id": "gc-2025-06-18-trend-pullback",
+    "file": "gc-2025-06-18-trend-pullback.json",
+    "market": "GC",
+    "timeframe": "5m",
+    "difficulty": "easy",
+    "session": "NewYork",
+    "patternTags": [
+      "trend_day",
+      "pullback",
+      "continuation"
+    ],
+    "title": "GC Trend Pullback"
+  },
+  {
+    "id": "nq-2025-06-25-afternoon-fakeout",
+    "file": "nq-2025-06-25-afternoon-fakeout.json",
+    "market": "NQ",
+    "timeframe": "1m",
+    "difficulty": "hard",
+    "session": "NewYork",
+    "patternTags": [
+      "range_fakeout",
+      "liquidity_sweep",
+      "reversal"
+    ],
+    "title": "NQ Afternoon Fakeout"
+  }
+]

@@ -1,5 +1,7 @@
 .env
 .DS_Store
-data/
+data/*
+!data/scenarios/
+!data/scenarios/**
 node_modules/
 npm-debug.log*

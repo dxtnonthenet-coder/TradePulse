@@ -8,6 +8,8 @@ const dataDir = path.join(root, "data");
 const signupsPath = path.join(dataDir, "signups.json");
 const signupsCsvPath = path.join(dataDir, "signups.csv");
 const subscriptionsPath = path.join(dataDir, "subscriptions.json");
+const referralsPath = path.join(dataDir, "referrals.json");
+const feedbackPath = path.join(dataDir, "feedback.json");
 const envPath = path.join(root, ".env");
 const types = {
   ".html": "text/html; charset=utf-8",
@@ -50,9 +52,24 @@ function ensureDataFiles() {
   if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
   if (!fs.existsSync(signupsPath)) fs.writeFileSync(signupsPath, "[]");
   if (!fs.existsSync(subscriptionsPath)) fs.writeFileSync(subscriptionsPath, "[]");
+  if (!fs.existsSync(referralsPath)) fs.writeFileSync(referralsPath, "[]");
+  if (!fs.existsSync(feedbackPath)) fs.writeFileSync(feedbackPath, "[]");
   if (!fs.existsSync(signupsCsvPath)) {
     fs.writeFileSync(signupsCsvPath, "createdAt,type,name,email,plan,source,details\n");
   }
+}
+
+function appendJsonRecord(filePath, entry) {
+  ensureDataFiles();
+  const rows = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  const saved = {
+    id: `rec_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+    createdAt: new Date().toISOString(),
+    ...entry
+  };
+  rows.push(saved);
+  fs.writeFileSync(filePath, JSON.stringify(rows, null, 2));
+  return saved;
 }
 
 function readBody(req, raw = false) {
@@ -591,6 +608,48 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (req.method === "POST" && parsedUrl.pathname === "/api/referral") {
+    readBody(req)
+      .then((body) => {
+        const data = JSON.parse(body || "{}");
+        const saved = appendJsonRecord(referralsPath, {
+          code: String(data.code || "").slice(0, 80),
+          email: String(data.email || "").slice(0, 160),
+          name: String(data.name || "").slice(0, 120),
+          status: "captured",
+          source: "TradePulse app"
+        });
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, saved }));
+      })
+      .catch((error) => {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      });
+    return;
+  }
+
+  if (req.method === "POST" && parsedUrl.pathname === "/api/feedback") {
+    readBody(req)
+      .then((body) => {
+        const data = JSON.parse(body || "{}");
+        const saved = appendJsonRecord(feedbackPath, {
+          email: String(data.email || "").slice(0, 160),
+          page: String(data.page || "").slice(0, 80),
+          rating: String(data.rating || "").slice(0, 24),
+          message: String(data.message || "").slice(0, 3000),
+          source: "TradePulse beta"
+        });
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, saved }));
+      })
+      .catch((error) => {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      });
+    return;
+  }
+
   if (req.method === "POST" && parsedUrl.pathname === "/api/chat") {
     readBody(req)
       .then((body) => handleAssistantChat(JSON.parse(body || "{}")))
@@ -648,8 +707,10 @@ const server = http.createServer((req, res) => {
   const requested = decodeURIComponent(req.url.split("?")[0]);
   const publicName = requested === "/" ? "index.html" : requested.replace(/^\/+/, "");
   const filePath = path.join(root, publicName);
+  const isScenarioFile = publicName === "data/scenarios/index.json" ||
+    /^data\/scenarios\/[a-z0-9-]+\.json$/i.test(publicName);
 
-  if (!filePath.startsWith(root) || publicName.includes("..") || !publicFiles.has(publicName)) {
+  if (!filePath.startsWith(root) || publicName.includes("..") || (!publicFiles.has(publicName) && !isScenarioFile)) {
     res.writeHead(403);
     res.end("Forbidden");
     return;
