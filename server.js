@@ -10,6 +10,9 @@ const signupsCsvPath = path.join(dataDir, "signups.csv");
 const subscriptionsPath = path.join(dataDir, "subscriptions.json");
 const referralsPath = path.join(dataDir, "referrals.json");
 const feedbackPath = path.join(dataDir, "feedback.json");
+const analyticsPath = path.join(dataDir, "analytics.json");
+const attemptsPath = path.join(dataDir, "attempts.json");
+const scenarioStatsPath = path.join(dataDir, "scenario-stats.json");
 const envPath = path.join(root, ".env");
 const types = {
   ".html": "text/html; charset=utf-8",
@@ -31,6 +34,7 @@ const publicFiles = new Set([
   "disclaimer.html",
   "refund.html",
   "manifest.json",
+  "service-worker.js",
   "assets/modes/replay-mode.jpg",
   "assets/modes/daily-challenge.jpg",
   "assets/modes/ranked-battle.jpg",
@@ -56,6 +60,9 @@ function ensureDataFiles() {
   if (!fs.existsSync(subscriptionsPath)) fs.writeFileSync(subscriptionsPath, "[]");
   if (!fs.existsSync(referralsPath)) fs.writeFileSync(referralsPath, "[]");
   if (!fs.existsSync(feedbackPath)) fs.writeFileSync(feedbackPath, "[]");
+  if (!fs.existsSync(analyticsPath)) fs.writeFileSync(analyticsPath, "[]");
+  if (!fs.existsSync(attemptsPath)) fs.writeFileSync(attemptsPath, "[]");
+  if (!fs.existsSync(scenarioStatsPath)) fs.writeFileSync(scenarioStatsPath, "{}");
   if (!fs.existsSync(signupsCsvPath)) {
     fs.writeFileSync(signupsCsvPath, "createdAt,type,name,email,plan,source,details\n");
   }
@@ -72,6 +79,15 @@ function appendJsonRecord(filePath, entry) {
   rows.push(saved);
   fs.writeFileSync(filePath, JSON.stringify(rows, null, 2));
   return saved;
+}
+
+function readJsonFile(filePath, fallback) {
+  ensureDataFiles();
+  try {
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch {
+    return fallback;
+  }
 }
 
 function readBody(req, raw = false) {
@@ -98,6 +114,257 @@ function csvCell(value) {
   return `"${String(value ?? "").replace(/"/g, '""')}"`;
 }
 
+function renderStripeReturnPage({ eyebrow, title, message, action, href, tone }) {
+  const isSuccess = tone === "success";
+  const accent = isSuccess ? "#56d66d" : "#ffc94a";
+  const accentSoft = isSuccess ? "rgba(86, 214, 109, 0.16)" : "rgba(255, 201, 74, 0.16)";
+  const redirectDelay = isSuccess ? "2.6" : "3.4";
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="${redirectDelay};url=${href}">
+  <title>${title} | ReplayEdge</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #05080c;
+      --panel: #111923;
+      --panel-2: #172332;
+      --line: rgba(255, 255, 255, 0.1);
+      --text: #eef7f1;
+      --muted: rgba(238, 247, 241, 0.68);
+      --accent: ${accent};
+      --accent-soft: ${accentSoft};
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 20%, rgba(86, 214, 109, 0.12), transparent 34rem),
+        linear-gradient(135deg, #05080c 0%, #0a1118 54%, #07120f 100%);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      opacity: 0.22;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(86, 214, 109, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(86, 214, 109, 0.12) 1px, transparent 1px);
+      background-size: 52px 52px;
+      mask-image: radial-gradient(circle at center, black, transparent 72%);
+    }
+
+    .return-card {
+      position: relative;
+      width: min(92vw, 560px);
+      padding: 42px;
+      border: 1px solid rgba(86, 214, 109, 0.22);
+      border-radius: 28px;
+      background: linear-gradient(180deg, rgba(23, 35, 50, 0.96), rgba(12, 18, 26, 0.96));
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.34);
+      text-align: center;
+      isolation: isolate;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 30px;
+      color: var(--text);
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      text-decoration: none;
+      font-size: 22px;
+    }
+
+    .brand span { color: var(--accent); }
+
+    .logo-wrap {
+      position: relative;
+      width: 76px;
+      height: 76px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 22px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(86, 214, 109, 0.22), rgba(86, 214, 109, 0.08));
+      border: 1px solid rgba(86, 214, 109, 0.28);
+    }
+
+    .logo-wrap::before {
+      content: "";
+      position: absolute;
+      inset: -9px;
+      border-radius: 30px;
+      border: 2px solid transparent;
+      border-top-color: var(--accent);
+      border-right-color: rgba(255, 255, 255, 0.14);
+      animation: spin 1.05s linear infinite;
+    }
+
+    .logo-bars {
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      gap: 7px;
+      width: 44px;
+      height: 44px;
+    }
+
+    .logo-bars i {
+      display: block;
+      width: 9px;
+      border-radius: 999px 999px 3px 3px;
+      background: linear-gradient(180deg, #83ffb0, var(--accent));
+      box-shadow: 0 0 14px rgba(86, 214, 109, 0.35);
+      animation: pulse 1.25s ease-in-out infinite;
+    }
+
+    .logo-bars i:nth-child(1) { height: 20px; animation-delay: 0s; }
+    .logo-bars i:nth-child(2) { height: 32px; animation-delay: 0.12s; }
+    .logo-bars i:nth-child(3) { height: 42px; animation-delay: 0.24s; }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 7vw, 58px);
+      line-height: 0.96;
+      letter-spacing: -0.045em;
+    }
+
+    p {
+      max-width: 430px;
+      margin: 20px auto 0;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.55;
+      font-weight: 700;
+    }
+
+    .loading-line {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 26px 0 0;
+      color: rgba(238, 247, 241, 0.76);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: blink 1s ease-in-out infinite;
+    }
+
+    .dot:nth-child(2) { animation-delay: 0.14s; }
+    .dot:nth-child(3) { animation-delay: 0.28s; }
+
+    .actions {
+      display: flex;
+      justify-content: center;
+      margin-top: 30px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 54px;
+      padding: 0 24px;
+      border-radius: 15px;
+      background: linear-gradient(135deg, #74ffad, var(--accent));
+      color: #06100b;
+      font-size: 16px;
+      font-weight: 950;
+      text-decoration: none;
+      box-shadow: 0 14px 34px rgba(86, 214, 109, 0.16);
+    }
+
+    .fineprint {
+      margin-top: 18px;
+      color: rgba(238, 247, 241, 0.45);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scaleY(0.9); opacity: 0.82; }
+      50% { transform: scaleY(1.04); opacity: 1; }
+    }
+
+    @keyframes blink {
+      0%, 100% { transform: translateY(0); opacity: 0.38; }
+      50% { transform: translateY(-3px); opacity: 1; }
+    }
+
+    @media (max-width: 560px) {
+      .return-card {
+        padding: 30px 22px;
+        border-radius: 22px;
+      }
+
+      p { font-size: 16px; }
+      .brand { font-size: 19px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="return-card" aria-live="polite">
+    <a class="brand" href="/#home" aria-label="Back to ReplayEdge">
+      REPLAY<span>EDGE</span>
+    </a>
+    <div class="logo-wrap" aria-hidden="true">
+      <div class="logo-bars"><i></i><i></i><i></i></div>
+    </div>
+    <p class="eyebrow">${eyebrow}</p>
+    <h1>${title}</h1>
+    <p>${message}</p>
+    <div class="loading-line">
+      <span>Redirecting</span>
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    </div>
+    <div class="actions">
+      <a class="button" href="${href}">${action}</a>
+    </div>
+    <div class="fineprint">Secure checkout handled by Stripe.</div>
+  </main>
+</body>
+</html>`;
+}
+
 function saveSignup(entry) {
   ensureDataFiles();
   const signups = JSON.parse(fs.readFileSync(signupsPath, "utf8"));
@@ -122,6 +389,202 @@ function saveSignup(entry) {
   );
   sendToSupabase(saved);
   return saved;
+}
+
+function safeString(value, max = 200) {
+  return String(value || "").trim().slice(0, max);
+}
+
+function readAttempts() {
+  ensureDataFiles();
+  try {
+    return JSON.parse(fs.readFileSync(attemptsPath, "utf8"));
+  } catch {
+    return [];
+  }
+}
+
+function writeAttempts(rows) {
+  ensureDataFiles();
+  fs.writeFileSync(attemptsPath, JSON.stringify(rows, null, 2));
+}
+
+function readScenarioStats() {
+  ensureDataFiles();
+  try {
+    return JSON.parse(fs.readFileSync(scenarioStatsPath, "utf8"));
+  } catch {
+    return {};
+  }
+}
+
+function writeScenarioStats(stats) {
+  ensureDataFiles();
+  fs.writeFileSync(scenarioStatsPath, JSON.stringify(stats, null, 2));
+}
+
+function scenarioKey(id) {
+  return safeString(id, 160) || "unknown";
+}
+
+function updateScenarioStats(attempt) {
+  const stats = readScenarioStats();
+  const key = scenarioKey(attempt.scenarioId);
+  const existing = stats[key] || {
+    scenarioId: key,
+    totalAttempts: 0,
+    correctAttempts: 0,
+    answers: {},
+    modes: {},
+    updatedAt: null
+  };
+  existing.totalAttempts += 1;
+  if (attempt.correct) existing.correctAttempts += 1;
+  const answer = safeString(attempt.answer, 160) || "Unknown";
+  existing.answers[answer] = (existing.answers[answer] || 0) + 1;
+  const mode = safeString(attempt.mode, 80) || "replay";
+  existing.modes[mode] = (existing.modes[mode] || 0) + 1;
+  existing.updatedAt = new Date().toISOString();
+  stats[key] = existing;
+  writeScenarioStats(stats);
+  return existing;
+}
+
+function distributionFromCounts(answers, totalAttempts) {
+  const entries = Object.entries(answers || {});
+  if (!entries.length || !totalAttempts) return [];
+  return entries
+    .map(([answer, count]) => ({
+      answer,
+      count,
+      percent: Math.max(1, Math.round((count / totalAttempts) * 100))
+    }))
+    .sort((a, b) => b.count - a.count);
+}
+
+function communityStatsForScenario(scenarioId) {
+  const stats = readScenarioStats()[scenarioKey(scenarioId)] || null;
+  if (!stats) {
+    return {
+      scenarioId: scenarioKey(scenarioId),
+      totalAttempts: 0,
+      correctAttempts: 0,
+      correctRate: null,
+      distribution: []
+    };
+  }
+  return {
+    scenarioId: stats.scenarioId,
+    totalAttempts: stats.totalAttempts,
+    correctAttempts: stats.correctAttempts,
+    correctRate: stats.totalAttempts ? Math.round((stats.correctAttempts / stats.totalAttempts) * 100) : null,
+    distribution: distributionFromCounts(stats.answers, stats.totalAttempts)
+  };
+}
+
+function leaderboardFromAttempts() {
+  const since = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const users = new Map();
+  readAttempts().forEach((attempt) => {
+    const created = Date.parse(attempt.createdAt || 0);
+    if (!created || created < since) return;
+    const key = safeString(attempt.userId || attempt.email || attempt.userName || "guest", 180).toLowerCase();
+    if (!users.has(key)) {
+      users.set(key, {
+        userId: key,
+        userName: safeString(attempt.userName || attempt.email?.split("@")[0] || "Guest", 80),
+        email: safeString(attempt.email, 160),
+        xp: 0,
+        total: 0,
+        correct: 0,
+        lastPlayedAt: attempt.createdAt
+      });
+    }
+    const row = users.get(key);
+    row.xp += Math.max(0, Number(attempt.xpEarned || attempt.earned || 0));
+    row.total += 1;
+    if (attempt.correct) row.correct += 1;
+    if (Date.parse(attempt.createdAt) > Date.parse(row.lastPlayedAt || 0)) row.lastPlayedAt = attempt.createdAt;
+  });
+  return Array.from(users.values())
+    .map((row) => ({
+      ...row,
+      accuracy: row.total ? Math.round((row.correct / row.total) * 100) : 0,
+      xp: row.xp || row.correct * 120 + (row.total - row.correct) * 25
+    }))
+    .sort((a, b) => b.xp - a.xp)
+    .slice(0, 50);
+}
+
+async function sendAttemptToSupabase(saved) {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return;
+
+  try {
+    await fetch(`${url.replace(/\/$/, "")}/rest/v1/attempts?on_conflict=id`, {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=minimal"
+      },
+      body: JSON.stringify({
+        id: saved.id,
+        created_at: saved.createdAt,
+        user_id: saved.userId || null,
+        user_name: saved.userName || null,
+        email: saved.email || null,
+        scenario_id: saved.scenarioId || null,
+        mode: saved.mode || null,
+        market: saved.market || null,
+        pattern: saved.pattern || null,
+        answer: saved.answer || null,
+        correct: Boolean(saved.correct),
+        correct_answer: saved.correctAnswer || null,
+        confidence: saved.confidence || null,
+        xp_earned: Number(saved.xpEarned || 0),
+        time_to_answer: Number(saved.timeToAnswer || 0),
+        difficulty: saved.difficulty || null,
+        session: saved.session || null,
+        source: saved.source || "ReplayEdge app",
+        metadata: saved.metadata || {}
+      })
+    });
+  } catch (error) {
+    console.warn("Supabase attempt save failed. Local attempt save still worked.", error.message);
+  }
+}
+
+function saveAttemptRecord(entry) {
+  const rows = readAttempts();
+  const saved = {
+    id: safeString(entry.id, 120) || `att_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+    createdAt: entry.createdAt || new Date().toISOString(),
+    userId: safeString(entry.userId, 180),
+    userName: safeString(entry.userName, 80) || "Guest",
+    email: safeString(entry.email, 160).toLowerCase(),
+    scenarioId: scenarioKey(entry.scenarioId),
+    mode: safeString(entry.mode, 80),
+    market: safeString(entry.market, 40),
+    pattern: safeString(entry.pattern, 120),
+    answer: safeString(entry.answer, 180),
+    correct: Boolean(entry.correct),
+    correctAnswer: safeString(entry.correctAnswer, 180),
+    confidence: safeString(entry.confidence, 40),
+    xpEarned: Math.max(0, Math.round(Number(entry.xpEarned || entry.earned || 0))),
+    timeToAnswer: Math.max(0, Number(entry.timeToAnswer || 0)),
+    difficulty: safeString(entry.difficulty, 40),
+    session: safeString(entry.session, 120),
+    source: "ReplayEdge app",
+    metadata: entry.metadata && typeof entry.metadata === "object" ? entry.metadata : {}
+  };
+  rows.push(saved);
+  writeAttempts(rows.slice(-25000));
+  const stats = updateScenarioStats(saved);
+  sendAttemptToSupabase(saved);
+  return { saved, stats: communityStatsForScenario(stats.scenarioId) };
 }
 
 async function sendToSupabase(saved) {
@@ -173,6 +636,67 @@ function publicSiteUrl(req) {
   if (configured) return configured.replace(/\/$/, "");
   const proto = req.headers["x-forwarded-proto"] || "http";
   return `${proto}://${req.headers.host || "localhost:4173"}`;
+}
+
+function titleCase(value) {
+  return String(value || "—")
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function launchSummary() {
+  const signups = readJsonFile(signupsPath, []);
+  const subscriptions = readJsonFile(subscriptionsPath, []);
+  const referrals = readJsonFile(referralsPath, []);
+  const feedback = readJsonFile(feedbackPath, []);
+  const analytics = readJsonFile(analyticsPath, []);
+  const attempts = readAttempts();
+  const paidStatuses = new Set(["active", "trialing"]);
+  const paidEmails = new Set(
+    subscriptions
+      .filter((row) => paidStatuses.has(String(row.status || "").toLowerCase()))
+      .map((row) => String(row.email || "").toLowerCase())
+      .filter(Boolean)
+  );
+  const paidCount = paidEmails.size || subscriptions.filter((row) => paidStatuses.has(String(row.status || "").toLowerCase())).length;
+  const correct = attempts.filter((attempt) => attempt.correct).length;
+  const countBy = (rows, keyGetter) => rows.reduce((counts, row) => {
+    const key = keyGetter(row);
+    if (!key) return counts;
+    counts[key] = (counts[key] || 0) + 1;
+    return counts;
+  }, {});
+  const topEntry = (counts, fallback) => Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || fallback;
+  const topMode = topEntry(countBy(attempts, (attempt) => attempt.mode || "replay"), "No attempts yet");
+  const mostMissedPattern = topEntry(
+    countBy(attempts.filter((attempt) => !attempt.correct), (attempt) => attempt.pattern || attempt.metadata?.pattern || "Needs more data"),
+    "No misses yet"
+  );
+  const recent = [
+    ...signups.slice(-6).map((row) => ({ type: "Lead", label: row.email || row.name || row.type || "New signup", createdAt: row.createdAt })),
+    ...attempts.slice(-8).map((row) => ({ type: row.correct ? "Correct replay" : "Missed replay", label: `${titleCase(row.mode || "Replay")} · ${row.market || "Market"}`, createdAt: row.createdAt })),
+    ...feedback.slice(-4).map((row) => ({ type: "Feedback", label: row.rating || row.message?.slice(0, 46) || "Beta note", createdAt: row.createdAt })),
+    ...analytics.slice(-4).map((row) => ({ type: "Event", label: titleCase(row.event || "App event"), createdAt: row.createdAt }))
+  ]
+    .filter((row) => row.createdAt)
+    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
+    .slice(0, 8);
+
+  return {
+    ok: true,
+    leads: signups.length,
+    paid: paidCount,
+    attempts: attempts.length,
+    referrals: referrals.filter((row) => row.type === "captured").length,
+    generatedReferralCodes: referrals.filter((row) => row.type === "generated").length,
+    feedback: feedback.length,
+    analytics: analytics.length,
+    accuracy: attempts.length ? Math.round((correct / attempts.length) * 100) : null,
+    conversion: signups.length ? Math.round((paidCount / signups.length) * 100) : 0,
+    topMode,
+    mostMissedPattern,
+    recent
+  };
 }
 
 function googleAuthUrl(req) {
@@ -231,6 +755,36 @@ function readSubscriptions() {
   return JSON.parse(fs.readFileSync(subscriptionsPath, "utf8"));
 }
 
+function readReferrals() {
+  ensureDataFiles();
+  return JSON.parse(fs.readFileSync(referralsPath, "utf8"));
+}
+
+function writeReferrals(referrals) {
+  ensureDataFiles();
+  fs.writeFileSync(referralsPath, JSON.stringify(referrals, null, 2));
+}
+
+function createReferralCode(seed) {
+  const hash = crypto.createHash("sha1").update(String(seed || Date.now())).digest("hex");
+  return `RE-${hash.slice(0, 6).toUpperCase()}`;
+}
+
+function referralStatsForUser(userId, referredBy = "") {
+  const referrals = readReferrals();
+  const owner = referrals.find((item) => item.type === "generated" && item.userId === userId);
+  const code = owner?.code || null;
+  const referralCount = code ? referrals.filter((item) => item.type !== "generated" && item.code === code).length : 0;
+  return {
+    code,
+    stats: {
+      referrals: referralCount,
+      rewardStatus: referralCount > 0 ? "pending" : "none",
+      joinedVia: Boolean(referredBy)
+    }
+  };
+}
+
 function writeSubscriptions(subscriptions) {
   ensureDataFiles();
   fs.writeFileSync(subscriptionsPath, JSON.stringify(subscriptions, null, 2));
@@ -277,14 +831,14 @@ async function handleAssistantChat(payload) {
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
       max_tokens: 420,
-      system: "You are the TradePulse Assistant. TradePulse is a futures trading education replay game with Free, Player, Coach, and Elite plans; game modes include Replay Mode, Daily Challenge, Ranked Battle, Trade Mode, Spot the Setup, Candle Survival, No-Trade Challenge, Chart Detective, Build the Thesis, and Review Queue. Explain XP, streaks, leaderboards, bookmarks, plans, and training features clearly and concisely. Do not provide financial advice, trade alerts, broker execution guidance, or personalized investment recommendations. If asked unrelated questions, politely redirect to TradePulse or trading education practice.",
+      system: "You are the ReplayEdge Assistant. ReplayEdge is a futures trading education replay game with Free, Player, Coach, and Elite plans; game modes include Replay Mode, Daily Challenge, Ranked Battle, Trade Mode, Spot the Setup, Candle Survival, No-Trade Challenge, Chart Detective, Build the Thesis, and Review Queue. Explain XP, streaks, leaderboards, bookmarks, plans, and training features clearly and concisely. Do not provide financial advice, trade alerts, broker execution guidance, or personalized investment recommendations. If asked unrelated questions, politely redirect to ReplayEdge or trading education practice.",
       messages: safeMessages.length ? safeMessages : [{ role: "user", content: "Hello" }]
     })
   });
 
   const data = await response.json();
   if (!response.ok) throw new Error(data.error?.message || "Anthropic request failed.");
-  return data.content?.map((part) => part.text || "").join("").trim() || "I can help with TradePulse plans, games, XP, streaks, and training features.";
+  return data.content?.map((part) => part.text || "").join("").trim() || "I can help with ReplayEdge plans, games, XP, streaks, and training features.";
 }
 
 async function handleGoogleAuthUser(payload) {
@@ -409,7 +963,7 @@ async function createCheckoutSession(payload) {
   params.set("metadata[billingPeriod]", billingPeriod);
   params.set("metadata[email]", payload.email || "");
   params.set("metadata[name]", payload.name || "");
-  params.set("metadata[source]", "tradepulse_prototype");
+  params.set("metadata[source]", "replayedge_prototype");
   params.set("subscription_data[metadata][plan]", payload.plan);
   params.set("subscription_data[metadata][billingPeriod]", billingPeriod);
   params.set("subscription_data[metadata][email]", payload.email || "");
@@ -597,11 +1151,61 @@ const server = http.createServer((req, res) => {
           name: data.name || "",
           email: data.email || "",
           plan: "Coach",
-          source: "TradePulse profile",
+          source: "ReplayEdge profile",
           details: { enabled: Boolean(data.enabled) }
         });
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true, saved }));
+      })
+      .catch((error) => {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      });
+    return;
+  }
+
+  if (req.method === "GET" && parsedUrl.pathname === "/api/referral/stats") {
+    const userId = String(parsedUrl.searchParams.get("userId") || "").slice(0, 120);
+    const referredBy = String(parsedUrl.searchParams.get("referredBy") || "").slice(0, 80);
+    if (!userId) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: "Missing userId" }));
+      return;
+    }
+    const result = referralStatsForUser(userId, referredBy);
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ ok: true, ...result }));
+    return;
+  }
+
+  if (req.method === "POST" && parsedUrl.pathname === "/api/referral/generate") {
+    readBody(req)
+      .then((body) => {
+        const data = JSON.parse(body || "{}");
+        const userId = String(data.userId || "").slice(0, 120);
+        if (!userId) throw new Error("Missing userId");
+        const referrals = readReferrals();
+        let owner = referrals.find((item) => item.type === "generated" && item.userId === userId);
+        if (!owner) {
+          let code = createReferralCode(`${userId}:${data.email || ""}`);
+          while (referrals.some((item) => item.code === code)) {
+            code = createReferralCode(`${userId}:${Date.now()}:${Math.random()}`);
+          }
+          owner = {
+            id: `ref_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+            type: "generated",
+            createdAt: new Date().toISOString(),
+            userId,
+            code,
+            email: String(data.email || "").slice(0, 160),
+            name: String(data.name || "").slice(0, 120)
+          };
+          referrals.push(owner);
+          writeReferrals(referrals);
+        }
+        const result = referralStatsForUser(userId, String(data.referredBy || "").slice(0, 80));
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, ...result }));
       })
       .catch((error) => {
         res.writeHead(400, { "Content-Type": "application/json" });
@@ -615,11 +1219,12 @@ const server = http.createServer((req, res) => {
       .then((body) => {
         const data = JSON.parse(body || "{}");
         const saved = appendJsonRecord(referralsPath, {
+          type: "captured",
           code: String(data.code || "").slice(0, 80),
           email: String(data.email || "").slice(0, 160),
           name: String(data.name || "").slice(0, 120),
           status: "captured",
-          source: "TradePulse app"
+          source: "ReplayEdge app"
         });
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true, saved }));
@@ -640,7 +1245,7 @@ const server = http.createServer((req, res) => {
           page: String(data.page || "").slice(0, 80),
           rating: String(data.rating || "").slice(0, 24),
           message: String(data.message || "").slice(0, 3000),
-          source: "TradePulse beta"
+          source: "ReplayEdge beta"
         });
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true, saved }));
@@ -649,6 +1254,75 @@ const server = http.createServer((req, res) => {
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: false, error: error.message }));
       });
+    return;
+  }
+
+  if (req.method === "POST" && parsedUrl.pathname === "/api/analytics") {
+    readBody(req)
+      .then((body) => {
+        const data = JSON.parse(body || "{}");
+        const saved = appendJsonRecord(analyticsPath, {
+          event: String(data.event || "unknown").slice(0, 80),
+          page: String(data.page || "").slice(0, 80),
+          plan: String(data.plan || "").slice(0, 40),
+          mode: String(data.mode || "").slice(0, 60),
+          details: data.details && typeof data.details === "object" ? data.details : {}
+        });
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, saved }));
+      })
+      .catch((error) => {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      });
+    return;
+  }
+
+  if (req.method === "POST" && parsedUrl.pathname === "/api/attempts") {
+    readBody(req)
+      .then((body) => {
+        const data = JSON.parse(body || "{}");
+        const result = saveAttemptRecord(data);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, ...result }));
+      })
+      .catch((error) => {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      });
+    return;
+  }
+
+  if (req.method === "GET" && parsedUrl.pathname === "/api/scenario-stats") {
+    const scenarioId = parsedUrl.searchParams.get("scenarioId");
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ ok: true, ...communityStatsForScenario(scenarioId) }));
+    return;
+  }
+
+  if (req.method === "GET" && parsedUrl.pathname === "/api/community-leaderboard") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ ok: true, rows: leaderboardFromAttempts() }));
+    return;
+  }
+
+  if (req.method === "GET" && parsedUrl.pathname === "/api/community-summary") {
+    const attempts = readAttempts();
+    const users = new Set(attempts.map((attempt) => attempt.userId || attempt.email || attempt.userName).filter(Boolean));
+    const correct = attempts.filter((attempt) => attempt.correct).length;
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({
+      ok: true,
+      attempts: attempts.length,
+      users: users.size,
+      accuracy: attempts.length ? Math.round((correct / attempts.length) * 100) : null
+    }));
+    return;
+  }
+
+  if (req.method === "GET" && parsedUrl.pathname === "/api/launch-summary") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(launchSummary()));
     return;
   }
 
@@ -696,13 +1370,27 @@ const server = http.createServer((req, res) => {
 
   if (req.method === "GET" && parsedUrl.pathname === "/success.html") {
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-    res.end(`<!doctype html><title>TradePulse Success</title><body style="background:#030608;color:#eef7f1;font-family:system-ui;padding:48px"><h1>Checkout complete.</h1><p>Stripe is confirming your access. Return to TradePulse and your subscription status will refresh automatically.</p><a style="color:#56d66d" href="/">Back to TradePulse</a></body>`);
+    res.end(renderStripeReturnPage({
+      eyebrow: "Checkout complete",
+      title: "Access is being activated.",
+      message: "Stripe is confirming your subscription. We will send you back to ReplayEdge in a moment.",
+      action: "Continue to ReplayEdge",
+      href: "/#profile",
+      tone: "success"
+    }));
     return;
   }
 
   if (req.method === "GET" && parsedUrl.pathname === "/cancel.html") {
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-    res.end(`<!doctype html><title>TradePulse Cancelled</title><body style="background:#030608;color:#eef7f1;font-family:system-ui;padding:48px"><h1>Checkout cancelled.</h1><p>No payment was completed.</p><a style="color:#56d66d" href="/">Back to TradePulse</a></body>`);
+    res.end(renderStripeReturnPage({
+      eyebrow: "No payment completed",
+      title: "Checkout cancelled.",
+      message: "No payment was completed. We will send you back to the plans page so you can keep reviewing your options.",
+      action: "Back to plans",
+      href: "/#plans",
+      tone: "cancel"
+    }));
     return;
   }
 
@@ -735,7 +1423,7 @@ const host = process.env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1";
 
 server.on("error", (error) => {
   if (error.code === "EADDRINUSE") {
-    console.log(`TradePulse is already running at http://localhost:${port}`);
+    console.log(`ReplayEdge is already running at http://localhost:${port}`);
     console.log("Open that link in Chrome. You do not need to start it twice.");
     process.exit(0);
   }
@@ -744,5 +1432,5 @@ server.on("error", (error) => {
 });
 
 server.listen(port, host, () => {
-  console.log(`TradePulse running at http://localhost:${port}`);
+  console.log(`ReplayEdge running at http://localhost:${port}`);
 });
