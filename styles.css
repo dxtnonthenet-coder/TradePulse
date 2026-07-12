@@ -21926,7 +21926,6 @@ body[data-page="home"] .hero-grid { padding-top: 18px !important; }
 .prop-shell { max-width: 1280px; margin: 0 auto; }
 
 .prop-topbar {
-  position: sticky; top: 64px; z-index: 40;
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
   padding: 12px 18px; margin-bottom: 14px;
   border: 1px solid rgba(148, 163, 184, 0.12);
@@ -22181,7 +22180,13 @@ body[data-page="home"] .hero-grid { padding-top: 18px !important; }
 
 @media (max-width: 980px) {
   .prop-desk { grid-template-columns: 1fr; }
-  .prop-topbar { top: 58px; }
   .prop-trade-panel { flex-direction: column; }
   .prop-live-pnl { text-align: center; }
 }
+
+/* prop firm locked page */
+.prop-locked-page { max-width: 760px; margin: 30px auto; text-align: center; padding: 20px; }
+.prop-locked-page h2 { font-size: clamp(28px, 4vw, 40px); margin: 8px 0 10px; }
+.prop-locked-sub { color: #dbe7e3; line-height: 1.65; margin-bottom: 22px; }
+.prop-locked-page .elite-locked-grid { margin-bottom: 26px; }
+.prop-locked-page small { display: block; margin-top: 12px; color: rgba(226,232,240,.45); }

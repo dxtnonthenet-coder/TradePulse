@@ -403,6 +403,31 @@ function pfEquippedChartTheme() {
 function renderPropfirm() {
   const root = document.getElementById("propfirm-root");
   if (!root) return;
+
+  if (typeof hasAccess === "function" && !hasAccess("propfirm")) {
+    pfSimStop();
+    root.innerHTML = `
+      <div class="prop-locked-page">
+        <p class="arcade-kicker gold-kicker">// PROP FIRM TRAINING GROUNDS</p>
+        <h2>Earn the desk.</h2>
+        <p class="prop-locked-sub">The full prop-firm career, simulated: get staked <b>$1,000 SimCash</b>, buy evaluation accounts, trade a live market under real prop rules — and if you break them, you blow the account.</p>
+        <div class="elite-locked-grid">
+          <div>🏦 <b>Buy Evaluations</b><span>25K, 50K, and 150K accounts with real targets and loss limits</span></div>
+          <div>📉 <b>Live Trading Desk</b><span>Smooth, realistic price action across 6 instruments</span></div>
+          <div>🎖 <b>Get Funded</b><span>Pass the eval, keep the same discipline, earn payouts</span></div>
+          <div>🏆 <b>Prize Shop</b><span>Spend winnings on avatar frames, badges, and desk themes</span></div>
+        </div>
+        <button class="primary-button" type="button" id="prop-unlock-cta">Unlock with any plan — from $24.99/mo</button>
+        <small>Included in Player, Coach, and Elite. SimCash only — no real money is ever traded.</small>
+      </div>
+    `;
+    root.querySelector("#prop-unlock-cta")?.addEventListener("click", () => {
+      if (typeof openUpgradeModal === "function") openUpgradeModal("propfirm");
+    });
+    if (window.lucide) window.lucide.createIcons();
+    return;
+  }
+
   const pf = propfirmData();
   if (!pf.welcomed) {
     pf.welcomed = true;
