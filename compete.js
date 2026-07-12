@@ -292,11 +292,12 @@ function openFriendProfile(code) {
     <div class="academy-modal-card fr-profile-card" role="dialog" aria-modal="true">
       <button class="academy-modal-close" id="fr-profile-close" type="button" aria-label="Close"><i data-lucide="x"></i></button>
       <div class="fr-profile-head">
-        ${typeof avatarHtml === "function" ? avatarHtml(person.name, "av-profile", person.avatar) : ""}
+        ${typeof avatarHtml === "function" ? avatarHtml(person.name, `av-profile${stats.frame ? ` prop-frame ${stats.frame}` : ""}`, person.avatar) : ""}
         <div>
           <h2>${person.name}</h2>
           <div class="pf-badges-row">
             <span class="pf-track-badge"><i data-lucide="${track.icon}"></i> ${track.label} Trader</span>
+            ${stats.title ? `<span class="prop-title-chip">${stats.title}</span>` : ""}
             ${isMutual ? `<span class="cp-offtrack">🤝 Mutuals</span>` : person.followsYou || compete.followers.some((f) => f.code === code) ? `<span class="cp-offtrack">Follows you</span>` : ""}
           </div>
           <p class="pf-joined">${person.lastActiveDay === new Date().toDateString() ? "🟢 Active today" : "⚪ Resting"}${myStreak ? ` · 🔥 ${myStreak}d streak with you` : ""}</p>

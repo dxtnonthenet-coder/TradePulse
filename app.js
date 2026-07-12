@@ -1071,6 +1071,7 @@ function navigateTo(viewName = "home", options = {}) {
   if (view === "toolkit" && typeof renderToolkit === "function") renderToolkit();
   if (view === "compete" && typeof renderCompete === "function") renderCompete();
   if (view === "dashboard" && typeof renderTradersDashboard === "function") renderTradersDashboard();
+  if (view === "propfirm" && typeof renderPropfirm === "function") renderPropfirm();
   if (view === "achievements" && typeof renderAchievements === "function") renderAchievements();
   if (view === "home") {
     if (typeof renderHomeAcademyPath === "function") renderHomeAcademyPath();

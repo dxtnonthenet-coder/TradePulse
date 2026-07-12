@@ -48,6 +48,7 @@ const publicFiles = new Set([
   "admin.js",
   "elite.js",
   "sync.js",
+  "propfirm.js",
   "favicon.svg",
   "privacy.html",
   "terms.html",
