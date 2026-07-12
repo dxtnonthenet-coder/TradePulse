@@ -956,7 +956,8 @@ async function createCheckoutSession(payload) {
   params.set("cancel_url", `${host}/cancel.html`);
   params.set("payment_method_collection", "always");
   params.set("billing_address_collection", "auto");
-  params.set("customer_creation", "if_required");
+  // NOTE: customer_creation is only valid in payment mode; subscription mode always
+  // creates a customer, so setting it makes Stripe reject the checkout session.
   params.set("allow_promotion_codes", "true");
   params.set("metadata[plan]", payload.plan);
   params.set("metadata[billingPeriod]", billingPeriod);
