@@ -310,6 +310,12 @@ function openFriendProfile(code) {
         <div class="pf-stat panel"><span class="pf-stat-icon">🕹</span><div><strong>${stats.runs || 0}</strong><small>Arcade runs</small></div></div>
         <div class="pf-stat panel"><span class="pf-stat-icon">🎯</span><div><strong>${stats.winRate || 0}%</strong><small>Win rate</small></div></div>
         <div class="pf-stat panel"><span class="pf-stat-icon">🏆</span><div><strong>${stats.achievements || 0}</strong><small>Achievements</small></div></div>
+        ${typeof stats.simCash === "number" ? `
+          <div class="pf-stat panel"><span class="pf-stat-icon">💵</span><div><strong>$${(stats.simCash || 0).toLocaleString()}</strong><small>SimCash net worth</small></div></div>
+          <div class="pf-stat panel"><span class="pf-stat-icon">🎖</span><div><strong>${stats.evalsPassed || 0}</strong><small>Evaluations passed</small></div></div>
+          <div class="pf-stat panel"><span class="pf-stat-icon">💰</span><div><strong>$${(stats.payoutTotal || 0).toLocaleString()}</strong><small>Total paid out</small></div></div>
+          <div class="pf-stat panel"><span class="pf-stat-icon">🚀</span><div><strong>${stats.biggestWin ? "+$" + stats.biggestWin.toLocaleString() : "—"}</strong><small>Biggest single trade</small></div></div>
+        ` : ""}
       </div>
       <div class="cp-row-actions fr-profile-actions">
         ${isFollowing

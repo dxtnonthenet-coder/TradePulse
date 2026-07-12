@@ -22204,3 +22204,42 @@ body[data-page="home"] .hero-grid { padding-top: 18px !important; }
 .prop-earn-note { margin: 14px 0 0; font-size: 12.5px; color: rgba(226,232,240,.6); }
 .prop-earn-note b { color: #86efac; }
 .prop-comeback-note { font-size: 12px !important; color: #86efac !important; }
+
+/* pnl calendar */
+.prop-cal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.prop-cal-nav { display: flex; align-items: center; gap: 12px; }
+.prop-cal-nav h3 { margin: 0; font-size: 20px; min-width: 170px; text-align: center; }
+.prop-cal-nav button { font: 800 13px inherit; cursor: pointer; width: 34px; height: 34px; border-radius: 9px; color: #e2e8f0; background: rgba(255,255,255,.04); border: 1px solid rgba(148,163,184,.15); }
+.prop-cal-nav button:disabled { opacity: .3; cursor: not-allowed; }
+.prop-cal-summary { display: flex; gap: 10px; flex-wrap: wrap; }
+.prop-cal-summary div { border: 1px solid rgba(148,163,184,.1); border-radius: 10px; padding: 7px 12px; text-align: center; }
+.prop-cal-summary small { display: block; font: 800 8.5px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .14em; color: rgba(226,232,240,.45); margin-bottom: 2px; }
+.prop-cal-summary b { font: 800 14px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.prop-cal-summary div.up b { color: #34d97b; }
+.prop-cal-summary div.down b { color: #f87171; }
+.prop-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px; }
+.prop-cal-dow { text-align: center; font: 800 9.5px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .16em; color: rgba(226,232,240,.4); padding: 4px 0; }
+.prop-cal-cell {
+  min-height: 68px; border-radius: 11px; padding: 8px 9px;
+  border: 1px solid rgba(148,163,184,.08); background: rgba(255,255,255,.015);
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+.prop-cal-cell.empty { border: none; background: none; }
+.prop-cal-cell small { font: 700 10.5px ui-monospace, SFMono-Regular, Menlo, monospace; color: rgba(226,232,240,.45); }
+.prop-cal-cell b { font: 800 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.prop-cal-cell b.dash { color: rgba(226,232,240,.18); font-weight: 600; }
+.prop-cal-cell.green { background: rgba(34,197,94,.1); border-color: rgba(34,197,94,.32); }
+.prop-cal-cell.green b { color: #4ade80; }
+.prop-cal-cell.red { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.32); }
+.prop-cal-cell.red b { color: #f87171; }
+.prop-cal-cell.today { outline: 2px solid rgba(246,195,78,.55); outline-offset: 1px; }
+.prop-cal-cell.future { opacity: .35; }
+.prop-cal-note { margin: 16px 0 0; font-size: 12px; color: rgba(226,232,240,.5); }
+
+/* clickable arena rows + trader card */
+.arena-row.clickable, .podium-slot.clickable { cursor: pointer; transition: transform .1s ease, border-color .15s ease; }
+.arena-row.clickable:hover { border-color: rgba(34,197,94,.45); transform: translateX(2px); }
+.podium-slot.clickable:hover { transform: translateY(-3px); }
+.arena-tap-hint { margin: 12px 0 0; text-align: center; font-size: 11.5px; color: rgba(226,232,240,.4); }
+.prop-record-grid .pf-stat strong { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+@media (max-width: 760px) { .prop-cal-cell { min-height: 52px; padding: 5px 6px; } .prop-cal-cell b { font-size: 10px; } }

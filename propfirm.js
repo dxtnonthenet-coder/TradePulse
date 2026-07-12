@@ -71,10 +71,15 @@ function propfirmData() {
   if (!pf.cosmetics || typeof pf.cosmetics !== "object") pf.cosmetics = {};
   if (!Array.isArray(pf.cosmetics.owned)) pf.cosmetics.owned = [];
   if (!pf.stats || typeof pf.stats !== "object") pf.stats = {};
-  ["accountsBought", "accountsFailed", "evalsPassed", "payoutsCollected", "payoutTotal", "trades", "wins"].forEach((key) => {
+  ["accountsBought", "accountsFailed", "evalsPassed", "payoutsCollected", "payoutTotal", "trades", "wins", "biggestWin"].forEach((key) => {
     if (typeof pf.stats[key] !== "number") pf.stats[key] = 0;
   });
+  if (!pf.pnlDays || typeof pf.pnlDays !== "object") pf.pnlDays = {};
   return pf;
+}
+
+function pfDayStamp(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 function pfMoney(value, showPlus = false) {
@@ -376,6 +381,12 @@ function pfCloseTrade(auto = false) {
   const pf = propfirmData();
   pf.stats.trades += 1;
   if (pnl > 0) pf.stats.wins += 1;
+  pf.stats.biggestWin = Math.max(pf.stats.biggestWin || 0, pnl);
+  // pnl calendar: desk-wide realized pnl per day (keep ~13 months)
+  const stamp = pfDayStamp();
+  pf.pnlDays[stamp] = (pf.pnlDays[stamp] || 0) + pnl;
+  const keys = Object.keys(pf.pnlDays).sort();
+  while (keys.length > 400) delete pf.pnlDays[keys.shift()];
   pfSim.position = null;
   saveProgress();
   if (!auto && typeof arcadeSound === "function") arcadeSound(pnl >= 0 ? "cashout" : "lose");
@@ -478,6 +489,7 @@ function renderPropfirm() {
       <nav class="prop-tabs">
         <button class="prop-tab ${pfState.tab === "desk" ? "active" : ""}" data-pf-tab="desk" type="button">📉 Trading Desk</button>
         <button class="prop-tab ${pfState.tab === "accounts" ? "active" : ""}" data-pf-tab="accounts" type="button">🏦 My Accounts</button>
+        <button class="prop-tab ${pfState.tab === "calendar" ? "active" : ""}" data-pf-tab="calendar" type="button">📅 PnL Calendar</button>
         <button class="prop-tab ${pfState.tab === "shop" ? "active" : ""}" data-pf-tab="shop" type="button">🏆 Prize Shop</button>
       </nav>
 
@@ -498,6 +510,7 @@ function renderPropfirm() {
   const body = root.querySelector("#prop-tab-body");
   if (pfState.tab === "desk") pfRenderDesk(body, account);
   else if (pfState.tab === "accounts") pfRenderAccounts(body);
+  else if (pfState.tab === "calendar") pfRenderCalendar(body);
   else pfRenderShop(body);
 
   pfRenderOverlay();
@@ -893,6 +906,67 @@ function pfRenderAccounts(body) {
   body.querySelector("#prop-bailout")?.addEventListener("click", pfClaimBailout);
 }
 
+/* ---------- pnl calendar ---------- */
+
+function pfRenderCalendar(body) {
+  const pf = propfirmData();
+  const now = new Date();
+  const view = new Date(now.getFullYear(), now.getMonth() - (pfState.calOffset || 0), 1);
+  const year = view.getFullYear();
+  const month = view.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDow = new Date(year, month, 1).getDay();
+  const isCurrentMonth = pfState.calOffset === 0 || pfState.calOffset === undefined;
+
+  let total = 0, greenDays = 0, redDays = 0, best = 0, worst = 0, bestDay = null, worstDay = null;
+  const cells = [];
+  for (let i = 0; i < firstDow; i += 1) cells.push(`<div class="prop-cal-cell empty"></div>`);
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const stamp = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const pnl = Math.round(pf.pnlDays[stamp] || 0);
+    const isToday = isCurrentMonth && day === now.getDate();
+    const isFuture = isCurrentMonth && day > now.getDate();
+    if (pnl > 0) { greenDays += 1; total += pnl; if (pnl > best) { best = pnl; bestDay = stamp; } }
+    else if (pnl < 0) { redDays += 1; total += pnl; if (pnl < worst) { worst = pnl; worstDay = stamp; } }
+    const tone = pnl > 0 ? "green" : pnl < 0 ? "red" : "flat";
+    cells.push(`
+      <div class="prop-cal-cell ${tone} ${isToday ? "today" : ""} ${isFuture ? "future" : ""}">
+        <small>${day}</small>
+        ${pnl !== 0 ? `<b>${pfMoney(pnl, true)}</b>` : `<b class="dash">—</b>`}
+      </div>
+    `);
+  }
+
+  const monthLabel = view.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  const tradedDays = greenDays + redDays;
+  body.innerHTML = `
+    <div class="prop-cal">
+      <div class="prop-cal-head">
+        <div class="prop-cal-nav">
+          <button type="button" id="prop-cal-prev" aria-label="Previous month">◀</button>
+          <h3>${monthLabel}</h3>
+          <button type="button" id="prop-cal-next" ${isCurrentMonth ? "disabled" : ""} aria-label="Next month">▶</button>
+        </div>
+        <div class="prop-cal-summary">
+          <div class="${total > 0 ? "up" : total < 0 ? "down" : ""}"><small>MONTH P&L</small><b>${pfMoney(total, true)}</b></div>
+          <div class="up"><small>GREEN DAYS</small><b>${greenDays}</b></div>
+          <div class="down"><small>RED DAYS</small><b>${redDays}</b></div>
+          <div><small>WIN DAY RATE</small><b>${tradedDays ? Math.round((greenDays / tradedDays) * 100) : 0}%</b></div>
+          <div class="up"><small>BEST DAY</small><b>${bestDay ? pfMoney(best, true) : "—"}</b></div>
+          <div class="down"><small>WORST DAY</small><b>${worstDay ? pfMoney(worst, true) : "—"}</b></div>
+        </div>
+      </div>
+      <div class="prop-cal-grid">
+        ${["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((label) => `<div class="prop-cal-dow">${label}</div>`).join("")}
+        ${cells.join("")}
+      </div>
+      <p class="prop-cal-note">Realized desk P&L per day, across all your accounts. Consistency is the real profit target — real prop firms read this exact calendar before they trust a trader.</p>
+    </div>
+  `;
+  body.querySelector("#prop-cal-prev").addEventListener("click", () => { pfState.calOffset = (pfState.calOffset || 0) + 1; renderPropfirm(); });
+  body.querySelector("#prop-cal-next").addEventListener("click", () => { pfState.calOffset = Math.max(0, (pfState.calOffset || 0) - 1); renderPropfirm(); });
+}
+
 /* ---------- prize shop ---------- */
 
 function pfShopUnlocked(item) {
@@ -1007,6 +1081,24 @@ function pfDecorateProfile() {
   if (badgeRow && title && !badgeRow.querySelector(".prop-title-chip")) {
     badgeRow.insertAdjacentHTML("beforeend", `<span class="prop-title-chip">${title.icon} ${title.name}</span>`);
   }
+  // Prop Firm Record — the stats every trader wants to flex
+  const anchor = document.querySelector("#profile-root .pf-stats-grid");
+  if (anchor && !document.getElementById("prop-record")) {
+    const pf = propfirmData();
+    const stats = pf.stats;
+    const deskWinRate = stats.trades ? Math.round((stats.wins / stats.trades) * 100) : 0;
+    anchor.insertAdjacentHTML("afterend", `
+      <h3 class="pf-section-title" id="prop-record">🏦 Prop Firm Record</h3>
+      <div class="pf-stats-grid prop-record-grid">
+        <div class="pf-stat panel"><span class="pf-stat-icon">💵</span><div><strong>${pfMoney(pf.cash)}</strong><small>SimCash net worth</small></div></div>
+        <div class="pf-stat panel"><span class="pf-stat-icon">🎖</span><div><strong>${stats.evalsPassed}</strong><small>Evaluations passed</small></div></div>
+        <div class="pf-stat panel"><span class="pf-stat-icon">💰</span><div><strong>${pfMoney(stats.payoutTotal)}</strong><small>Total paid out · ${stats.payoutsCollected} payout${stats.payoutsCollected === 1 ? "" : "s"}</small></div></div>
+        <div class="pf-stat panel"><span class="pf-stat-icon">🚀</span><div><strong>${stats.biggestWin > 0 ? pfMoney(stats.biggestWin, true) : "—"}</strong><small>Biggest single trade</small></div></div>
+        <div class="pf-stat panel"><span class="pf-stat-icon">🎯</span><div><strong>${deskWinRate}%</strong><small>Desk win rate · ${stats.trades.toLocaleString()} trades</small></div></div>
+        <div class="pf-stat panel"><span class="pf-stat-icon">💥</span><div><strong>${stats.accountsFailed}</strong><small>Accounts blown</small></div></div>
+      </div>
+    `);
+  }
 }
 
 /* override chain: decorate after the existing renderers run */
@@ -1036,8 +1128,11 @@ if (typeof competeMyStats === "function") {
     const title = pfTitleItem();
     if (cosmetics.frame) stats.frame = cosmetics.frame;
     if (title) stats.title = `${title.icon} ${title.name}`;
-    stats.evalsPassed = propfirmData().stats.evalsPassed;
+    const record = propfirmData().stats;
+    stats.evalsPassed = record.evalsPassed;
     stats.simCash = Math.round(propfirmData().cash);
+    stats.payoutTotal = Math.round(record.payoutTotal || 0);
+    stats.biggestWin = Math.round(record.biggestWin || 0);
     return stats;
   };
 }
@@ -1124,7 +1219,7 @@ function pfRenderGainersBoard() {
     const place = rows.indexOf(row) + 1;
     const width = Math.max(6, Math.round((row.simCash / maxCash) * 100));
     return `
-      <div class="arena-row ${row.you ? "you" : ""}">
+      <div class="arena-row clickable ${row.you ? "you" : ""}" data-gainer-index="${rows.indexOf(row)}" role="button" tabindex="0">
         <b class="arena-place">${place}</b>
         ${pfGainerAvatar(row, "arena-avatar")}
         <span class="arena-name"><span class="arena-name-line">${row.name}${row.you ? '<i class="arena-you-tag">YOU</i>' : ""}</span><small>${row.title || `${row.evalsPassed || 0} evals passed`}</small></span>
@@ -1147,8 +1242,76 @@ function pfRenderGainersBoard() {
     <div class="arena-podium">${podium}</div>
     ${chase}
     <div class="arena-list">${list}</div>
+    <p class="arena-tap-hint">Tap any trader to see their record.</p>
   `;
+  // podium + rows open the trader card
+  host.querySelectorAll(".podium-slot").forEach((slot, index) => {
+    const order = [rows[1], rows[0], rows[2]].filter(Boolean);
+    slot.classList.add("clickable");
+    slot.addEventListener("click", () => pfOpenTraderCard(order[index]));
+  });
+  host.querySelectorAll("[data-gainer-index]").forEach((rowEl) => {
+    const open = () => pfOpenTraderCard(rows[Number(rowEl.dataset.gainerIndex)]);
+    rowEl.addEventListener("click", open);
+    rowEl.addEventListener("keydown", (event) => { if (event.key === "Enter") open(); });
+  });
   pfFetchGainers();
+}
+
+/* ---------- trader card: click anyone, see their record ---------- */
+
+function pfBotRecord(row) {
+  // house traders get plausible records derived from their balance
+  const seedScale = row.simCash / 1000;
+  return {
+    payoutTotal: Math.round(row.simCash * 0.72),
+    biggestWin: Math.round(220 + seedScale * 55),
+    level: Math.max(3, Math.round(seedScale * 2.4)),
+    streak: Math.max(2, Math.round(seedScale * 1.1)),
+    xp: Math.round(row.simCash * 2.6)
+  };
+}
+
+function pfOpenTraderCard(row) {
+  if (!row) return;
+  if (row.you) { navigateTo("profile"); return; }
+  const stats = row.code ? row : { ...row, ...pfBotRecord(row) };
+  document.getElementById("prop-trader-card")?.remove();
+  const modal = document.createElement("div");
+  modal.id = "prop-trader-card";
+  modal.className = "academy-modal";
+  modal.innerHTML = `
+    <div class="academy-modal-card fr-profile-card" role="dialog" aria-modal="true">
+      <button class="academy-modal-close" id="prop-trader-close" type="button" aria-label="Close">✕</button>
+      <div class="fr-profile-head">
+        ${pfGainerAvatar(row, "av av-profile")}
+        <div>
+          <h2>${row.name}</h2>
+          <div class="pf-badges-row">
+            ${row.title ? `<span class="prop-title-chip">${row.title}</span>` : ""}
+            <span class="prop-state funded">💵 ${pfMoney(row.simCash)}</span>
+          </div>
+          <p class="pf-joined">Prop Firm Training Grounds trader</p>
+        </div>
+      </div>
+      <div class="pf-stats-grid fr-profile-stats">
+        <div class="pf-stat panel"><span class="pf-stat-icon">💵</span><div><strong>${pfMoney(row.simCash)}</strong><small>SimCash net worth</small></div></div>
+        <div class="pf-stat panel"><span class="pf-stat-icon">🎖</span><div><strong>${row.evalsPassed || 0}</strong><small>Evaluations passed</small></div></div>
+        <div class="pf-stat panel"><span class="pf-stat-icon">💰</span><div><strong>${pfMoney(stats.payoutTotal || 0)}</strong><small>Total paid out</small></div></div>
+        <div class="pf-stat panel"><span class="pf-stat-icon">🚀</span><div><strong>${stats.biggestWin ? pfMoney(stats.biggestWin, true) : "—"}</strong><small>Biggest single trade</small></div></div>
+        ${stats.level ? `<div class="pf-stat panel"><span class="pf-stat-icon">⚡</span><div><strong>Lv ${stats.level}</strong><small>${(stats.xp || 0).toLocaleString()} XP</small></div></div>` : ""}
+        ${stats.streak ? `<div class="pf-stat panel"><span class="pf-stat-icon">🔥</span><div><strong>${stats.streak}</strong><small>Day streak</small></div></div>` : ""}
+      </div>
+      ${row.code && typeof competeFollow === "function" ? `<button class="primary-button" type="button" id="prop-trader-follow">＋ Follow ${row.name}</button>` : ""}
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener("click", (event) => { if (event.target === modal) modal.remove(); });
+  modal.querySelector("#prop-trader-close").addEventListener("click", () => modal.remove());
+  modal.querySelector("#prop-trader-follow")?.addEventListener("click", () => {
+    competeFollow(row.code);
+    modal.remove();
+  });
 }
 
 function pfInjectBoardToggle() {

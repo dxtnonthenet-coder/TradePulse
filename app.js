@@ -1234,7 +1234,10 @@ async function startCheckout(plan, trial = false, triggerButton = null) {
     }
     throw new Error(result.error || "Checkout did not return a URL.");
   } catch (error) {
-    showToast(`Checkout setup needs attention: ${error.message}`, "error");
+    const friendly = /payment method types|capab/i.test(error.message || "")
+      ? "Payments are being activated for our account — checkout opens again shortly. Try once more in a few minutes."
+      : `Checkout setup needs attention: ${error.message}`;
+    showToast(friendly, "error");
     return false;
   } finally {
     checkoutButtonLoading(triggerButton, false);

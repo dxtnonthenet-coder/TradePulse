@@ -1467,6 +1467,8 @@ const server = http.createServer((req, res) => {
             // prop firm: SimCash net worth + cosmetics shown to friends/leaderboards
             simCash: Math.max(0, Math.round(Number(data.stats.simCash || 0))),
             evalsPassed: Math.max(0, Number(data.stats.evalsPassed || 0)),
+            payoutTotal: Math.max(0, Math.round(Number(data.stats.payoutTotal || 0))),
+            biggestWin: Math.max(0, Math.round(Number(data.stats.biggestWin || 0))),
             frame: typeof data.stats.frame === "string" ? data.stats.frame.slice(0, 30) : undefined,
             title: typeof data.stats.title === "string" ? data.stats.title.slice(0, 40) : undefined
           };
@@ -1845,7 +1847,12 @@ const server = http.createServer((req, res) => {
         simCash: Math.round(Number(user.stats.simCash || 0)),
         evalsPassed: Number(user.stats.evalsPassed || 0),
         frame: user.stats.frame || null,
-        title: user.stats.title || null
+        title: user.stats.title || null,
+        payoutTotal: Math.round(Number(user.stats.payoutTotal || 0)),
+        biggestWin: Math.round(Number(user.stats.biggestWin || 0)),
+        level: Number(user.stats.level || 1),
+        streak: Number(user.stats.streak || 0),
+        xp: Number(user.stats.xp || 0)
       }))
       .sort((a, b) => b.simCash - a.simCash)
       .slice(0, 20);
