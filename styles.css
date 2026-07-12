@@ -22243,3 +22243,99 @@ body[data-page="home"] .hero-grid { padding-top: 18px !important; }
 .arena-tap-hint { margin: 12px 0 0; text-align: center; font-size: 11.5px; color: rgba(226,232,240,.4); }
 .prop-record-grid .pf-stat strong { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 @media (max-width: 760px) { .prop-cal-cell { min-height: 52px; padding: 5px 6px; } .prop-cal-cell b { font-size: 10px; } }
+
+/* ===================== Google sign-in button — official style ===================== */
+body .google-auth-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  font: 600 15px/1 "Roboto", Inter, system-ui, sans-serif !important;
+  letter-spacing: 0.01em !important;
+  color: #1f1f1f !important;
+  background: #ffffff !important;
+  border: 1px solid #dadce0 !important;
+  border-radius: 12px !important;
+  padding: 13px 22px !important;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: box-shadow 0.15s ease, background 0.15s ease;
+  text-shadow: none !important;
+}
+body .google-auth-button:hover {
+  background: #f7f8f8 !important;
+  box-shadow: 0 2px 8px rgba(66, 133, 244, 0.28);
+}
+body .google-auth-button:active { background: #eef1f2 !important; }
+body .google-auth-button .g-logo { width: 20px; height: 20px; flex: 0 0 20px; }
+body .google-auth-button .g-label { color: #1f1f1f !important; }
+body .google-auth-button.full { width: 100%; }
+
+/* ===================== Mobile polish (≤640px only — desktop untouched) ===================== */
+@media (max-width: 640px) {
+  /* plans comparison table: fit 375px instead of clipping */
+  .compare-table > div { grid-template-columns: minmax(104px, 1.3fr) repeat(3, minmax(52px, 0.6fr)); }
+  .compare-table span, .compare-table strong, .compare-table b { font-size: 10.5px !important; padding: 8px 6px !important; }
+
+  /* arcade header stats: wrap into two rows instead of clipping */
+  .arcade-head-stats { flex-wrap: wrap; gap: 8px; }
+  .arcade-head-stats > div { padding: 9px 12px; flex: 1 1 40%; }
+
+  /* arena leaderboard topbar: allow wrap */
+  .arena-topbar { flex-wrap: wrap; gap: 6px; }
+  .arena-reset { font-size: 10.5px; flex-basis: 100%; white-space: normal; }
+  .arena-row { gap: 8px; padding: 9px 10px; }
+  .arena-bar { display: none; } /* free space for names + numbers on tiny screens */
+
+  /* prop firm: header + tabs + panels breathe on phones */
+  .prop-topbar { flex-wrap: wrap; gap: 8px; padding: 12px 14px; }
+  .prop-wallet { text-align: left; }
+  .prop-wallet strong { font-size: 21px; }
+  .prop-tabs { flex-wrap: wrap; }
+  .prop-tab { padding: 8px 12px; font-size: 12px; flex: 1 1 40%; }
+  .prop-inst-row { gap: 6px; }
+  .prop-inst { padding: 6px 9px; }
+  .prop-speed { margin-left: 0; width: 100%; justify-content: flex-end; }
+  .prop-buy, .prop-sell, .prop-exit { padding: 14px 8px; font-size: 15px; }
+  .prop-locked-page .primary-button, .prop-locked-panel .primary-button { max-width: 100%; white-space: normal; }
+  .prop-acct-nums { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .prop-acct-nums b { font-size: 12.5px; }
+  .prop-cal-summary { gap: 6px; }
+  .prop-cal-summary div { padding: 5px 8px; }
+  .prop-cal-summary b { font-size: 12px; }
+
+  /* skill trail: smaller nodes = more visible per screen (still swipeable) */
+  .path-node { min-width: 92px; }
+
+  /* traders dashboard: title row + actions stack cleanly */
+  .tdash-head-actions { width: 100%; }
+  .tdash-head-actions .arcade-btn { flex: 1; }
+  .tdash-title-row h2 { font-size: 24px; }
+  .tdash-chart-stats { grid-template-columns: repeat(2, 1fr); }
+
+  /* elite desk numbers */
+  .elite-kpi b { font-size: 20px; }
+  .elite-watch-row { flex-wrap: wrap; row-gap: 4px; }
+  .elite-watch-spark { flex-basis: 90px; }
+
+  /* modals fit the screen */
+  .academy-modal-card, .tdash-modal-card, .prop-overlay-card { width: min(94vw, 560px) !important; }
+
+  /* assistant bubble doesn't cover the exit/trade buttons */
+  body .assistant-widget { bottom: 12px !important; right: 12px !important; }
+}
+
+/* the legacy .google-auth-button span rule styled a round badge — neutralize it for the new label */
+body .google-auth-button .g-label {
+  display: inline !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  background: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  font: inherit !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}

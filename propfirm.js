@@ -1,5 +1,5 @@
 /* ReplayEdge — Prop Firm Training Grounds.
-   A full prop-firm career simulator: buy evaluation accounts with SimCash,
+   A full prop-firm career simulator: buy evaluation accounts with simulated dollars,
    trade a live simulated market under real prop rules (daily loss limit,
    trailing drawdown, profit target), get funded, collect payouts, and spend
    winnings in the Prize Shop on profile cosmetics.
@@ -107,7 +107,7 @@ function pfBuyAccount(tierId) {
   const tier = PF_TIERS[tierId];
   if (!tier) return;
   if (pf.cash < tier.cost) {
-    showToast(`Not enough SimCash — the ${tier.label} costs ${pfMoney(tier.cost)}.`, "warning");
+    showToast(`Not enough funds — the ${tier.label} costs ${pfMoney(tier.cost)}.`, "warning");
     return;
   }
   pf.cash -= tier.cost;
@@ -184,13 +184,13 @@ function pfRequestPayout() {
   updateProgressUi();
   if (typeof arcadeSound === "function") arcadeSound("bigwin");
   if (typeof confettiBurst === "function") confettiBurst(34);
-  showToast(`💰 Payout approved: ${pfMoney(amount, true)} SimCash (${Math.round(tier.payoutShare * 100)}% trader split).`, "success");
+  showToast(`💰 Payout approved: ${pfMoney(amount, true)} (${Math.round(tier.payoutShare * 100)}% trader split).`, "success");
   if (typeof checkAchievements === "function") checkAchievements();
   renderPropfirm();
 }
 
 /* ---------- training rewards: the comeback loop ----------
-   Blown your stake? The Academy and Arcade pay SimCash, so the road back
+   Blown your stake? The Academy and Arcade pay dollars, so the road back
    always runs through practice. Capped daily so it stays a grind, not a farm. */
 
 const PF_TRAINING_REWARDS = { lesson: 25, win: 15, run: 5 };
@@ -209,7 +209,7 @@ function propfirmTrainingReward(kind) {
   saveProgress();
   const capped = pf.dayEarn.amount >= PF_DAILY_EARN_CAP;
   setTimeout(() => {
-    showToast(`🏦 +$${paid} SimCash earned for the Training Grounds${capped ? " — daily training cap reached ($" + PF_DAILY_EARN_CAP + ")" : ""}.`, "success");
+    showToast(`🏦 +$${paid} earned for the Training Grounds${capped ? " — daily training cap reached ($" + PF_DAILY_EARN_CAP + ")" : ""}.`, "success");
   }, 1000);
   const cashEl = document.getElementById("prop-cash");
   if (cashEl) cashEl.textContent = pfMoney(pf.cash);
@@ -227,7 +227,7 @@ function pfClaimBailout() {
   pf.cash += 100;
   pf.lastBailout = Date.now();
   saveProgress();
-  showToast("🚑 Rescue Fund: +$100 SimCash. Trade smarter this time.", "success");
+  showToast("🚑 Rescue Fund: +$100. Trade smarter this time.", "success");
   renderPropfirm();
 }
 
@@ -447,7 +447,7 @@ function renderPropfirm() {
       <div class="prop-locked-page">
         <p class="arcade-kicker gold-kicker">// PROP FIRM TRAINING GROUNDS</p>
         <h2>Earn the desk.</h2>
-        <p class="prop-locked-sub">The full prop-firm career, simulated: get staked <b>$1,000 SimCash</b>, buy evaluation accounts, trade a live market under real prop rules — and if you break them, you blow the account.</p>
+        <p class="prop-locked-sub">The full prop-firm career, simulated: get staked <b>$1,000</b>, buy evaluation accounts, trade a live market under real prop rules — and if you break them, you blow the account.</p>
         <div class="elite-locked-grid">
           <div>🏦 <b>Buy Evaluations</b><span>25K, 50K, and 150K accounts with real targets and loss limits</span></div>
           <div>📉 <b>Live Trading Desk</b><span>Smooth, realistic price action across 6 instruments</span></div>
@@ -455,7 +455,7 @@ function renderPropfirm() {
           <div>🏆 <b>Prize Shop</b><span>Spend winnings on avatar frames, badges, and desk themes</span></div>
         </div>
         <button class="primary-button" type="button" id="prop-unlock-cta">Unlock with any plan — from $24.99/mo</button>
-        <small>Included in Player, Coach, and Elite. SimCash only — no real money is ever traded.</small>
+        <small>Included in Player, Coach, and Elite. Simulated dollars only — no real money is ever traded.</small>
       </div>
     `;
     root.querySelector("#prop-unlock-cta")?.addEventListener("click", () => {
@@ -469,7 +469,7 @@ function renderPropfirm() {
   if (!pf.welcomed) {
     pf.welcomed = true;
     saveProgress();
-    setTimeout(() => showToast("🏦 Welcome to the Training Grounds — you've been staked $1,000 SimCash. Buy an evaluation and earn the desk.", "success"), 600);
+    setTimeout(() => showToast("🏦 Welcome to the Training Grounds — you've been staked $1,000. Buy an evaluation and earn the desk.", "success"), 600);
   }
   const account = pfActiveAccount();
 
@@ -480,8 +480,8 @@ function renderPropfirm() {
           <p class="arcade-kicker">// PROP FIRM TRAINING GROUNDS</p>
           <h2>Earn the desk.</h2>
         </div>
-        <div class="prop-wallet" title="SimCash — simulated money for the Training Grounds. Not real, never withdrawable.">
-          <small>SIMCASH BALANCE</small>
+        <div class="prop-wallet" title="Training Grounds dollars are simulated — not real, never withdrawable.">
+          <small>BALANCE</small>
           <strong id="prop-cash">${pfMoney(pf.cash)}</strong>
         </div>
       </header>
@@ -494,7 +494,7 @@ function renderPropfirm() {
       </nav>
 
       <div id="prop-tab-body"></div>
-      <p class="prop-disclaimer">SimCash is simulated game currency with no monetary value — it cannot be purchased, withdrawn, or exchanged. The market shown is a randomized simulation for practice only.</p>
+      <p class="prop-disclaimer">All dollars in the Training Grounds are simulated game currency with no monetary value — they cannot be purchased, withdrawn, or exchanged. The market shown is a randomized simulation for practice only.</p>
     </div>
     <div id="prop-overlay-slot"></div>
   `;
@@ -1042,7 +1042,7 @@ function pfRenderOverlay() {
         ${overlay.type === "failed" ? `
           <span class="prop-overlay-icon">💥</span>
           <h3>ACCOUNT FAILED</h3>
-          <p>${overlay.reason}. That's the rule that kills real prop accounts every day — now it cost you SimCash instead of rent.</p>
+          <p>${overlay.reason}. That's the rule that kills real prop accounts every day — now it cost you simulated dollars instead of rent.</p>
           <p class="prop-comeback-note">Broke? Training pays: <b>+$25</b> per Academy lesson · <b>+$15</b> per winning Arcade run (up to $${PF_DAILY_EARN_CAP}/day).</p>
           <button class="primary-button" type="button" data-pf-overlay="accounts">Buy another account</button>
         ` : `
@@ -1090,7 +1090,7 @@ function pfDecorateProfile() {
     anchor.insertAdjacentHTML("afterend", `
       <h3 class="pf-section-title" id="prop-record">🏦 Prop Firm Record</h3>
       <div class="pf-stats-grid prop-record-grid">
-        <div class="pf-stat panel"><span class="pf-stat-icon">💵</span><div><strong>${pfMoney(pf.cash)}</strong><small>SimCash net worth</small></div></div>
+        <div class="pf-stat panel"><span class="pf-stat-icon">💵</span><div><strong>${pfMoney(pf.cash)}</strong><small>Net worth</small></div></div>
         <div class="pf-stat panel"><span class="pf-stat-icon">🎖</span><div><strong>${stats.evalsPassed}</strong><small>Evaluations passed</small></div></div>
         <div class="pf-stat panel"><span class="pf-stat-icon">💰</span><div><strong>${pfMoney(stats.payoutTotal)}</strong><small>Total paid out · ${stats.payoutsCollected} payout${stats.payoutsCollected === 1 ? "" : "s"}</small></div></div>
         <div class="pf-stat panel"><span class="pf-stat-icon">🚀</span><div><strong>${stats.biggestWin > 0 ? pfMoney(stats.biggestWin, true) : "—"}</strong><small>Biggest single trade</small></div></div>
@@ -1236,7 +1236,7 @@ function pfRenderGainersBoard() {
 
   host.innerHTML = `
     <div class="arena-topbar">
-      <span class="arena-live"><i></i> BIGGEST GAINERS · SIMCASH</span>
+      <span class="arena-live"><i></i> BIGGEST GAINERS · NET WORTH</span>
       <span class="arena-reset">Net worth from the <b>Prop Firm Training Grounds</b></span>
     </div>
     <div class="arena-podium">${podium}</div>
@@ -1295,7 +1295,7 @@ function pfOpenTraderCard(row) {
         </div>
       </div>
       <div class="pf-stats-grid fr-profile-stats">
-        <div class="pf-stat panel"><span class="pf-stat-icon">💵</span><div><strong>${pfMoney(row.simCash)}</strong><small>SimCash net worth</small></div></div>
+        <div class="pf-stat panel"><span class="pf-stat-icon">💵</span><div><strong>${pfMoney(row.simCash)}</strong><small>Net worth</small></div></div>
         <div class="pf-stat panel"><span class="pf-stat-icon">🎖</span><div><strong>${row.evalsPassed || 0}</strong><small>Evaluations passed</small></div></div>
         <div class="pf-stat panel"><span class="pf-stat-icon">💰</span><div><strong>${pfMoney(stats.payoutTotal || 0)}</strong><small>Total paid out</small></div></div>
         <div class="pf-stat panel"><span class="pf-stat-icon">🚀</span><div><strong>${stats.biggestWin ? pfMoney(stats.biggestWin, true) : "—"}</strong><small>Biggest single trade</small></div></div>
@@ -1338,7 +1338,7 @@ function pfInjectBoardToggle() {
   const sub = section.querySelector(".section-heading p:not(.arcade-kicker)");
   if (heading) heading.textContent = pfBoard.mode === "cash" ? "Biggest Gainers" : "Weekly XP Race";
   if (sub) sub.textContent = pfBoard.mode === "cash"
-    ? "Ranked by SimCash net worth from the Prop Firm Training Grounds. Payouts build empires."
+    ? "Ranked by account net worth from the Prop Firm Training Grounds. Payouts build empires."
     : "Every lesson, every run, every streak counts. Top 3 take the podium when the week resets.";
 }
 

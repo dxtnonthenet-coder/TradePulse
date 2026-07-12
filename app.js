@@ -1683,7 +1683,7 @@ function requiredPlanForFeature(feature) {
 function openUpgradeModal(feature) {
   const required = requiredPlanForFeature(feature);
   const bullets = {
-    Player: ["Prop Firm Training Grounds: earn funded accounts and payouts in SimCash", "Traders Dashboard: live market data, news, and AI session context", "XP, streaks, levels, and leaderboards"],
+    Player: ["Prop Firm Training Grounds: earn funded accounts and payouts (simulated dollars)", "Traders Dashboard: live market data, news, and AI session context", "XP, streaks, levels, and leaderboards"],
     Coach: ["Trader Toolkit: risk calculator, mistake journal, performance analytics", "+25% XP on every Arcade run", "Weekly digest and coach-level review"],
     Elite: ["Everything in Coach plus the personal Study Plan generator", "+50% XP on every Arcade run", "Elite dashboard, streak freeze bank, gold leaderboard identity"]
   }[required];
