@@ -1463,7 +1463,12 @@ const server = http.createServer((req, res) => {
             lessons: Math.max(0, Number(data.stats.lessons || 0)),
             runs: Math.max(0, Number(data.stats.runs || 0)),
             winRate: Math.max(0, Math.min(100, Number(data.stats.winRate || 0))),
-            achievements: Math.max(0, Number(data.stats.achievements || 0))
+            achievements: Math.max(0, Number(data.stats.achievements || 0)),
+            // prop firm: SimCash net worth + cosmetics shown to friends/leaderboards
+            simCash: Math.max(0, Math.round(Number(data.stats.simCash || 0))),
+            evalsPassed: Math.max(0, Number(data.stats.evalsPassed || 0)),
+            frame: typeof data.stats.frame === "string" ? data.stats.frame.slice(0, 30) : undefined,
+            title: typeof data.stats.title === "string" ? data.stats.title.slice(0, 40) : undefined
           };
         }
         if (typeof data.avatar === "string" && data.avatar.startsWith("data:image") && data.avatar.length < 40000) {
@@ -1828,6 +1833,25 @@ const server = http.createServer((req, res) => {
         });
       return;
     }
+  }
+
+  if (req.method === "GET" && parsedUrl.pathname === "/api/propfirm/leaderboard") {
+    const users = readJsonFile(friendsPath, {});
+    const rows = Object.values(users)
+      .filter((user) => user?.stats && Number(user.stats.simCash || 0) > 0)
+      .map((user) => ({
+        code: user.code,
+        name: user.name || "Trader",
+        simCash: Math.round(Number(user.stats.simCash || 0)),
+        evalsPassed: Number(user.stats.evalsPassed || 0),
+        frame: user.stats.frame || null,
+        title: user.stats.title || null
+      }))
+      .sort((a, b) => b.simCash - a.simCash)
+      .slice(0, 20);
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ ok: true, rows }));
+    return;
   }
 
   if (req.method === "GET" && parsedUrl.pathname === "/api/market/chart") {

@@ -22190,3 +22190,17 @@ body[data-page="home"] .hero-grid { padding-top: 18px !important; }
 .prop-locked-sub { color: #dbe7e3; line-height: 1.65; margin-bottom: 22px; }
 .prop-locked-page .elite-locked-grid { margin-bottom: 26px; }
 .prop-locked-page small { display: block; margin-top: 12px; color: rgba(226,232,240,.45); }
+
+/* gainers board + comeback loop */
+.arena-mode-toggle { display: flex; gap: 8px; margin-top: 14px; }
+.arena-mode {
+  font: 800 12.5px inherit; cursor: pointer;
+  color: rgba(226,232,240,.6); background: rgba(255,255,255,.03);
+  border: 1px solid rgba(148,163,184,.14); border-radius: 999px; padding: 8px 16px;
+}
+.arena-mode.active { color: #eef4f2; border-color: rgba(34,197,94,.5); background: rgba(34,197,94,.08); }
+.podium-xp.cash, .arena-xp.cash { color: #34d97b !important; }
+.arena-bar i.cash { background: linear-gradient(90deg, #16a34a, #4ade80) !important; }
+.prop-earn-note { margin: 14px 0 0; font-size: 12.5px; color: rgba(226,232,240,.6); }
+.prop-earn-note b { color: #86efac; }
+.prop-comeback-note { font-size: 12px !important; color: #86efac !important; }

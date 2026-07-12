@@ -2281,6 +2281,7 @@ function completeAcademyLesson(lesson) {
   trackEvent("academy_lesson_passed", { lessonId: lesson.id, xp: earned });
   if (typeof dailyBump === "function") dailyBump("lessons");
   if (typeof checkAchievements === "function") checkAchievements();
+  if (typeof propfirmTrainingReward === "function") propfirmTrainingReward("lesson");
 
   const found = findAcademyLesson(lesson.id);
   if (found) {

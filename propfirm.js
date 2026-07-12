@@ -184,6 +184,32 @@ function pfRequestPayout() {
   renderPropfirm();
 }
 
+/* ---------- training rewards: the comeback loop ----------
+   Blown your stake? The Academy and Arcade pay SimCash, so the road back
+   always runs through practice. Capped daily so it stays a grind, not a farm. */
+
+const PF_TRAINING_REWARDS = { lesson: 25, win: 15, run: 5 };
+const PF_DAILY_EARN_CAP = 150;
+
+function propfirmTrainingReward(kind) {
+  const amount = PF_TRAINING_REWARDS[kind] || 0;
+  if (!amount) return;
+  const pf = propfirmData();
+  const today = new Date().toDateString();
+  if (!pf.dayEarn || pf.dayEarn.day !== today) pf.dayEarn = { day: today, amount: 0 };
+  if (pf.dayEarn.amount >= PF_DAILY_EARN_CAP) return; // cap reached — resets at midnight
+  const paid = Math.min(amount, PF_DAILY_EARN_CAP - pf.dayEarn.amount);
+  pf.dayEarn.amount += paid;
+  pf.cash += paid;
+  saveProgress();
+  const capped = pf.dayEarn.amount >= PF_DAILY_EARN_CAP;
+  setTimeout(() => {
+    showToast(`🏦 +$${paid} SimCash earned for the Training Grounds${capped ? " — daily training cap reached ($" + PF_DAILY_EARN_CAP + ")" : ""}.`, "success");
+  }, 1000);
+  const cashEl = document.getElementById("prop-cash");
+  if (cashEl) cashEl.textContent = pfMoney(pf.cash);
+}
+
 function pfBailoutAvailable() {
   const pf = propfirmData();
   const broke = pf.cash < 100 && !pf.accounts.some((account) => account.state === "eval" || account.state === "funded");
@@ -821,6 +847,7 @@ function pfRenderAccounts(body) {
         </div>
       `).join("")}
     </div>
+    <p class="prop-earn-note">💡 Training pays your stake: <b>+$25</b> per Academy lesson passed · <b>+$15</b> per winning Arcade run · <b>+$5</b> per run banked — up to <b>$${PF_DAILY_EARN_CAP}/day</b>.</p>
     ${pfBailoutAvailable() ? `<button class="prop-bailout" id="prop-bailout" type="button">🚑 Broke? Claim the $100 Rescue Fund (once a day)</button>` : ""}
     ${active.length ? `
       <h3 class="prop-list-head">Active accounts</h3>
@@ -942,6 +969,7 @@ function pfRenderOverlay() {
           <span class="prop-overlay-icon">💥</span>
           <h3>ACCOUNT FAILED</h3>
           <p>${overlay.reason}. That's the rule that kills real prop accounts every day — now it cost you SimCash instead of rent.</p>
+          <p class="prop-comeback-note">Broke? Training pays: <b>+$25</b> per Academy lesson · <b>+$15</b> per winning Arcade run (up to $${PF_DAILY_EARN_CAP}/day).</p>
           <button class="primary-button" type="button" data-pf-overlay="accounts">Buy another account</button>
         ` : `
           <span class="prop-overlay-icon">🎉</span>
@@ -1009,7 +1037,154 @@ if (typeof competeMyStats === "function") {
     if (cosmetics.frame) stats.frame = cosmetics.frame;
     if (title) stats.title = `${title.icon} ${title.name}`;
     stats.evalsPassed = propfirmData().stats.evalsPassed;
+    stats.simCash = Math.round(propfirmData().cash);
     return stats;
+  };
+}
+
+/* ================= BIGGEST GAINERS LEADERBOARD ================= */
+
+const pfBoard = { mode: "xp", rows: null, fetchedAt: 0, fetching: false };
+
+const PF_GAINER_BOTS = [
+  { name: "DeskWarden", simCash: 14250, frame: "frame-gold", title: "💰 PAID OUT", evalsPassed: 4 },
+  { name: "FundedFox", simCash: 9800, frame: "frame-aurora", title: "🦈 PROP SHARK", evalsPassed: 3 },
+  { name: "PayoutPatel", simCash: 7350, frame: "frame-silver", title: "💰 PAID OUT", evalsPassed: 2 },
+  { name: "RiskRachel", simCash: 5200, frame: "frame-emerald", title: "🎖 FUNDED TRADER", evalsPassed: 2 },
+  { name: "TrailingTed", simCash: 4100, frame: null, title: "🎖 FUNDED TRADER", evalsPassed: 1 },
+  { name: "DrawdownDan", simCash: 3050, frame: "frame-blood", title: null, evalsPassed: 1 },
+  { name: "EvalEvan", simCash: 2400, frame: "frame-bronze", title: null, evalsPassed: 1 },
+  { name: "ScalpSofia", simCash: 1800, frame: null, title: null, evalsPassed: 0 },
+  { name: "MicroMike", simCash: 1350, frame: null, title: null, evalsPassed: 0 },
+  { name: "PaperPete", simCash: 1050, frame: null, title: null, evalsPassed: 0 }
+];
+
+async function pfFetchGainers() {
+  if (pfBoard.fetching || Date.now() - pfBoard.fetchedAt < 60000) return;
+  pfBoard.fetching = true;
+  try {
+    const response = await fetch("/api/propfirm/leaderboard");
+    const json = await response.json();
+    if (json.ok) {
+      pfBoard.rows = json.rows || [];
+      pfBoard.fetchedAt = Date.now();
+      if (pfBoard.mode === "cash") pfRenderGainersBoard();
+    }
+  } catch { /* offline fine — bots carry the board */ }
+  pfBoard.fetching = false;
+}
+
+function pfGainerRows() {
+  const myCode = typeof competeData === "function" ? competeData().code : null;
+  const server = (pfBoard.rows || []).filter((row) => row.code !== myCode);
+  const you = {
+    name: progress().signup?.name || "You",
+    simCash: Math.round(propfirmData().cash),
+    frame: propfirmData().cosmetics.frame || null,
+    title: pfTitleItem() ? `${pfTitleItem().icon} ${pfTitleItem().name}` : null,
+    evalsPassed: propfirmData().stats.evalsPassed,
+    you: true
+  };
+  const merged = [...server, you];
+  // pad with house bots so a young board still looks like a market floor
+  PF_GAINER_BOTS.forEach((bot) => { if (merged.length < 12) merged.push({ ...bot }); });
+  return merged.sort((a, b) => b.simCash - a.simCash).slice(0, 12);
+}
+
+function pfGainerAvatar(row, cls) {
+  const frameCls = row.frame ? ` prop-frame ${row.frame}` : "";
+  const img = row.you && typeof userAvatarUrl === "function" && userAvatarUrl() ? `<img src="${userAvatarUrl()}" alt="" />` : (typeof leaderboardInitials === "function" ? leaderboardInitials(row.name) : row.name[0]);
+  return `<span class="${cls}${frameCls}" style="--hue:${typeof leaderboardHue === "function" ? leaderboardHue(row.name) : 150}">${img}</span>`;
+}
+
+function pfRenderGainersBoard() {
+  const host = els.leaderboardFull || document.getElementById("leaderboard-full");
+  if (!host) return;
+  const rows = pfGainerRows();
+  const top = [rows[1], rows[0], rows[2]].filter(Boolean);
+  const rest = rows.slice(3);
+  const maxCash = rows[0]?.simCash || 1;
+  const youIndex = rows.findIndex((row) => row.you);
+
+  const podium = top.map((row) => {
+    const place = rows.indexOf(row) + 1;
+    return `
+      <div class="podium-slot place-${place} ${row.you ? "you" : ""}">
+        ${place === 1 ? '<span class="podium-crown">👑</span>' : ""}
+        ${pfGainerAvatar(row, "podium-avatar")}
+        <strong class="podium-name">${row.name}</strong>
+        <small class="podium-meta">${row.title ? row.title : `${row.evalsPassed || 0} evals passed`}</small>
+        <b class="podium-xp cash">${pfMoney(row.simCash)}</b>
+        <div class="podium-base"><span>${place}</span></div>
+      </div>
+    `;
+  }).join("");
+
+  const list = rest.map((row) => {
+    const place = rows.indexOf(row) + 1;
+    const width = Math.max(6, Math.round((row.simCash / maxCash) * 100));
+    return `
+      <div class="arena-row ${row.you ? "you" : ""}">
+        <b class="arena-place">${place}</b>
+        ${pfGainerAvatar(row, "arena-avatar")}
+        <span class="arena-name"><span class="arena-name-line">${row.name}${row.you ? '<i class="arena-you-tag">YOU</i>' : ""}</span><small>${row.title || `${row.evalsPassed || 0} evals passed`}</small></span>
+        <span class="arena-bar"><i class="cash" style="width:${width}%"></i></span>
+        <strong class="arena-xp cash">${pfMoney(row.simCash)}</strong>
+      </div>
+    `;
+  }).join("");
+
+  const youRow = youIndex >= 0 ? rows[youIndex] : null;
+  const chase = youRow && youIndex > 2
+    ? `<div class="arena-chase">You're <b>#${youIndex + 1}</b> with ${pfMoney(youRow.simCash)} — ${pfMoney(rows[youIndex - 1].simCash - youRow.simCash + 1)} behind ${rows[youIndex - 1].name}. Payouts close gaps fast.</div>`
+    : youRow ? `<div class="arena-chase gold">You're on the money podium at <b>#${youIndex + 1}</b>. Defend the bag.</div>` : "";
+
+  host.innerHTML = `
+    <div class="arena-topbar">
+      <span class="arena-live"><i></i> BIGGEST GAINERS · SIMCASH</span>
+      <span class="arena-reset">Net worth from the <b>Prop Firm Training Grounds</b></span>
+    </div>
+    <div class="arena-podium">${podium}</div>
+    ${chase}
+    <div class="arena-list">${list}</div>
+  `;
+  pfFetchGainers();
+}
+
+function pfInjectBoardToggle() {
+  const section = document.getElementById("leaderboard-view");
+  if (!section) return;
+  let toggle = section.querySelector("#arena-mode-toggle");
+  if (!toggle) {
+    toggle = document.createElement("div");
+    toggle.id = "arena-mode-toggle";
+    toggle.className = "arena-mode-toggle";
+    section.querySelector(".section-heading")?.appendChild(toggle);
+  }
+  toggle.innerHTML = `
+    <button class="arena-mode ${pfBoard.mode === "xp" ? "active" : ""}" data-board-mode="xp" type="button">⚡ Weekly XP Race</button>
+    <button class="arena-mode ${pfBoard.mode === "cash" ? "active" : ""}" data-board-mode="cash" type="button">💰 Biggest Gainers</button>
+  `;
+  toggle.querySelectorAll("[data-board-mode]").forEach((button) => {
+    button.addEventListener("click", () => {
+      pfBoard.mode = button.dataset.boardMode;
+      renderLeaderboard();
+    });
+  });
+  const heading = section.querySelector(".section-heading h2");
+  const sub = section.querySelector(".section-heading p:not(.arcade-kicker)");
+  if (heading) heading.textContent = pfBoard.mode === "cash" ? "Biggest Gainers" : "Weekly XP Race";
+  if (sub) sub.textContent = pfBoard.mode === "cash"
+    ? "Ranked by SimCash net worth from the Prop Firm Training Grounds. Payouts build empires."
+    : "Every lesson, every run, every streak counts. Top 3 take the podium when the week resets.";
+}
+
+if (typeof renderLeaderboard === "function") {
+  const pfBaseRenderLeaderboard = renderLeaderboard;
+  window.renderLeaderboard = function () {
+    pfBaseRenderLeaderboard();
+    pfInjectBoardToggle();
+    if (pfBoard.mode === "cash") pfRenderGainersBoard();
   };
 }
 

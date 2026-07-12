@@ -502,6 +502,7 @@ function arcadeAwardXp(gameId, amount, score) {
   if (typeof checkAchievements === "function") checkAchievements();
   if (typeof gauntletRecordRun === "function") gauntletRecordRun(gameId, boosted);
   if (typeof trainerNotifyRun === "function") trainerNotifyRun(gameId);
+  if (typeof propfirmTrainingReward === "function") propfirmTrainingReward(clean > 0 ? "win" : "run");
   return boosted;
 }
 
