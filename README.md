@@ -1,11 +1,11 @@
-# TradePulse Beginner Setup
+# ReplayEdge Beginner Setup
 
 This folder contains the whole starter app.
 
 You only need this folder:
 
 ```text
-TradePulse
+ReplayEdge
 ```
 
 Inside it are:
@@ -29,7 +29,7 @@ Open the Terminal app on your Mac.
 Copy and paste this:
 
 ```bash
-cd /Users/dxtnonthenet/Documents/TA/TradePulse
+cd /Users/dxtnonthenet/Documents/TA/ReplayEdge
 ```
 
 Press Enter.
@@ -47,7 +47,7 @@ Press Enter.
 You should see something like:
 
 ```text
-TradePulse running at http://localhost:4173
+ReplayEdge running at http://localhost:4173
 ```
 
 ## Baby Step 4: Open The Website
@@ -80,7 +80,7 @@ Do this:
 Copy and paste this:
 
 ```bash
-/Users/dxtnonthenet/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node tradepulse.js add
+/Users/dxtnonthenet/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node replayedge.js add
 ```
 
 Press Enter.
@@ -96,7 +96,7 @@ When it says done, refresh Chrome.
 Copy and paste this:
 
 ```bash
-/Users/dxtnonthenet/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node tradepulse.js list
+/Users/dxtnonthenet/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node replayedge.js list
 ```
 
 Press Enter.
@@ -173,13 +173,13 @@ First, make this version feel fun.
 After someone submits a signup, trial form, or plan button, the app saves it here:
 
 ```text
-/Users/dxtnonthenet/Documents/TA/TradePulse/data/signups.csv
+/Users/dxtnonthenet/Documents/TA/ReplayEdge/data/signups.csv
 ```
 
 And also here:
 
 ```text
-/Users/dxtnonthenet/Documents/TA/TradePulse/data/signups.json
+/Users/dxtnonthenet/Documents/TA/ReplayEdge/data/signups.json
 ```
 
 Important: this file storage works when you open the app from:
@@ -198,7 +198,7 @@ If you open the app as a plain file, the signup is only saved in that browser.
 4. Copy everything from:
 
 ```text
-/Users/dxtnonthenet/Documents/TA/TradePulse/supabase-schema.sql
+/Users/dxtnonthenet/Documents/TA/ReplayEdge/supabase-schema.sql
 ```
 
 5. Paste it into Supabase SQL editor.

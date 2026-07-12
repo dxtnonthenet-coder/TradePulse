@@ -1,10 +1,17 @@
 {
-  "name": "TradePulse",
-  "short_name": "TradePulse",
+  "name": "ReplayEdge",
+  "short_name": "ReplayEdge",
   "description": "Replay real futures moments blind and train your chart eye.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0e1117",
   "theme_color": "#56d66d",
-  "icons": []
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }

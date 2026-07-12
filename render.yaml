@@ -1,11 +1,52 @@
 services:
   - type: web
-    name: tradepulse
+    name: replayedge
     env: node
     plan: starter
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /
+    # Durable storage: survives every deploy and restart. All server data
+    # (subscriptions, friends, signups, referrals, and per-user progress)
+    # is written under DATA_DIR, which points at this mounted disk.
+    disk:
+      name: replayedge-data
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
+      # --- set automatically ---
       - key: NODE_ENV
         value: production
+      - key: DATA_DIR
+        value: /var/data
+      # --- Render will PROMPT you to paste each of these during setup ---
+      # (copy the values from your local .env — use your Stripe TEST/sandbox
+      #  keys for now; swap to live keys after the site is up and Stripe is
+      #  activated. PUBLIC_SITE_URL is your Render URL, e.g. https://replayedge.onrender.com)
+      - key: PUBLIC_SITE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_PLAYER
+        sync: false
+      - key: STRIPE_PRICE_COACH
+        sync: false
+      - key: STRIPE_PRICE_ELITE
+        sync: false
+      - key: STRIPE_PRICE_PLAYER_ANNUAL
+        sync: false
+      - key: STRIPE_PRICE_COACH_ANNUAL
+        sync: false
+      - key: STRIPE_PRICE_ELITE_ANNUAL
+        sync: false
+      # optional — only if you use the AI chat assistant's server route
+      - key: ANTHROPIC_API_KEY
+        sync: false

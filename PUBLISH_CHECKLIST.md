@@ -1,4 +1,4 @@
-# TradePulse Publish Checklist
+# ReplayEdge Publish Checklist
 
 ## Before Publishing
 

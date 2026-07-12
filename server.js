@@ -4,7 +4,10 @@ const fs = require("fs");
 const path = require("path");
 
 const root = __dirname;
-const dataDir = path.join(root, "data");
+// DATA_DIR points at a Render Persistent Disk in production so nothing is wiped
+// on deploy/restart; falls back to the local ./data folder in development.
+const dataDir = process.env.DATA_DIR || path.join(root, "data");
+const progressDir = path.join(dataDir, "progress");
 const signupsPath = path.join(dataDir, "signups.json");
 const signupsCsvPath = path.join(dataDir, "signups.csv");
 const subscriptionsPath = path.join(dataDir, "subscriptions.json");
@@ -13,6 +16,8 @@ const feedbackPath = path.join(dataDir, "feedback.json");
 const analyticsPath = path.join(dataDir, "analytics.json");
 const attemptsPath = path.join(dataDir, "attempts.json");
 const scenarioStatsPath = path.join(dataDir, "scenario-stats.json");
+const friendsPath = path.join(dataDir, "friends.json");
+const lobbiesPath = path.join(dataDir, "lobbies.json");
 const envPath = path.join(root, ".env");
 const types = {
   ".html": "text/html; charset=utf-8",
@@ -29,6 +34,21 @@ const publicFiles = new Set([
   "index.html",
   "styles.css",
   "app.js",
+  "academy.js",
+  "tracks.js",
+  "arcade.js",
+  "profile.js",
+  "toolkit.js",
+  "compete.js",
+  "achievements.js",
+  "streak.js",
+  "mastery.js",
+  "trainer.js",
+  "dashboard.js",
+  "admin.js",
+  "elite.js",
+  "sync.js",
+  "favicon.svg",
   "privacy.html",
   "terms.html",
   "disclaimer.html",
@@ -55,7 +75,8 @@ function loadEnv() {
 }
 
 function ensureDataFiles() {
-  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
+  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+  if (!fs.existsSync(progressDir)) fs.mkdirSync(progressDir, { recursive: true });
   if (!fs.existsSync(signupsPath)) fs.writeFileSync(signupsPath, "[]");
   if (!fs.existsSync(subscriptionsPath)) fs.writeFileSync(subscriptionsPath, "[]");
   if (!fs.existsSync(referralsPath)) fs.writeFileSync(referralsPath, "[]");
@@ -63,6 +84,8 @@ function ensureDataFiles() {
   if (!fs.existsSync(analyticsPath)) fs.writeFileSync(analyticsPath, "[]");
   if (!fs.existsSync(attemptsPath)) fs.writeFileSync(attemptsPath, "[]");
   if (!fs.existsSync(scenarioStatsPath)) fs.writeFileSync(scenarioStatsPath, "{}");
+  if (!fs.existsSync(friendsPath)) fs.writeFileSync(friendsPath, "{}");
+  if (!fs.existsSync(lobbiesPath)) fs.writeFileSync(lobbiesPath, "{}");
   if (!fs.existsSync(signupsCsvPath)) {
     fs.writeFileSync(signupsCsvPath, "createdAt,type,name,email,plan,source,details\n");
   }
@@ -79,6 +102,32 @@ function appendJsonRecord(filePath, entry) {
   rows.push(saved);
   fs.writeFileSync(filePath, JSON.stringify(rows, null, 2));
   return saved;
+}
+
+/* ---------- per-user progress store (cross-device saves) ---------- */
+
+function progressUserIdOk(userId) {
+  return typeof userId === "string" && userId.length >= 3 && userId.length <= 200;
+}
+
+function progressFilePath(userId) {
+  // hash the identity so emails / guest ids can't escape the folder or collide
+  const hash = crypto.createHash("sha1").update(String(userId).toLowerCase()).digest("hex");
+  return path.join(progressDir, `${hash}.json`);
+}
+
+function readProgressRecord(userId) {
+  ensureDataFiles();
+  try {
+    return JSON.parse(fs.readFileSync(progressFilePath(userId), "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function writeProgressRecord(userId, record) {
+  ensureDataFiles();
+  fs.writeFileSync(progressFilePath(userId), JSON.stringify(record));
 }
 
 function readJsonFile(filePath, fallback) {
@@ -644,61 +693,6 @@ function titleCase(value) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function launchSummary() {
-  const signups = readJsonFile(signupsPath, []);
-  const subscriptions = readJsonFile(subscriptionsPath, []);
-  const referrals = readJsonFile(referralsPath, []);
-  const feedback = readJsonFile(feedbackPath, []);
-  const analytics = readJsonFile(analyticsPath, []);
-  const attempts = readAttempts();
-  const paidStatuses = new Set(["active", "trialing"]);
-  const paidEmails = new Set(
-    subscriptions
-      .filter((row) => paidStatuses.has(String(row.status || "").toLowerCase()))
-      .map((row) => String(row.email || "").toLowerCase())
-      .filter(Boolean)
-  );
-  const paidCount = paidEmails.size || subscriptions.filter((row) => paidStatuses.has(String(row.status || "").toLowerCase())).length;
-  const correct = attempts.filter((attempt) => attempt.correct).length;
-  const countBy = (rows, keyGetter) => rows.reduce((counts, row) => {
-    const key = keyGetter(row);
-    if (!key) return counts;
-    counts[key] = (counts[key] || 0) + 1;
-    return counts;
-  }, {});
-  const topEntry = (counts, fallback) => Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || fallback;
-  const topMode = topEntry(countBy(attempts, (attempt) => attempt.mode || "replay"), "No attempts yet");
-  const mostMissedPattern = topEntry(
-    countBy(attempts.filter((attempt) => !attempt.correct), (attempt) => attempt.pattern || attempt.metadata?.pattern || "Needs more data"),
-    "No misses yet"
-  );
-  const recent = [
-    ...signups.slice(-6).map((row) => ({ type: "Lead", label: row.email || row.name || row.type || "New signup", createdAt: row.createdAt })),
-    ...attempts.slice(-8).map((row) => ({ type: row.correct ? "Correct replay" : "Missed replay", label: `${titleCase(row.mode || "Replay")} · ${row.market || "Market"}`, createdAt: row.createdAt })),
-    ...feedback.slice(-4).map((row) => ({ type: "Feedback", label: row.rating || row.message?.slice(0, 46) || "Beta note", createdAt: row.createdAt })),
-    ...analytics.slice(-4).map((row) => ({ type: "Event", label: titleCase(row.event || "App event"), createdAt: row.createdAt }))
-  ]
-    .filter((row) => row.createdAt)
-    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
-    .slice(0, 8);
-
-  return {
-    ok: true,
-    leads: signups.length,
-    paid: paidCount,
-    attempts: attempts.length,
-    referrals: referrals.filter((row) => row.type === "captured").length,
-    generatedReferralCodes: referrals.filter((row) => row.type === "generated").length,
-    feedback: feedback.length,
-    analytics: analytics.length,
-    accuracy: attempts.length ? Math.round((correct / attempts.length) * 100) : null,
-    conversion: signups.length ? Math.round((paidCount / signups.length) * 100) : 0,
-    topMode,
-    mostMissedPattern,
-    recent
-  };
-}
-
 function googleAuthUrl(req) {
   const url = process.env.SUPABASE_URL;
   const anonKey = process.env.SUPABASE_ANON_KEY;
@@ -715,8 +709,11 @@ function googleAuthUrl(req) {
 function planForStripePrice(priceId) {
   const entries = [
     ["Player", process.env.STRIPE_PRICE_PLAYER],
+    ["Player", process.env.STRIPE_PRICE_PLAYER_ANNUAL],
     ["Coach", process.env.STRIPE_PRICE_COACH],
-    ["Elite", process.env.STRIPE_PRICE_ELITE]
+    ["Coach", process.env.STRIPE_PRICE_COACH_ANNUAL],
+    ["Elite", process.env.STRIPE_PRICE_ELITE],
+    ["Elite", process.env.STRIPE_PRICE_ELITE_ANNUAL]
   ];
   return entries.find(([, id]) => id === priceId)?.[0] || null;
 }
@@ -958,6 +955,8 @@ async function createCheckoutSession(payload) {
   params.set("success_url", `${host}/success.html?session_id={CHECKOUT_SESSION_ID}`);
   params.set("cancel_url", `${host}/cancel.html`);
   params.set("payment_method_collection", "always");
+  params.set("billing_address_collection", "auto");
+  params.set("customer_creation", "if_required");
   params.set("allow_promotion_codes", "true");
   params.set("metadata[plan]", payload.plan);
   params.set("metadata[billingPeriod]", billingPeriod);
@@ -1076,6 +1075,272 @@ async function createPortalSession(payload) {
 
 loadEnv();
 
+/* ---------- live market data proxy ----------
+   Primary source: Yahoo Finance. When Yahoo throttles (it does), we fall back
+   per asset class: Cboe delayed (stocks + index proxies), Coinbase (crypto),
+   Kraken + frankfurter.dev (forex), NASDAQ (stocks). Everything is normalized
+   to { bars:[{t,o,h,l,c,v}], meta:{last, prevClose}, source, label }. */
+
+const marketCache = new Map();
+const MARKET_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+
+function marketCachePut(key, data) {
+  marketCache.set(key, { at: Date.now(), data });
+  if (marketCache.size > 300) {
+    [...marketCache.entries()]
+      .sort((a, b) => a[1].at - b[1].at)
+      .slice(0, 100)
+      .forEach(([k]) => marketCache.delete(k));
+  }
+}
+
+async function marketFetchRaw(url, asText = false) {
+  const response = await fetch(url, {
+    headers: { "User-Agent": MARKET_UA, Accept: asText ? "*/*" : "application/json" },
+    signal: AbortSignal.timeout(9000)
+  });
+  if (!response.ok) throw new Error(`Upstream ${response.status}`);
+  return asText ? response.text() : response.json();
+}
+
+function marketSymbolOk(symbol) {
+  return /^[A-Za-z0-9.^=-]{1,15}$/.test(symbol);
+}
+
+/* ----- providers ----- */
+
+async function yahooChartProvider(symbol, range, interval) {
+  let lastError = null;
+  for (const host of ["query1", "query2"]) {
+    try {
+      const data = await marketFetchRaw(`https://${host}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${range}&interval=${interval}&includePrePost=false`);
+      const result = data?.chart?.result?.[0];
+      if (!result) throw new Error(data?.chart?.error?.description || "No data for symbol");
+      const quote = result.indicators?.quote?.[0] || {};
+      const bars = (result.timestamp || []).reduce((list, stamp, index) => {
+        const close = quote.close?.[index];
+        if (close === null || close === undefined) return list;
+        list.push({
+          t: stamp * 1000,
+          o: quote.open?.[index] ?? close,
+          h: quote.high?.[index] ?? close,
+          l: quote.low?.[index] ?? close,
+          c: close,
+          v: quote.volume?.[index] || 0
+        });
+        return list;
+      }, []);
+      return {
+        bars,
+        meta: { last: result.meta?.regularMarketPrice ?? null, prevClose: result.meta?.chartPreviousClose ?? result.meta?.previousClose ?? null },
+        source: "Yahoo Finance",
+        label: interval === "1d" ? "daily" : `${interval} bars`
+      };
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError || new Error("Yahoo unavailable");
+}
+
+const CBOE_PROXIES = {
+  "ES=F": ["_SPX", "S&P 500 index — delayed proxy for ES"],
+  "NQ=F": ["_NDX", "Nasdaq 100 index — delayed proxy for NQ"],
+  "RTY=F": ["_RUT", "Russell 2000 index — delayed proxy for RTY"],
+  "YM=F": ["_DJX", "Dow index — delayed proxy for YM"],
+  "GC=F": ["GLD", "Gold ETF (GLD) — delayed proxy for GC futures"],
+  "SI=F": ["SLV", "Silver ETF (SLV) — delayed proxy for SI futures"],
+  "CL=F": ["USO", "Oil ETF (USO) — delayed proxy for CL futures"],
+  "NG=F": ["UNG", "Nat gas ETF (UNG) — delayed proxy for NG futures"],
+  "ZB=F": ["TLT", "20+yr Treasury ETF (TLT) — delayed proxy for ZB futures"],
+  "6E=F": ["FXE", "Euro ETF (FXE) — delayed proxy for 6E futures"],
+  "XAUUSD=X": ["GLD", "Gold ETF (GLD) — delayed proxy for spot gold"],
+  "^GSPC": ["_SPX", null],
+  "^VIX": ["_VIX", null],
+  "^NDX": ["_NDX", null],
+  "^RUT": ["_RUT", null],
+  "^TNX": ["_TNX", null]
+};
+
+async function cboeChartProvider(symbol) {
+  const mapped = CBOE_PROXIES[symbol];
+  const cboeSymbol = mapped ? mapped[0] : symbol.toUpperCase();
+  if (!/^[A-Z_]{1,12}$/.test(cboeSymbol)) throw new Error("Not a Cboe symbol");
+  const data = await marketFetchRaw(`https://cdn.cboe.com/api/global/delayed_quotes/charts/intraday/${cboeSymbol}.json`);
+  const rows = data?.data || [];
+  if (!rows.length) throw new Error("No Cboe data");
+  const bars = rows.map((row) => ({
+    t: Date.parse(row.datetime),
+    o: row.price?.open,
+    h: row.price?.high,
+    l: row.price?.low,
+    c: row.price?.close,
+    v: row.volume?.stock_volume || 0
+  })).filter((bar) => isFinite(bar.c) && bar.c > 0 && bar.l > 0); // Cboe pads dead minutes with zero bars
+  return {
+    bars,
+    meta: { last: bars[bars.length - 1]?.c ?? null, prevClose: null },
+    source: "Cboe (delayed)",
+    label: "1m bars · today",
+    proxyNote: mapped && mapped[1] ? mapped[1] : null
+  };
+}
+
+async function coinbaseChartProvider(symbol) {
+  const data = await marketFetchRaw(`https://api.exchange.coinbase.com/products/${encodeURIComponent(symbol)}/candles?granularity=300`);
+  if (!Array.isArray(data) || !data.length) throw new Error("No Coinbase data");
+  const bars = data.reverse().map(([time, low, high, open, close, volume]) => ({
+    t: time * 1000, o: open, h: high, l: low, c: close, v: volume
+  }));
+  return {
+    bars,
+    meta: { last: bars[bars.length - 1]?.c ?? null, prevClose: null },
+    source: "Coinbase",
+    label: "5m bars · 24h"
+  };
+}
+
+async function krakenChartProvider(symbol) {
+  const pair = symbol.replace(/=X$/, "");
+  const data = await marketFetchRaw(`https://api.kraken.com/0/public/OHLC?pair=${encodeURIComponent(pair)}&interval=15`);
+  if (data?.error?.length) throw new Error(data.error[0]);
+  const key = Object.keys(data?.result || {}).find((item) => item !== "last");
+  const rows = key ? data.result[key] : [];
+  if (!rows.length) throw new Error("No Kraken data");
+  const bars = rows.slice(-120).map(([time, open, high, low, close, , volume]) => ({
+    t: time * 1000, o: Number(open), h: Number(high), l: Number(low), c: Number(close), v: Number(volume)
+  }));
+  return {
+    bars,
+    meta: { last: bars[bars.length - 1]?.c ?? null, prevClose: null },
+    source: "Kraken",
+    label: "15m bars"
+  };
+}
+
+async function frankfurterChartProvider(symbol) {
+  const pair = symbol.replace(/=X$/, "");
+  const base = pair.slice(0, 3);
+  const quoteCur = pair.slice(3, 6);
+  const start = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+  const end = new Date().toISOString().slice(0, 10);
+  const data = await marketFetchRaw(`https://api.frankfurter.dev/v1/${start}..${end}?base=${base}&symbols=${quoteCur}`);
+  const entries = Object.entries(data?.rates || {}).sort(([a], [b]) => a.localeCompare(b));
+  if (!entries.length) throw new Error("No ECB data for that pair");
+  let prev = null;
+  const bars = entries.map(([date, rates]) => {
+    const close = rates[quoteCur];
+    const open = prev ?? close;
+    prev = close;
+    return { t: Date.parse(date), o: open, h: Math.max(open, close), l: Math.min(open, close), c: close, v: 0 };
+  });
+  return {
+    bars,
+    meta: { last: bars[bars.length - 1]?.c ?? null, prevClose: bars.length > 1 ? bars[bars.length - 2].c : null },
+    source: "ECB reference rates",
+    label: "daily · 30d"
+  };
+}
+
+async function nasdaqChartProvider(symbol) {
+  const data = await marketFetchRaw(`https://api.nasdaq.com/api/quote/${encodeURIComponent(symbol)}/chart?assetclass=stocks`);
+  const points = data?.data?.chart || [];
+  if (!points.length) throw new Error("No NASDAQ data");
+  let prev = null;
+  const bars = points.map((point) => {
+    const close = Number(point?.z?.value ?? point?.y);
+    const t = point?.z?.dateTime ? Date.parse(point.z.dateTime) : point?.x;
+    const open = prev ?? close;
+    prev = close;
+    return { t, o: open, h: Math.max(open, close), l: Math.min(open, close), c: close, v: Number(point?.z?.volume || 0) };
+  }).filter((bar) => isFinite(bar.c) && isFinite(bar.t));
+  const prevClose = Number(String(data?.data?.previousClose || "").replace(/[$,]/g, "")) || null;
+  return {
+    bars,
+    meta: { last: bars[bars.length - 1]?.c ?? null, prevClose },
+    source: "NASDAQ (delayed)",
+    label: "intraday · today"
+  };
+}
+
+function marketFallbacksFor(symbol) {
+  if (CBOE_PROXIES[symbol]) return [cboeChartProvider]; // mapped proxies win (incl. XAUUSD=X → GLD)
+  if (/-USD$/.test(symbol)) return [coinbaseChartProvider];
+  if (/=X$/.test(symbol)) return [krakenChartProvider, frankfurterChartProvider];
+  if (symbol === "DX-Y.NYB") {
+    return [async () => {
+      const result = await cboeChartProvider("UUP");
+      return { ...result, proxyNote: "Dollar ETF (UUP) — delayed proxy for DXY" };
+    }];
+  }
+  if (/=F$/.test(symbol) || /^\^/.test(symbol)) return [];
+  return [cboeChartProvider, nasdaqChartProvider];
+}
+
+async function loadMarketChart(symbol, range, interval) {
+  const cacheKey = `chart:${symbol}:${range}:${interval}`;
+  const cached = marketCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < 60_000) return cached.data;
+  const errors = [];
+  const providers = [
+    (sym) => yahooChartProvider(sym, range, interval),
+    ...marketFallbacksFor(symbol)
+  ];
+  for (const provider of providers) {
+    try {
+      const result = await provider(symbol);
+      if (result?.bars?.length) {
+        marketCachePut(cacheKey, result);
+        return result;
+      }
+    } catch (error) {
+      errors.push(error.message);
+    }
+  }
+  if (cached) return cached.data; // stale beats nothing
+  throw new Error(errors[errors.length - 1] || "No data source available for that symbol");
+}
+
+/* ----- news: Yahoo search first, Google News RSS as fallback ----- */
+
+function decodeXmlEntities(text) {
+  return String(text || "")
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&apos;/g, "'");
+}
+
+async function loadMarketNews(symbol, queryText) {
+  const cacheKey = `news:${symbol}:${queryText}`;
+  const cached = marketCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < 300_000) return cached.data;
+  let news = [];
+  try {
+    const data = await marketFetchRaw(`https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(symbol)}&newsCount=10&quotesCount=0&listsCount=0`);
+    news = (data?.news || []).map((item) => ({
+      title: item.title,
+      publisher: item.publisher,
+      link: item.link,
+      publishedAt: item.providerPublishTime ? item.providerPublishTime * 1000 : null
+    }));
+  } catch {
+    // fall through to Google News RSS
+  }
+  if (!news.length) {
+    const xml = await marketFetchRaw(`https://news.google.com/rss/search?q=${encodeURIComponent(queryText || symbol)}&hl=en-US&gl=US&ceid=US:en`, true);
+    news = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, 10).map(([, item]) => {
+      const title = decodeXmlEntities((item.match(/<title>([\s\S]*?)<\/title>/) || [])[1]);
+      const link = decodeXmlEntities((item.match(/<link>([\s\S]*?)<\/link>/) || [])[1]);
+      const pubDate = (item.match(/<pubDate>([\s\S]*?)<\/pubDate>/) || [])[1];
+      const publisher = decodeXmlEntities((item.match(/<source[^>]*>([\s\S]*?)<\/source>/) || [])[1]);
+      return { title, publisher, link, publishedAt: pubDate ? Date.parse(pubDate) : null };
+    }).filter((item) => item.title && item.link);
+  }
+  const result = news.filter((item) => item.title && item.link).slice(0, 8);
+  marketCachePut(cacheKey, result);
+  return result;
+}
+
 const server = http.createServer((req, res) => {
   const parsedUrl = new URL(req.url, `http://${req.headers.host || "localhost"}`);
 
@@ -1161,6 +1426,212 @@ const server = http.createServer((req, res) => {
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: false, error: error.message }));
       });
+    return;
+  }
+
+  if (req.method === "POST" && parsedUrl.pathname === "/api/friends/register") {
+    readBody(req)
+      .then((body) => {
+        const data = JSON.parse(body || "{}");
+        const userId = String(data.userId || "").slice(0, 120);
+        if (!userId) throw new Error("Missing userId");
+        const users = readJsonFile(friendsPath, {});
+        if (!users[userId]) {
+          users[userId] = { code: `TR-${crypto.randomBytes(3).toString("hex").toUpperCase()}`, following: [], followers: [] };
+        }
+        const me = users[userId];
+        // migrate legacy mutual friends → following + followers
+        if (Array.isArray(me.friends)) {
+          me.following = [...new Set([...(me.following || []), ...me.friends])];
+          me.followers = [...new Set([...(me.followers || []), ...me.friends])];
+          delete me.friends;
+        }
+        me.following = me.following || [];
+        me.followers = me.followers || [];
+        me.name = String(data.name || me.name || "Trader").slice(0, 40);
+        me.track = String(data.track || me.track || "futures").slice(0, 20);
+        me.weeklyXp = Math.max(0, Number(data.weeklyXp || 0));
+        me.weeklyActivity = Math.max(0, Number(data.weeklyActivity || 0));
+        if (data.lastActiveDay) me.lastActiveDay = String(data.lastActiveDay).slice(0, 40);
+        if (data.stats && typeof data.stats === "object") {
+          me.stats = {
+            xp: Math.max(0, Number(data.stats.xp || 0)),
+            level: Math.max(1, Number(data.stats.level || 1)),
+            streak: Math.max(0, Number(data.stats.streak || 0)),
+            lessons: Math.max(0, Number(data.stats.lessons || 0)),
+            runs: Math.max(0, Number(data.stats.runs || 0)),
+            winRate: Math.max(0, Math.min(100, Number(data.stats.winRate || 0))),
+            achievements: Math.max(0, Number(data.stats.achievements || 0))
+          };
+        }
+        if (typeof data.avatar === "string" && data.avatar.startsWith("data:image") && data.avatar.length < 40000) {
+          me.avatar = data.avatar;
+        }
+        fs.writeFileSync(friendsPath, JSON.stringify(users, null, 2));
+        const profileOf = (id) => {
+          const user = users[id];
+          if (!user) return null;
+          return {
+            code: user.code, name: user.name, track: user.track || "futures",
+            weeklyXp: user.weeklyXp || 0, weeklyActivity: user.weeklyActivity || 0,
+            lastActiveDay: user.lastActiveDay || "", avatar: user.avatar || null,
+            stats: user.stats || {}
+          };
+        };
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({
+          ok: true,
+          code: me.code,
+          following: me.following.map(profileOf).filter(Boolean),
+          followers: me.followers.map(profileOf).filter(Boolean),
+          cheers: (me.cheers || []).slice(-10)
+        }));
+      })
+      .catch((error) => {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      });
+    return;
+  }
+
+  if (req.method === "POST" && (parsedUrl.pathname === "/api/friends/follow" || parsedUrl.pathname === "/api/friends/add" || parsedUrl.pathname === "/api/friends/unfollow")) {
+    readBody(req)
+      .then((body) => {
+        const data = JSON.parse(body || "{}");
+        const userId = String(data.userId || "").slice(0, 120);
+        const code = String(data.code || "").trim().toUpperCase().slice(0, 20);
+        const users = readJsonFile(friendsPath, {});
+        if (!users[userId]) throw new Error("Register first");
+        const targetId = Object.keys(users).find((id) => users[id].code === code);
+        if (!targetId) throw new Error("No trader found with that code");
+        if (targetId === userId) throw new Error("That's your own code");
+        const me = users[userId];
+        const target = users[targetId];
+        me.following = me.following || [];
+        me.followers = me.followers || [];
+        target.following = target.following || [];
+        target.followers = target.followers || [];
+        if (parsedUrl.pathname === "/api/friends/unfollow") {
+          me.following = me.following.filter((id) => id !== targetId);
+          target.followers = target.followers.filter((id) => id !== userId);
+        } else {
+          if (!me.following.includes(targetId)) me.following.push(targetId);
+          if (!target.followers.includes(userId)) target.followers.push(userId);
+        }
+        fs.writeFileSync(friendsPath, JSON.stringify(users, null, 2));
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({
+          ok: true,
+          friend: {
+            code: target.code, name: target.name, track: target.track || "futures",
+            weeklyXp: target.weeklyXp || 0, weeklyActivity: target.weeklyActivity || 0,
+            lastActiveDay: target.lastActiveDay || "", avatar: target.avatar || null,
+            stats: target.stats || {},
+            followsYou: (target.following || []).includes(userId)
+          }
+        }));
+      })
+      .catch((error) => {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      });
+    return;
+  }
+
+  if (req.method === "GET" && parsedUrl.pathname === "/api/friends/search") {
+    const query = String(parsedUrl.searchParams.get("name") || "").trim().toLowerCase().slice(0, 40);
+    const users = readJsonFile(friendsPath, {});
+    const matches = query.length >= 2
+      ? Object.values(users)
+          .filter((user) => String(user.name || "").toLowerCase().includes(query))
+          .slice(0, 6)
+          .map((user) => ({ name: user.name, code: user.code, track: user.track || "futures", avatar: user.avatar || null, stats: user.stats || {} }))
+      : [];
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ ok: true, matches }));
+    return;
+  }
+
+  if (req.method === "POST" && parsedUrl.pathname === "/api/friends/cheer") {
+    readBody(req)
+      .then((body) => {
+        const data = JSON.parse(body || "{}");
+        const users = readJsonFile(friendsPath, {});
+        const targetCode = String(data.toCode || "").trim().toUpperCase().slice(0, 20);
+        const targetId = Object.keys(users).find((id) => users[id].code === targetCode);
+        if (!targetId) throw new Error("Friend not found");
+        users[targetId].cheers = (users[targetId].cheers || []).slice(-19);
+        users[targetId].cheers.push({
+          from: String(data.from || "A friend").slice(0, 40),
+          kind: String(data.kind || "cheer").slice(0, 20),
+          at: Date.now()
+        });
+        fs.writeFileSync(friendsPath, JSON.stringify(users, null, 2));
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true }));
+      })
+      .catch((error) => {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      });
+    return;
+  }
+
+  if (req.method === "POST" && parsedUrl.pathname === "/api/lobby/create") {
+    readBody(req)
+      .then((body) => {
+        const data = JSON.parse(body || "{}");
+        const lobbies = readJsonFile(lobbiesPath, {});
+        const code = `LB-${crypto.randomBytes(2).toString("hex").toUpperCase()}`;
+        lobbies[code] = {
+          game: String(data.game || "candlerush").slice(0, 30),
+          track: String(data.track || "futures").slice(0, 20),
+          host: String(data.name || "Trader").slice(0, 40),
+          createdAt: new Date().toISOString(),
+          scores: []
+        };
+        fs.writeFileSync(lobbiesPath, JSON.stringify(lobbies, null, 2));
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, code, lobby: lobbies[code] }));
+      })
+      .catch((error) => {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      });
+    return;
+  }
+
+  if (req.method === "POST" && parsedUrl.pathname === "/api/lobby/score") {
+    readBody(req)
+      .then((body) => {
+        const data = JSON.parse(body || "{}");
+        const lobbies = readJsonFile(lobbiesPath, {});
+        const code = String(data.code || "").trim().toUpperCase().slice(0, 20);
+        const lobby = lobbies[code];
+        if (!lobby) throw new Error("Lobby not found");
+        lobby.scores.push({ name: String(data.name || "Trader").slice(0, 40), score: Math.max(0, Number(data.score || 0)), at: new Date().toISOString() });
+        lobby.scores = lobby.scores.slice(-50);
+        fs.writeFileSync(lobbiesPath, JSON.stringify(lobbies, null, 2));
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, lobby: { code, ...lobby } }));
+      })
+      .catch((error) => {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      });
+    return;
+  }
+
+  if (req.method === "GET" && parsedUrl.pathname === "/api/lobby/get") {
+    const code = String(parsedUrl.searchParams.get("code") || "").trim().toUpperCase().slice(0, 20);
+    const lobbies = readJsonFile(lobbiesPath, {});
+    if (!lobbies[code]) {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: "Lobby not found" }));
+      return;
+    }
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ ok: true, lobby: { code, ...lobbies[code] } }));
     return;
   }
 
@@ -1320,9 +1791,83 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (req.method === "GET" && parsedUrl.pathname === "/api/launch-summary") {
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(launchSummary()));
+
+  if (parsedUrl.pathname === "/api/progress") {
+    if (req.method === "GET") {
+      const userId = parsedUrl.searchParams.get("userId");
+      if (!progressUserIdOk(userId)) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: "Invalid userId" }));
+        return;
+      }
+      const record = readProgressRecord(userId);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true, progress: record?.progress || null, updatedAt: record?.updatedAt || null }));
+      return;
+    }
+    if (req.method === "POST") {
+      readBody(req)
+        .then((body) => {
+          const payload = JSON.parse(body || "{}");
+          if (!progressUserIdOk(payload.userId) || !payload.progress || typeof payload.progress !== "object") {
+            throw new Error("Invalid progress payload");
+          }
+          const record = { userId: payload.userId, updatedAt: Date.now(), progress: payload.progress };
+          writeProgressRecord(payload.userId, record);
+          return record;
+        })
+        .then((record) => {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ ok: true, updatedAt: record.updatedAt }));
+        })
+        .catch((error) => {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ ok: false, error: error.message }));
+        });
+      return;
+    }
+  }
+
+  if (req.method === "GET" && parsedUrl.pathname === "/api/market/chart") {
+    const symbol = (parsedUrl.searchParams.get("symbol") || "").trim();
+    const range = parsedUrl.searchParams.get("range") || "1d";
+    const interval = parsedUrl.searchParams.get("interval") || "5m";
+    const okRanges = new Set(["1d", "5d", "1mo", "3mo", "6mo", "1y"]);
+    const okIntervals = new Set(["1m", "2m", "5m", "15m", "30m", "60m", "1d"]);
+    if (!marketSymbolOk(symbol) || !okRanges.has(range) || !okIntervals.has(interval)) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: "Invalid symbol, range, or interval" }));
+      return;
+    }
+    loadMarketChart(symbol, range, interval)
+      .then((data) => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, ...data }));
+      })
+      .catch((error) => {
+        res.writeHead(503, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      });
+    return;
+  }
+
+  if (req.method === "GET" && parsedUrl.pathname === "/api/market/news") {
+    const symbol = (parsedUrl.searchParams.get("symbol") || "").trim().slice(0, 15);
+    const query = (parsedUrl.searchParams.get("q") || "").trim().slice(0, 60);
+    if (!marketSymbolOk(symbol) || (query && !/^[\w .,'^=&/-]+$/.test(query))) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: "Invalid query" }));
+      return;
+    }
+    loadMarketNews(symbol, query)
+      .then((news) => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, news }));
+      })
+      .catch((error) => {
+        res.writeHead(503, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      });
     return;
   }
 
@@ -1413,7 +1958,10 @@ const server = http.createServer((req, res) => {
       return;
     }
 
-    res.writeHead(200, { "Content-Type": types[path.extname(filePath)] || "text/plain" });
+    res.writeHead(200, {
+      "Content-Type": types[path.extname(filePath)] || "text/plain",
+      "Cache-Control": "no-cache" // revalidate every load so UI updates ship instantly
+    });
     res.end(data);
   });
 });

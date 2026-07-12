@@ -1,0 +1,203 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1420" viewBox="0 0 1800 1420">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#071016"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0" x2="1">
+      <stop offset="0" stop-color="#56f4a1"/>
+      <stop offset="1" stop-color="#1ec56b"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" x2="1">
+      <stop offset="0" stop-color="#ffe482"/>
+      <stop offset="1" stop-color="#ffb63d"/>
+    </linearGradient>
+    <linearGradient id="red" x1="0" x2="1">
+      <stop offset="0" stop-color="#ff7068"/>
+      <stop offset="1" stop-color="#d93655"/>
+    </linearGradient>
+    <linearGradient id="purple" x1="0" x2="1">
+      <stop offset="0" stop-color="#7d5cff"/>
+      <stop offset="1" stop-color="#d653ff"/>
+    </linearGradient>
+    <pattern id="grid" width="42" height="42" patternUnits="userSpaceOnUse">
+      <path d="M 42 0 L 0 0 0 42" fill="none" stroke="#23414a" stroke-opacity=".35" stroke-width="1"/>
+    </pattern>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000" flood-opacity=".45"/>
+    </filter>
+    <style>
+      .title{font:900 58px Inter,Arial,sans-serif;fill:#f4fff8;letter-spacing:-1px}
+      .sub{font:700 24px Inter,Arial,sans-serif;fill:#9fb5b0}
+      .panel-title{font:900 34px Inter,Arial,sans-serif;fill:#fff}
+      .label{font:900 17px Inter,Arial,sans-serif;fill:#56f4a1;letter-spacing:4px}
+      .small{font:800 17px Inter,Arial,sans-serif;fill:#a9bbb7}
+      .tiny{font:800 13px Inter,Arial,sans-serif;fill:#83928f;letter-spacing:1px}
+      .white{fill:#f7fff9}
+      .muted{fill:#a6b6b1}
+      .panel{fill:#101722;stroke:#273446;stroke-width:2;rx:26;filter:url(#shadow)}
+      .card{fill:#151f2b;stroke:#2b394a;stroke-width:2;rx:18}
+      .pill{fill:#0a1219;stroke:#2d3d4d;stroke-width:2;rx:18}
+      .btn{fill:url(#green);rx:18}
+      .btn-dark{fill:#101822;stroke:#314052;stroke-width:2;rx:16}
+      .chart{fill:#061018;stroke:#26384a;stroke-width:2;rx:20}
+      .candle-g{fill:#53e27a;stroke:#67ff99;stroke-width:4;rx:4}
+      .candle-r{fill:#ef4c49;stroke:#ff6962;stroke-width:4;rx:4}
+      .wick-g{stroke:#55df82;stroke-width:5;stroke-linecap:round}
+      .wick-r{stroke:#ef5750;stroke-width:5;stroke-linecap:round}
+    </style>
+  </defs>
+
+  <rect width="1800" height="1420" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1800" height="1420" fill="url(#grid)" opacity=".45"/>
+
+  <text x="72" y="88" class="title">ReplayEdge Game UI Mockups</text>
+  <text x="74" y="130" class="sub">Four visual directions for a more modern, addictive, game-like training experience.</text>
+
+  <!-- Option A -->
+  <g transform="translate(72 190)">
+    <rect class="panel" width="806" height="550"/>
+    <text x="36" y="58" class="label">OPTION A</text>
+    <text x="36" y="100" class="panel-title">Arcade Tape Sprint</text>
+    <text x="36" y="132" class="small">Fast, colorful, easy to understand. Best default direction.</text>
+
+    <rect x="36" y="164" width="734" height="306" class="chart"/>
+    <rect x="36" y="164" width="734" height="42" fill="#192433" rx="20"/>
+    <text x="60" y="191" class="tiny">NQ • DATE HIDDEN</text>
+    <text x="696" y="191" class="tiny" fill="#56f4a1">18S</text>
+    <line x1="80" y1="260" x2="720" y2="260" stroke="#253849"/>
+    <line x1="80" y1="335" x2="720" y2="335" stroke="#253849"/>
+    <line x1="80" y1="410" x2="720" y2="410" stroke="#253849"/>
+    <text x="58" y="342" font-family="Inter,Arial" font-size="18" font-weight="900" fill="#75a7ff">VWAP</text>
+    <line x1="104" y1="340" x2="704" y2="314" stroke="#3f77ff" stroke-dasharray="10 10" stroke-width="3"/>
+
+    <g transform="translate(140 245)">
+      <line class="wick-g" x1="0" y1="35" x2="0" y2="130"/><rect class="candle-g" x="-13" y="62" width="26" height="62"/>
+      <line class="wick-g" x1="80" y1="0" x2="80" y2="110"/><rect class="candle-g" x="67" y="24" width="26" height="76"/>
+      <line class="wick-r" x1="160" y1="44" x2="160" y2="142"/><rect class="candle-r" x="147" y="66" width="26" height="58"/>
+      <line class="wick-g" x1="240" y1="-28" x2="240" y2="100"/><rect class="candle-g" x="227" y="-2" width="26" height="86"/>
+      <line class="wick-r" x1="320" y1="26" x2="320" y2="154"/><rect class="candle-r" x="307" y="60" width="26" height="76"/>
+      <line class="wick-r" x1="400" y1="62" x2="400" y2="166"/><rect class="candle-r" x="387" y="92" width="26" height="58"/>
+      <line class="wick-g" x1="480" y1="-40" x2="480" y2="96"/><rect class="candle-g" x="467" y="-5" width="26" height="82"/>
+    </g>
+
+    <rect x="78" y="488" width="180" height="44" class="btn-dark"/><text x="130" y="517" font-family="Inter,Arial" font-size="18" font-weight="900" fill="#56f4a1">LONG</text>
+    <rect x="312" y="488" width="180" height="44" class="btn-dark"/><text x="366" y="517" font-family="Inter,Arial" font-size="18" font-weight="900" fill="#ff6a66">SHORT</text>
+    <rect x="546" y="488" width="180" height="44" class="btn-dark"/><text x="606" y="517" font-family="Inter,Arial" font-size="18" font-weight="900" fill="#b5c4c0">FLAT</text>
+
+    <rect x="586" y="38" width="170" height="36" fill="#312116" stroke="#e7b958" stroke-width="2" rx="18"/>
+    <text x="612" y="61" class="tiny" fill="#ffdc78">COMBO X2</text>
+  </g>
+
+  <!-- Option B -->
+  <g transform="translate(924 190)">
+    <rect class="panel" width="806" height="550"/>
+    <text x="36" y="58" class="label" fill="#ff6a66">OPTION B</text>
+    <text x="36" y="100" class="panel-title">Market Boss Fight</text>
+    <text x="36" y="132" class="small">Turns hard reads into a battle. Great for ranked and streak runs.</text>
+
+    <rect x="36" y="164" width="734" height="328" fill="#171d2a" stroke="#33223d" stroke-width="2" rx="22"/>
+    <rect x="70" y="190" width="666" height="42" fill="#0b1118" rx="21"/>
+    <rect x="70" y="190" width="422" height="42" fill="url(#red)" rx="21"/>
+    <text x="88" y="218" class="tiny" fill="#fff">LIQUIDITY SWEEP BOSS</text>
+    <text x="620" y="218" class="tiny" fill="#ffb7b5">63%</text>
+
+    <g transform="translate(300 270)">
+      <circle cx="100" cy="86" r="98" fill="#23101a" stroke="#ff5261" stroke-width="4"/>
+      <circle cx="100" cy="86" r="60" fill="#3a1222"/>
+      <path d="M50 96 C80 38 120 38 150 96 C122 78 78 78 50 96Z" fill="#ff606a"/>
+      <circle cx="73" cy="78" r="9" fill="#ffe171"/>
+      <circle cx="127" cy="78" r="9" fill="#ffe171"/>
+      <path d="M78 118 Q100 136 122 118" stroke="#ffe171" stroke-width="8" fill="none" stroke-linecap="round"/>
+    </g>
+
+    <rect x="64" y="382" width="190" height="84" fill="#13271e" stroke="#39d878" stroke-width="2" rx="18"/>
+    <text x="92" y="415" font-family="Inter,Arial" font-size="22" font-weight="900" fill="#fff">Wait</text>
+    <text x="92" y="446" class="tiny">Shield capital</text>
+    <rect x="308" y="382" width="190" height="84" fill="#2b1620" stroke="#ff5660" stroke-width="2" rx="18"/>
+    <text x="336" y="415" font-family="Inter,Arial" font-size="22" font-weight="900" fill="#fff">Attack</text>
+    <text x="336" y="446" class="tiny">Take breakout</text>
+    <rect x="552" y="382" width="190" height="84" fill="#151f2c" stroke="#ffc553" stroke-width="2" rx="18"/>
+    <text x="580" y="415" font-family="Inter,Arial" font-size="22" font-weight="900" fill="#fff">Trap</text>
+    <text x="580" y="446" class="tiny">Fade the move</text>
+  </g>
+
+  <!-- Option C -->
+  <g transform="translate(72 790)">
+    <rect class="panel" width="806" height="550"/>
+    <text x="36" y="58" class="label" fill="#ffc85a">OPTION C</text>
+    <text x="36" y="100" class="panel-title">Coach Mission Mode</text>
+    <text x="36" y="132" class="small">Most beginner-friendly. The game teaches through checkpoints.</text>
+
+    <rect x="36" y="164" width="440" height="314" class="card"/>
+    <text x="66" y="204" class="label" fill="#ffc85a">MISSION</text>
+    <text x="66" y="246" font-family="Inter,Arial" font-size="42" font-weight="900" fill="#fff">Build the read.</text>
+    <rect x="68" y="282" width="360" height="54" fill="#0d161f" rx="14"/>
+    <circle cx="96" cy="309" r="13" fill="url(#green)"/>
+    <text x="122" y="316" class="small" fill="#fff">Find location</text>
+    <rect x="68" y="352" width="360" height="54" fill="#0d161f" rx="14"/>
+    <circle cx="96" cy="379" r="13" fill="#263848" stroke="#56f4a1" stroke-width="3"/>
+    <text x="122" y="386" class="small" fill="#fff">Check momentum</text>
+    <rect x="68" y="422" width="360" height="54" fill="#0d161f" rx="14"/>
+    <circle cx="96" cy="449" r="13" fill="#263848" stroke="#56f4a1" stroke-width="3"/>
+    <text x="122" y="456" class="small" fill="#fff">Choose action</text>
+
+    <rect x="512" y="164" width="258" height="314" class="chart"/>
+    <line x1="540" y1="250" x2="742" y2="250" stroke="#263849"/>
+    <line x1="540" y1="330" x2="742" y2="330" stroke="#263849"/>
+    <rect x="562" y="292" width="28" height="76" fill="#56e783" rx="5"/>
+    <line x1="576" y1="258" x2="576" y2="392" stroke="#56e783" stroke-width="5"/>
+    <rect x="630" y="214" width="28" height="102" fill="#ff625b" rx="5"/>
+    <line x1="644" y1="190" x2="644" y2="344" stroke="#ff625b" stroke-width="5"/>
+    <rect x="700" y="270" width="28" height="64" fill="#56e783" rx="5"/>
+    <line x1="714" y1="234" x2="714" y2="372" stroke="#56e783" stroke-width="5"/>
+    <circle cx="644" cy="208" r="22" fill="#ffcf4d" opacity=".9"/>
+    <text x="570" y="434" class="tiny" fill="#ffc85a">CLUE HIGHLIGHT</text>
+
+    <rect x="36" y="496" width="734" height="38" class="btn"/>
+    <text x="322" y="522" font-family="Inter,Arial" font-size="18" font-weight="900" fill="#061018">Submit read</text>
+  </g>
+
+  <!-- Option D -->
+  <g transform="translate(924 790)">
+    <rect class="panel" width="806" height="550"/>
+    <text x="36" y="58" class="label" fill="#b56cff">OPTION D</text>
+    <text x="36" y="100" class="panel-title">Replay Arcade Lobby</text>
+    <text x="36" y="132" class="small">Best home/game hub. Makes modes feel like a real game catalog.</text>
+
+    <rect x="36" y="164" width="734" height="330" fill="#0c111b" rx="22"/>
+    <text x="60" y="204" font-family="Inter,Arial" font-size="28" font-weight="900" fill="#fff">Choose your run</text>
+    <rect x="608" y="176" width="122" height="42" fill="#26223f" rx="18"/>
+    <text x="638" y="203" class="tiny" fill="#fff">View All</text>
+
+    <g transform="translate(62 240)">
+      <rect width="150" height="210" rx="20" fill="#6c39ef"/>
+      <circle cx="75" cy="72" r="42" fill="#a889ff"/>
+      <rect x="38" y="110" width="74" height="52" fill="#fff" opacity=".9" rx="8"/>
+      <text x="24" y="184" font-family="Inter,Arial" font-size="23" font-weight="900" fill="#fff">TAPE</text>
+      <text x="24" y="207" class="tiny" fill="#e7dcff">1,284 live</text>
+    </g>
+    <g transform="translate(232 240)">
+      <rect width="150" height="210" rx="20" fill="#eb285b"/>
+      <circle cx="75" cy="74" r="45" fill="#ffcf4d"/>
+      <path d="M50 72 L100 72 M75 47 L75 97" stroke="#46111e" stroke-width="14" stroke-linecap="round"/>
+      <text x="24" y="184" font-family="Inter,Arial" font-size="23" font-weight="900" fill="#fff">BOSS</text>
+      <text x="24" y="207" class="tiny" fill="#ffd8df">632 competing</text>
+    </g>
+    <g transform="translate(402 240)">
+      <rect width="150" height="210" rx="20" fill="#0ea76d"/>
+      <rect x="42" y="42" width="66" height="88" fill="#8cffbf" rx="14"/>
+      <line x1="58" y1="68" x2="92" y2="68" stroke="#06361f" stroke-width="8"/>
+      <line x1="58" y1="94" x2="92" y2="94" stroke="#06361f" stroke-width="8"/>
+      <text x="24" y="184" font-family="Inter,Arial" font-size="23" font-weight="900" fill="#fff">DAILY</text>
+      <text x="24" y="207" class="tiny" fill="#c4ffe0">one shot</text>
+    </g>
+    <g transform="translate(572 240)">
+      <rect width="150" height="210" rx="20" fill="#f49b2f"/>
+      <polygon points="75,34 116,82 94,144 56,144 34,82" fill="#ffe58d"/>
+      <circle cx="75" cy="92" r="22" fill="#0c111b"/>
+      <text x="24" y="184" font-family="Inter,Arial" font-size="23" font-weight="900" fill="#fff">RISK</text>
+      <text x="24" y="207" class="tiny" fill="#ffefc7">rule lab</text>
+    </g>
+  </g>
+</svg>

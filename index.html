@@ -3,49 +3,119 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TradePulse</title>
-    <meta name="description" content="Replay real futures moments blind. Make your call, reveal the move, and train your chart eye with TradePulse." />
+    <title>ReplayEdge — The Day Trader's One-Stop Shop</title>
+    <meta name="description" content="Futures, forex, stocks, options, and crypto — full trading academies wrapped in competitive arcade games. Learn your market, duel your friends, climb the ranks." />
+    <meta property="og:title" content="ReplayEdge — Every Market. One Arena." />
+    <meta property="og:description" content="The day trader's one-stop shop: five market academies, competitive games, and ranked play." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ReplayEdge — Every Market. One Arena." />
+    <meta name="twitter:description" content="Five market academies, competitive arcade games, ranked play. No real money. All skill." />
+    <link rel="canonical" href="https://replayedge-n3se.onrender.com/" />
     <meta name="theme-color" content="#0e1117" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="shortcut icon" href="favicon.svg" />
+    <link rel="apple-touch-icon" href="favicon.svg" />
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://unpkg.com/lucide@latest" defer></script>
   </head>
   <body data-view="home" data-page="home">
-    <aside class="side-nav" id="side-nav" aria-label="TradePulse navigation">
+    <div class="splash" id="splash" aria-hidden="true">
+      <div class="splash-core">
+        <div class="splash-ring"></div>
+        <div class="splash-candles"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="splash-brand">REPLAY<span>EDGE</span></div>
+      <div class="splash-tag">LOADING THE ARENA</div>
+    </div>
+    <script>
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          const splash = document.getElementById("splash");
+          if (!splash) return;
+          splash.classList.add("splash-done");
+          setTimeout(() => splash.remove(), 700);
+        }, 700);
+      });
+    </script>
+    <script>
+      (() => {
+        const saved = localStorage.getItem("sidebarOpen");
+        const open = saved === null ? window.matchMedia("(min-width: 1280px)").matches : saved === "true";
+        document.body.classList.toggle("sidebar-expanded", open);
+        if (location.search.includes("notrans")) {
+          // debug flag: embedded preview browsers freeze CSS transitions mid-flight.
+          // finish() jumps every animation/transition to its end state, bypassing the cascade.
+          setInterval(() => {
+            document.getAnimations().forEach((animation) => {
+              try { animation.finish(); } catch { try { animation.cancel(); } catch { /* ignore */ } }
+            });
+          }, 250);
+        }
+      })();
+    </script>
+    <aside class="side-nav" id="side-nav" aria-label="ReplayEdge navigation">
       <div class="side-nav-links">
-        <button class="side-link start-side-link nav-tab" data-page-target="home" data-view-target="home" type="button" data-tooltip="Start Training">
-          <span class="side-icon"><i data-lucide="play"></i></span>
-          <span class="side-label">Play</span>
+        <button class="side-link start-side-link nav-tab" data-page-target="home" data-view-target="home" type="button" data-tooltip="Home">
+          <span class="side-icon"><i data-lucide="house"></i></span>
+          <span class="side-label">Home</span>
         </button>
-        <button class="side-link daily-tab mode-start" data-mode="daily" type="button" data-tooltip="Daily Challenge">
-          <span class="side-icon"><i data-lucide="calendar-days"></i></span>
-          <span class="side-label">Daily Challenge</span>
+        <button class="side-link academy-side-link nav-tab" data-page-target="academy" data-view-target="academy" type="button" data-tooltip="Academy">
+          <span class="side-icon"><i data-lucide="graduation-cap"></i></span>
+          <span class="side-label">Academy</span>
+        </button>
+        <button class="side-link arcade-side-link nav-tab" data-page-target="arcade" data-view-target="arcade" type="button" data-tooltip="Arcade">
+          <span class="side-icon"><i data-lucide="gamepad-2"></i></span>
+          <span class="side-label">Arcade</span>
+        </button>
+        <button class="side-link dashboard-side-link nav-tab premium-lock" data-page-target="dashboard" data-view-target="dashboard" data-feature="tradersDashboard" type="button" data-tooltip="Traders Dashboard">
+          <span class="side-icon"><i data-lucide="radar"></i></span>
+          <span class="side-label">Traders Dashboard</span>
+          <span class="side-live-pill">LIVE</span>
+          <span class="side-lock"><i data-lucide="lock"></i></span>
+        </button>
+        <button class="side-link compete-side-link nav-tab" data-page-target="compete" data-view-target="compete" type="button" data-tooltip="Friends">
+          <span class="side-icon"><i data-lucide="users"></i></span>
+          <span class="side-label">Friends</span>
+        </button>
+        <button class="side-link achievements-tab nav-tab" data-page-target="achievements" data-view-target="achievements" type="button" data-tooltip="Achievements">
+          <span class="side-icon"><i data-lucide="medal"></i></span>
+          <span class="side-label">Achievements</span>
         </button>
         <button class="side-link leaderboard-tab nav-tab" data-page-target="leaderboard" data-view-target="leaderboard" type="button" data-tooltip="Leaderboard">
           <span class="side-icon"><i data-lucide="trophy"></i></span>
           <span class="side-label">Leaderboard</span>
         </button>
-        <button class="side-link plans-tab nav-tab" data-page-target="plans" data-view-target="plans" type="button" data-tooltip="View Plans">
-          <span class="side-icon"><i data-lucide="badge-dollar-sign"></i></span>
-          <span class="side-label">Plans</span>
+
+        <div class="side-divider"></div>
+        <div class="side-section-label">Learn</div>
+        <button class="side-link futures-tab nav-tab" data-page-target="futures" data-view-target="futures" type="button" data-tooltip="Why Trading?">
+          <span class="side-icon"><i data-lucide="trending-up"></i></span>
+          <span class="side-label">Why Trading?</span>
         </button>
+
+
+        <div class="side-divider"></div>
+        <div class="side-section-label">Account</div>
         <button class="side-link profile-tab nav-tab" data-page-target="profile" data-view-target="profile" type="button" data-tooltip="Login or Profile">
-          <span class="side-icon"><i data-lucide="log-in"></i></span>
+          <span class="side-icon"><i data-lucide="user"></i></span>
           <span class="side-label" id="side-profile-label">Login</span>
         </button>
-        <div class="side-divider subscriber-nav"></div>
-        <div class="side-section-label subscriber-nav">Learn</div>
-        <button class="side-link futures-tab nav-tab subscriber-nav" data-page-target="futures" data-view-target="futures" type="button" data-tooltip="Why Futures?">
-          <span class="side-icon"><i data-lucide="landmark"></i></span>
-          <span class="side-label">Why Futures?</span>
+        <button class="side-link plans-tab nav-tab" data-page-target="plans" data-view-target="plans" type="button" data-tooltip="View Plans">
+          <span class="side-icon"><i data-lucide="credit-card"></i></span>
+          <span class="side-label">Plans</span>
         </button>
-        <button class="side-link roadmap-tab nav-tab subscriber-nav" data-page-target="roadmap" data-view-target="roadmap" type="button" data-tooltip="Build Path">
-          <span class="side-icon"><i data-lucide="route"></i></span>
-          <span class="side-label">Build Path</span>
+        <div class="side-divider"></div>
+        <div class="side-section-label">Premium</div>
+        <button class="side-link nav-tab" data-page-target="toolkit" data-view-target="toolkit" type="button" data-tooltip="Trader Toolkit">
+          <span class="side-icon"><i data-lucide="wrench"></i></span>
+          <span class="side-label">Trader Toolkit</span>
         </button>
-        <button class="side-link elite-side-link nav-tab subscriber-nav" data-page-target="elite" data-view-target="elite" type="button" data-tooltip="Elite">
+        <button class="side-link elite-side-link nav-tab premium-lock" data-page-target="elite" data-view-target="elite" data-feature="eliteDashboard" type="button" data-tooltip="Elite Dashboard">
           <span class="side-icon"><i data-lucide="crown"></i></span>
-          <span class="side-label">Elite</span>
+          <span class="side-label">Elite Dashboard</span>
+          <span class="side-lock"><i data-lucide="lock"></i></span>
         </button>
       </div>
 
@@ -61,68 +131,104 @@
         <span class="side-label">Logout</span>
       </button>
     </aside>
+    <div class="sidebar-backdrop" id="sidebar-backdrop" aria-hidden="true"></div>
 
     <div class="site-shell">
       <header class="hero">
         <nav class="top-nav" aria-label="Primary navigation">
-          <button class="brand" id="brand-home" type="button" aria-label="Go to TradePulse home">
-            <div class="brand-icon">
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
-            <strong>TRADE<span>PULSE</span></strong>
+          <button class="side-toggle" id="side-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false">
+            <i data-lucide="menu"></i>
           </button>
+          <button class="brand" id="brand-home" type="button" aria-label="Go to ReplayEdge home">
+            <div class="brand-icon">
+              <svg class="replayedge-mark" viewBox="0 0 72 44" aria-hidden="true" focusable="false">
+                <defs>
+                  <linearGradient id="replayedge-mark-fill" x1="10" y1="8" x2="62" y2="38" gradientUnits="userSpaceOnUse">
+                    <stop offset="0" stop-color="#8bffb6" />
+                    <stop offset="0.5" stop-color="#46f59b" />
+                    <stop offset="1" stop-color="#18cfa7" />
+                  </linearGradient>
+                  <filter id="replayedge-mark-glow" x="-20%" y="-30%" width="140%" height="160%">
+                    <feGaussianBlur stdDeviation="2.4" result="blur" />
+                    <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.18 0 0 0 0 1 0 0 0 0 0.62 0 0 0 0.45 0" result="glow" />
+                    <feMerge>
+                      <feMergeNode in="glow" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+                <path class="mark-wing mark-wing-back" d="M13 12L30 5v34L13 32V12Z" fill="rgba(86, 214, 109, 0.16)" stroke="rgba(139, 255, 182, 0.42)" stroke-width="1.4" />
+                <path class="mark-edge" d="M31 6L58 22L31 38V6Z" fill="url(#replayedge-mark-fill)" filter="url(#replayedge-mark-glow)" />
+                <path class="mark-cut" d="M25 29L34 20L40 25L49 13" fill="none" stroke="#06120c" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.72" />
+                <circle class="mark-node" cx="49" cy="13" r="2.8" fill="#eafff4" stroke="rgba(6, 18, 12, 0.75)" stroke-width="1.2" />
+              </svg>
+            </div>
+            <strong>REPLAY<span>EDGE</span></strong>
+          </button>
+          <div class="topbar-status" aria-label="Training progress">
+            <span id="topbar-streak">0 day streak</span>
+          </div>
           <div class="topbar-actions">
             <button class="topbar-back hidden" id="topbar-back" type="button">← Back to modes</button>
-            <button class="audio-toggle" id="audio-toggle" type="button" aria-pressed="false">
-              <i data-lucide="volume-x"></i>
-              <span>Muted</span>
+            <button class="game-help-button hidden" id="game-help" type="button" aria-label="How to play this mode">
+              <i data-lucide="circle-help"></i>
+            </button>
+            <button class="tp-topbar-rank-pill" id="tp-topbar-rank-pill" type="button" aria-label="Open profile">
+              <span class="tp-topbar-rank-badge tp-topbar-rank-quartz"><i data-lucide="star"></i></span>
+              <span class="tp-topbar-rank-info">
+                <strong id="tp-topbar-rank-name">Guest</strong>
+                <span class="tp-topbar-rank-track"><i id="tp-topbar-rank-fill"></i></span>
+              </span>
+              <span class="tp-topbar-rank-chevron"><i data-lucide="chevron-down"></i></span>
+            </button>
+            <button class="topbar-login nav-tab" id="topbar-login" data-page-target="profile" data-view-target="profile" type="button">Log in</button>
+            <button class="topbar-avatar nav-tab hidden" id="topbar-avatar" data-page-target="profile" data-view-target="profile" type="button" aria-label="Open profile">
+              <i data-lucide="user"></i>
             </button>
           </div>
         </nav>
 
-        <section class="market-tape" aria-label="TradePulse training status">
+        <section class="market-tape" aria-label="ReplayEdge training status estimates">
           <div class="tape-status"><i></i><strong>Replay engine online</strong></div>
           <div><span>Active market</span><strong id="tape-market">NQ</strong><b id="tape-move">+1.24%</b></div>
           <div><span>Session</span><strong id="tape-session">New York</strong><b class="neutral">Practice</b></div>
           <div><span>Trainer benchmark</span><strong id="tape-accuracy">68.4%</strong><b id="tape-delta">+3.2%</b></div>
-          <div><span>Replay pool</span><strong id="tape-scenarios">248,901</strong><b class="neutral">Rotating</b></div>
+          <div><span>Replay pool</span><strong id="tape-scenarios">248,901</strong><b class="neutral">Training estimate</b></div>
         </section>
 
-        <div class="return-recap hidden" id="return-recap">
-          <span id="return-recap-copy">Last session recap ready.</span>
-          <button class="mode-start" data-mode="replay" type="button">Continue Training</button>
-          <button id="close-return-recap" type="button" aria-label="Dismiss recap">×</button>
-        </div>
-
         <section class="hero-grid">
+          <div class="hero-fx" aria-hidden="true">
+            <i class="fx-candle up"></i><i class="fx-candle down"></i><i class="fx-candle up"></i>
+            <i class="fx-candle up"></i><i class="fx-candle down"></i><i class="fx-candle up"></i>
+            <i class="fx-candle down"></i><i class="fx-candle up"></i>
+          </div>
           <div class="hero-copy">
-            <p class="signal">Replay real futures moments blind</p>
-            <h1>Train your chart eye. <span class="animated-headline">Master the Replay.</span></h1>
+            <p class="signal">The day trader's one-stop shop</p>
+            <h1>Every market. One arena.</h1>
             <p class="lead">
-              Replay real NQ and ES futures moments blind. No date. No context. Just price. Make your call, see what actually happened, and compress months of screen time into sharper decision reps.
+              Futures, forex, stocks, options, and crypto — full academies for each, wrapped in fast, competitive arcade games. Learn your market, duel your friends, climb the ranks. No real money. All skill.
             </p>
+            <div class="hero-markets" id="hero-markets" aria-label="Choose your market"></div>
             <div class="hero-cta-row">
-              <button class="primary-button hero-primary-cta" id="start-free-replay" type="button">Start Free - No Signup Needed</button>
+              <button class="primary-button hero-primary-cta nav-tab" id="start-academy" data-page-target="academy" data-view-target="academy" type="button">Start the Academy</button>
+              <button class="ghost-button hero-arcade-cta nav-tab" id="enter-arcade" data-page-target="arcade" data-view-target="arcade" type="button">Enter the Arcade</button>
               <button class="google-auth-button" id="hero-google-signin" type="button">
                 <span>G</span>
                 Sign in with Google
               </button>
             </div>
-            <p class="cta-note">10 free replays. No credit card. Instant access.</p>
+            <p class="cta-note">Free to start. No credit card. Instant access.</p>
             <p class="social-proof"><b id="waitlist-count">1,489</b> traders already training.</p>
             <div class="feature-list">
-              <div><span class="mini-icon">A</span>Real market scenarios</div>
-              <div><span class="mini-icon">T</span>Multiple timeframes</div>
-              <div><span class="mini-icon">XP</span>XP, streaks, rewards</div>
-              <div><span class="mini-icon">#</span>Biggest Gainers board</div>
-              <div><span class="mini-icon">250K</span>Personalized scenario pool</div>
+              <div><span class="mini-icon">5</span>Market academies</div>
+              <div><span class="mini-icon">8</span>Arcade games</div>
+              <div><span class="mini-icon">1v1</span>Duels &amp; tournaments</div>
+              <div><span class="mini-icon">XP</span>Weekly ranked ladder</div>
             </div>
             <div class="hero-performance">
-              <div><strong>3.8x</strong><span>More deliberate chart reps</span></div>
-              <div><strong>24/7</strong><span>Replay access</span></div>
-              <div><strong>9</strong><span>Training modes</span></div>
+              <div><strong>5</strong><span>Markets, one platform</span></div>
+              <div><strong>160</strong><span>Lessons, basics to orderflow</span></div>
+              <div><strong>8</strong><span>Games that prove it</span></div>
             </div>
             <p class="safe-copy">
               Education and skill-building only. No trade alerts, no personalized recommendations, no financial advice.
@@ -155,25 +261,7 @@
           </div>
         </section>
 
-        <section class="pain-section" aria-label="Why TradePulse exists">
-          <article>
-            <i data-lucide="monitor-x"></i>
-            <h3>You paper trade and it feels nothing like real price action.</h3>
-            <p>TradePulse puts you inside replay moments where you have to decide under pressure.</p>
-          </article>
-          <article>
-            <i data-lucide="video-off"></i>
-            <h3>You watch setups on YouTube but freeze when it is live.</h3>
-            <p>Repetition builds pattern memory before your capital is involved.</p>
-          </article>
-          <article>
-            <i data-lucide="brain-circuit"></i>
-            <h3>You know the theory but hesitate when it matters.</h3>
-            <p>Every reveal shows the clue, the mistake, and the next drill.</p>
-          </article>
-        </section>
-
-        <section class="market-intel" aria-label="TradePulse market training intelligence preview">
+        <section class="market-intel" aria-label="ReplayEdge market training intelligence preview">
           <article class="intel-card edge-card">
             <div class="edge-ring"><strong>72</strong><span>Edge</span></div>
             <div>
@@ -209,198 +297,26 @@
           </article>
         </section>
 
-        <section class="onboarding-strip" id="onboarding-strip" aria-label="Quick start onboarding">
-          <div>
-            <p class="signal">3-step start</p>
-            <h2>Pick your market. Pick your level. Trade it blind.</h2>
-          </div>
-          <label>Market
-            <select id="quick-market">
-              <option>NQ</option>
-              <option>ES</option>
-              <option>CL</option>
-              <option>GC</option>
-              <option>BTC</option>
-            </select>
-          </label>
-          <label>Experience
-            <select id="quick-experience">
-              <option>Beginner</option>
-              <option>Learning futures</option>
-              <option>Intermediate</option>
-              <option>Advanced</option>
-            </select>
-          </label>
-          <button class="primary-button" id="quick-start" type="button">Play First Scenario</button>
-        </section>
       </header>
 
       <main>
-        <div class="beta-banner hidden" id="beta-banner">
-          <span>TradePulse is in Beta — your feedback shapes what gets built next.</span>
-          <button type="button" id="open-feedback">Share feedback →</button>
-          <button type="button" id="dismiss-beta" aria-label="Dismiss beta banner">×</button>
+        <div class="notification-slot" id="notification-slot" aria-live="polite">
+          <div class="return-recap hidden" id="return-recap">
+            <span id="return-recap-copy">Last session recap ready.</span>
+            <button class="nav-tab" data-page-target="arcade" data-view-target="arcade" type="button">Continue Training</button>
+            <button id="close-return-recap" type="button" aria-label="Dismiss recap">×</button>
+          </div>
+
+          <div class="free-plan-banner hidden" id="free-plan-banner">
+            <span id="free-plan-banner-copy">Free Plan · 10 plays left</span>
+            <button class="free-plan-upgrade nav-tab" data-page-target="plans" data-view-target="plans" type="button">Upgrade</button>
+          </div>
         </div>
 
-        <div class="free-plan-banner hidden" id="free-plan-banner">
-          <span id="free-plan-banner-copy">You're on the Free Plan — 10 plays remaining</span>
-          <button class="free-plan-upgrade nav-tab" data-page-target="plans" data-view-target="plans" type="button">Upgrade</button>
-        </div>
-
-        <section class="game-mode-showcase page-section" data-page="home" data-view="home">
-          <div class="game-mode-heading">
-            <div>
-              <p class="signal">Training Arena</p>
-              <h2>Trending training games</h2>
-              <p>Every mode trains a different part of your market decision-making.</p>
-            </div>
-            <button class="show-all-modes nav-tab" data-page-target="home" data-view-target="home" type="button">Open Training Hub <span>↗</span></button>
-          </div>
-          <label class="lobby-search" for="mode-search">
-            <i data-lucide="search"></i>
-            <input id="mode-search" type="search" placeholder="Search TradePulse modes" autocomplete="off" />
-          </label>
-          <div class="game-mode-grid">
-            <button class="game-mode-card replay-game mode-start" data-mode="replay" type="button">
-              <span class="game-art">
-                <img src="assets/modes/replay-mode.jpg" alt="Futuristic candlestick replay timeline" />
-                <i class="art-scan"></i>
-              </span>
-              <span class="game-copy">
-                <small>Core Training</small>
-                <strong>Replay Mode</strong>
-                <span>Study, predict, then reveal the hidden candles.</span>
-              </span>
-              <span class="game-footer"><b><i></i> 1,284 training</b><em>Play Now ↗</em></span>
-            </button>
-
-            <button class="game-mode-card daily-game mode-start" data-mode="daily" type="button">
-              <span class="game-art">
-                <img src="assets/modes/daily-challenge.jpg" alt="Daily market challenge capsule and reward crystal" />
-                <i class="art-scan"></i>
-              </span>
-              <span class="game-copy">
-                <small>One Chance</small>
-                <strong>Daily Challenge</strong>
-                <span>Take today’s scenario and protect your streak.</span>
-              </span>
-              <span class="game-footer"><b><i></i> 847 training</b><em>Play Now ↗</em></span>
-            </button>
-
-            <button class="game-mode-card ranked-game mode-start" data-mode="ranked" type="button">
-              <span class="game-art">
-                <img src="assets/modes/ranked-battle.jpg" alt="Competitive market analysis arena with trophy" />
-                <i class="art-scan"></i>
-              </span>
-              <span class="game-copy">
-                <small>Competitive</small>
-                <strong>Ranked Battle</strong>
-                <span>Make fast calls, earn XP, and climb the ranks.</span>
-              </span>
-              <span class="game-footer"><b><i></i> 632 competing</b><em>Battle ↗</em></span>
-            </button>
-
-            <button class="game-mode-card trade-game mode-start" data-mode="trade" type="button">
-              <span class="game-art">
-                <img src="assets/modes/trade-mode.jpg" alt="Precision trade setup console with risk and target markers" />
-                <i class="art-scan"></i>
-              </span>
-              <span class="game-copy">
-                <small>Advanced</small>
-                <strong>Trade Mode</strong>
-                <span>Place entry, stop, and target with discipline.</span>
-              </span>
-              <span class="game-footer"><b><i></i> 519 training</b><em>Play Now ↗</em></span>
-            </button>
-            <button class="game-mode-card spot-game mode-start" data-mode="spot" type="button">
-              <span class="game-art"><img src="assets/modes/trade-mode.jpg" alt="Targeting interface highlighting a market setup zone" /><i class="art-scan"></i></span>
-              <span class="game-copy"><small>Visual Skill</small><strong>Spot the Setup</strong><span>Click the exact chart area where the setup forms.</span></span>
-              <span class="game-footer"><b><i></i> 706 training</b><em>Find It ↗</em></span>
-            </button>
-            <button class="game-mode-card survival-game mode-start" data-mode="survival" type="button">
-              <span class="game-art"><img src="assets/modes/replay-mode.jpg" alt="Candles advancing through a market replay timeline" /><i class="art-scan"></i></span>
-              <span class="game-copy"><small>Live Decisions</small><strong>Candle Survival</strong><span>Adapt your decision as each new candle develops.</span></span>
-              <span class="game-footer"><b><i></i> 934 surviving</b><em>Start Run ↗</em></span>
-            </button>
-            <button class="game-mode-card notrade-game mode-start" data-mode="notrade" type="button">
-              <span class="game-art"><img src="assets/modes/daily-challenge.jpg" alt="Market decision capsule representing patience and discipline" /><i class="art-scan"></i></span>
-              <span class="game-copy"><small>Discipline</small><strong>No-Trade Challenge</strong><span>Prove you can avoid attractive low-quality setups.</span></span>
-              <span class="game-footer"><b><i></i> 411 training</b><em>Test Patience ↗</em></span>
-            </button>
-            <button class="game-mode-card detective-game mode-start" data-mode="detective" type="button">
-              <span class="game-art"><img src="assets/modes/daily-challenge.jpg" alt="Mystery market clue inside a futuristic analysis capsule" /><i class="art-scan"></i></span>
-              <span class="game-copy"><small>Investigation</small><strong>Chart Detective</strong><span>Find the clue that explains why the setup succeeds or fails.</span></span>
-              <span class="game-footer"><b><i></i> 588 investigating</b><em>Solve It ↗</em></span>
-            </button>
-            <button class="game-mode-card thesis-game mode-start" data-mode="thesis" type="button">
-              <span class="game-art"><img src="assets/modes/ranked-battle.jpg" alt="Advanced market consoles combining into one analysis" /><i class="art-scan"></i></span>
-              <span class="game-copy"><small>Mastery</small><strong>Build the Thesis</strong><span>Score trend, location, momentum, liquidity, and action.</span></span>
-              <span class="game-footer"><b><i></i> 372 building</b><em>Build Thesis ↗</em></span>
-            </button>
-            <button class="game-mode-card review-game mode-start coach-mode hidden" data-mode="review" type="button">
-              <span class="game-art"><img src="assets/modes/replay-mode.jpg" alt="Review queue replay library" /><i class="art-scan"></i></span>
-              <span class="game-copy"><small>Coach Review</small><strong>Review Queue</strong><span>Replay only scenarios you previously missed.</span></span>
-              <span class="game-footer"><b><i></i> <span id="review-queue-count">0</span> to review</b><em>Review Now ↗</em></span>
-            </button>
-          </div>
-          <div class="mode-search-empty hidden" id="mode-search-empty">
-            No matching modes. Try Replay, Daily, Ranked, Trade, Review, or Pattern.
-          </div>
-        </section>
-
-        <section class="other-sections page-section" id="modes" data-page="home" data-view="home">
-          <div class="section-heading training-hub-heading">
-            <p class="signal">Choose A Game</p>
-            <h2>Pick your challenge</h2>
-            <p>Choose your mode, study the chart, then make the call. Every mode uses your same free-play count.</p>
-          </div>
-          <div class="game-mode-grid training-game-grid">
-            <button class="game-mode-card replay-game mode-start" data-mode="replay" type="button">
-              <span class="game-art"><img src="assets/modes/replay-mode.jpg" alt="Futuristic candlestick replay timeline" /><i class="art-scan"></i></span>
-              <span class="game-copy"><small>Core Training</small><strong>Replay Mode</strong><span>Study the chart, switch timeframes, predict the move, then reveal the candles.</span></span>
-              <span class="game-footer"><b><i></i> 1,284 training</b><em>Play Replay ↗</em></span>
-            </button>
-            <button class="game-mode-card daily-game mode-start" data-mode="daily" type="button">
-              <span class="game-art"><img src="assets/modes/daily-challenge.jpg" alt="Daily market challenge capsule and reward crystal" /><i class="art-scan"></i></span>
-              <span class="game-copy"><small>One Chance</small><strong>Daily Challenge</strong><span>Take one fresh scenario, earn bonus XP, and protect your daily streak.</span></span>
-              <span class="game-footer"><b><i></i> 847 training</b><em>Play Daily ↗</em></span>
-            </button>
-            <button class="game-mode-card ranked-game mode-start" data-mode="ranked" type="button">
-              <span class="game-art"><img src="assets/modes/ranked-battle.jpg" alt="Competitive market analysis arena with trophy" /><i class="art-scan"></i></span>
-              <span class="game-copy"><small>Competitive</small><strong>Ranked Battle</strong><span>Make faster decisions under pressure, earn bigger XP, and climb the board.</span></span>
-              <span class="game-footer"><b><i></i> 632 competing</b><em>Play Ranked ↗</em></span>
-            </button>
-            <button class="game-mode-card trade-game mode-start" data-mode="trade" type="button">
-              <span class="game-art"><img src="assets/modes/trade-mode.jpg" alt="Precision trade setup console with risk and target markers" /><i class="art-scan"></i></span>
-              <span class="game-copy"><small>Advanced</small><strong>Trade Mode</strong><span>Choose entry, stop, and target while the simulator scores your discipline.</span></span>
-              <span class="game-footer"><b><i></i> 519 training</b><em>Play Trade Mode ↗</em></span>
-            </button>
-            <button class="game-mode-card spot-game mode-start" data-mode="spot" type="button">
-              <span class="game-art"><img src="assets/modes/trade-mode.jpg" alt="Targeting interface highlighting a market setup zone" /><i class="art-scan"></i></span>
-              <span class="game-copy"><small>Visual Skill</small><strong>Spot the Setup</strong><span>Click the exact area where liquidity, rejection, reclaim, or expansion becomes visible.</span></span>
-              <span class="game-footer"><b><i></i> 706 training</b><em>Find It ↗</em></span>
-            </button>
-            <button class="game-mode-card survival-game mode-start" data-mode="survival" type="button">
-              <span class="game-art"><img src="assets/modes/replay-mode.jpg" alt="Candles advancing through a market replay timeline" /><i class="art-scan"></i></span>
-              <span class="game-copy"><small>Live Decisions</small><strong>Candle Survival</strong><span>Make five decisions while the chart advances and conditions change around you.</span></span>
-              <span class="game-footer"><b><i></i> 934 surviving</b><em>Start Run ↗</em></span>
-            </button>
-            <button class="game-mode-card notrade-game mode-start" data-mode="notrade" type="button">
-              <span class="game-art"><img src="assets/modes/daily-challenge.jpg" alt="Market decision capsule representing patience and discipline" /><i class="art-scan"></i></span>
-              <span class="game-copy"><small>Discipline</small><strong>No-Trade Challenge</strong><span>Separate valid opportunities from chop, bad reward, and emotionally tempting entries.</span></span>
-              <span class="game-footer"><b><i></i> 411 training</b><em>Test Patience ↗</em></span>
-            </button>
-            <button class="game-mode-card detective-game mode-start" data-mode="detective" type="button">
-              <span class="game-art"><img src="assets/modes/daily-challenge.jpg" alt="Mystery market clue inside a futuristic analysis capsule" /><i class="art-scan"></i></span>
-              <span class="game-copy"><small>Investigation</small><strong>Chart Detective</strong><span>Study the context and identify the single clue carrying the most decision value.</span></span>
-              <span class="game-footer"><b><i></i> 588 investigating</b><em>Solve It ↗</em></span>
-            </button>
-            <button class="game-mode-card thesis-game mode-start" data-mode="thesis" type="button">
-              <span class="game-art"><img src="assets/modes/ranked-battle.jpg" alt="Advanced market consoles combining into one analysis" /><i class="art-scan"></i></span>
-              <span class="game-copy"><small>Mastery</small><strong>Build the Thesis</strong><span>Construct and score a complete market read across five analytical components.</span></span>
-              <span class="game-footer"><b><i></i> 372 building</b><em>Build Thesis ↗</em></span>
-            </button>
-          </div>
+        <section class="home-main page-section" data-page="home" data-view="home">
+          <div id="home-academy-path"></div>
+          <div id="home-quests"></div>
+          <div id="home-arcade-rail"></div>
         </section>
 
         <section class="trainer-section page-section" id="trainer" data-page="game" data-view="game">
@@ -440,6 +356,7 @@
               <div class="timeframe-tabs" id="timeframe-tabs"></div>
               <div class="chart-frame">
                 <canvas id="chart" width="1180" height="620" aria-label="Candlestick market replay chart"></canvas>
+                <div class="candle-pop-layer" id="candle-pop-layer" aria-hidden="true"></div>
                 <div class="replay-status" id="replay-status">Future candles hidden</div>
                 <div class="chart-hotspots hidden" id="chart-hotspots" aria-label="Chart setup zones"></div>
                 <div class="result-clue-marker hidden" id="result-clue-marker" aria-hidden="true">
@@ -479,6 +396,12 @@
               <p class="tag-line" id="setup-tags">VWAP · Sweep · Opening Range</p>
               <h3 id="question">What is the highest probability move?</h3>
               <div class="mode-instruction" id="mode-instruction">Study every timeframe before making your decision.</div>
+              <div class="game-readiness-card" aria-label="Decision checklist">
+                <span>Decision checklist</span>
+                <div><i></i>Location</div>
+                <div><i></i>Momentum</div>
+                <div><i></i>Invalidation</div>
+              </div>
 
               <div class="confidence-picker" id="confidence-picker">
                 <span>Confidence</span>
@@ -621,10 +544,10 @@
           </article>
 
           <article class="panel">
-            <div class="panel-title">Daily Challenge</div>
-            <p class="muted">One scenario. One chance.</p>
-            <div class="challenge-reward">Reward: 200 XP</div>
-            <button class="panel-button mode-start" data-mode="daily">Start Challenge</button>
+            <div class="panel-title">Arcade</div>
+            <p class="muted">Climb the board by winning arcade runs.</p>
+            <div class="challenge-reward">XP multipliers live</div>
+            <button class="panel-button nav-tab" data-page-target="arcade" data-view-target="arcade">Play Now</button>
           </article>
 
           <article class="panel">
@@ -639,78 +562,102 @@
           </article>
         </section>
 
-        <section class="leaderboard-section panel page-section" id="leaderboard-view" data-page="leaderboard" data-view="leaderboard">
-          <div class="section-heading">
-            <p class="signal">Leaderboard</p>
-            <h2>Biggest Gainers</h2>
-            <p>Top XP climbers this week. Keep training to move your name up the board.</p>
-          </div>
-          <div class="leaderboard leaderboard-full" id="leaderboard-full"></div>
+        <section class="academy-section page-section" id="academy" data-page="academy" data-view="academy">
+          <div id="academy-root"></div>
         </section>
 
-        <section class="roadmap panel page-section" id="roadmap" data-page="roadmap" data-view="roadmap">
-          <div class="panel-title">MVP Roadmap</div>
-          <div class="roadmap-grid">
-            <div><b>1</b><strong>Core Replay Engine</strong><span>Candlestick replay, questions, scoring.</span></div>
-            <div><b>2</b><strong>Gamification</strong><span>XP, levels, streaks, achievements.</span></div>
-            <div><b>3</b><strong>Content Library</strong><span>100 curated scenarios and lessons.</span></div>
-            <div><b>4</b><strong>Social Features</strong><span>Leaderboards, profiles, friend challenges.</span></div>
-            <div><b>5</b><strong>Advanced Modes</strong><span>Trade mode, ranked battles, analytics.</span></div>
+        <section class="arcade-section page-section" id="arcade" data-page="arcade" data-view="arcade">
+          <div id="arcade-trainer"></div>
+          <div id="arcade-root"></div>
+        </section>
+
+        <section class="toolkit-section page-section" id="toolkit" data-page="toolkit" data-view="toolkit">
+          <div id="toolkit-root"></div>
+        </section>
+
+        <section class="compete-section page-section" id="compete" data-page="compete" data-view="compete">
+          <div id="compete-root"></div>
+        </section>
+
+        <section class="tdash-section page-section" id="traders-dashboard" data-page="dashboard" data-view="dashboard">
+          <div id="dashboard-root"></div>
+        </section>
+
+        <section class="achievements-section page-section" id="achievements" data-page="achievements" data-view="achievements">
+          <div id="achievements-root"></div>
+        </section>
+
+        <section class="leaderboard-section panel page-section" id="leaderboard-view" data-page="leaderboard" data-view="leaderboard">
+          <div class="section-heading">
+            <p class="arcade-kicker">// THE ARENA</p>
+            <h2>Weekly XP Race</h2>
+            <p>Every lesson, every run, every streak counts. Top 3 take the podium when the week resets.</p>
           </div>
+          <div class="leaderboard leaderboard-full" id="leaderboard-full"></div>
+          <div class="leaderboard-rank-scale" id="leaderboard-rank-scale"></div>
         </section>
 
         <section class="plans-section panel page-section" id="plans" data-page="plans" data-view="plans">
           <div class="section-heading">
-            <p class="signal">Plans</p>
+            <p class="arcade-kicker">// PLANS</p>
             <h2>Choose your training access</h2>
-            <p>Start with 10 free plays. Upgrade when you want unlimited replays, deeper review, and personalized training.</p>
+            <p>Start free in the Academy and Arcade. Upgrade for unlimited runs, the Trader Toolkit, and permanent XP boosts.</p>
           </div>
           <div class="billing-toggle" aria-label="Billing period">
             <button class="billing-option active" data-billing="monthly" type="button">Monthly</button>
-            <button class="billing-option" data-billing="annual" type="button">Annual <span>2 months free</span></button>
+            <button class="billing-option" data-billing="annual" type="button">Annual</button>
           </div>
+          <div class="launch-deal-strip" aria-label="Limited time launch pricing">
+            <span>Limited-time launch pricing</span>
+          </div>
+          <div class="annual-savings-stamp" aria-live="polite">Annual billing saves up to $141/year.</div>
           <div class="plans-grid">
             <article>
               <span>Player</span>
-              <h3 class="plan-price" data-monthly="$19.99/mo" data-annual="$199/year">$19.99/mo</h3>
+              <h3 class="plan-price launch-price" data-monthly="$24.99/mo" data-annual="$249/year" data-deal="Launch access">
+                <small>Launch access</small>
+                <b>$24.99/mo</b>
+              </h3>
               <ul>
-                <li>Unlimited Replay Mode</li>
-                <li>Daily Challenge access</li>
-                <li>Ranked Battle access</li>
-                <li>Trade Mode access</li>
-                <li>XP, streaks, levels, and achievements</li>
-                <li>Leaderboard climbing</li>
-                <li>Personalized scenario pool</li>
+                <li>Unlimited Arcade runs — no signup caps</li>
+                <li>Full Academy: all 7 tiers, 33 lessons</li>
+                <li>All 7 arcade games as you unlock tiers</li>
+                <li>XP, streaks, levels, and badges</li>
+                <li>Weekly XP Race leaderboard</li>
+                <li>Daily 2x XP boost rotation</li>
               </ul>
               <button class="primary-button plan-button" data-plan="Player">Choose Player</button>
             </article>
             <article class="featured-plan">
               <span>Coach <b class="popular-badge">Most Popular</b></span>
-              <h3 class="plan-price" data-monthly="$29.99/mo" data-annual="$299/year">$29.99/mo</h3>
+              <h3 class="plan-price launch-price" data-monthly="$44.99/mo" data-annual="$449/year" data-old-monthly="$74.99/mo" data-old-annual="$749/year" data-discount="40% off">
+                <small><s>$74.99/mo</s><em>40% off</em></small>
+                <b>$44.99/mo</b>
+              </h3>
               <ul>
                 <li>Everything in Player</li>
-                <li>Deeper educational reasoning after replays</li>
-                <li>Mistake review when answers are wrong</li>
-                <li>Pattern recognition tips</li>
-                <li>Weak-setup awareness</li>
-                <li>Discipline and decision-quality feedback</li>
-                <li>Advanced learning path support</li>
+                <li><b>+25% XP on every Arcade run</b></li>
+                <li>Trader Toolkit: Risk Calculator with futures tick presets</li>
+                <li>Mistake Journal — failed quizzes &amp; busts auto-collected to re-drill</li>
+                <li>Performance Analytics — run graph, per-game records, consistency</li>
+                <li>Weekly performance digest</li>
               </ul>
               <button class="primary-button plan-button" data-plan="Coach">Choose Coach</button>
             </article>
             <article class="elite-plan-card">
               <span>Elite</span>
-              <h3 class="plan-price" data-monthly="$49.99/mo" data-annual="$499/year">$49.99/mo</h3>
+              <h3 class="plan-price launch-price" data-monthly="$69.99/mo" data-annual="$699/year" data-old-monthly="$139.99/mo" data-old-annual="$1,399/year" data-discount="50% off">
+                <small><s>$139.99/mo</s><em>50% off</em></small>
+                <b>$69.99/mo</b>
+              </h3>
               <ul>
                 <li>Everything in Coach</li>
-                <li>Personalized weakness detection</li>
-                <li>Custom practice playlists</li>
-                <li>Advanced analytics dashboard</li>
-                <li>Mistake journal</li>
-                <li>Scenario filters</li>
-                <li>Weekly progress report</li>
-                <li>7-day personal curriculum</li>
-                <li>Advanced Trade Mode scoring</li>
+                <li><b>+50% XP on every Arcade run</b></li>
+                <li>Personal Study Plan — regenerated weekly from your weakest tiers</li>
+                <li>Elite analytics dashboard</li>
+                <li>Streak Freeze Bank</li>
+                <li>Gold leaderboard identity ♛</li>
+                <li>First access to new games and tiers</li>
               </ul>
               <button class="primary-button plan-button" data-plan="Elite">Choose Elite</button>
             </article>
@@ -719,26 +666,51 @@
             <strong>7-day money-back guarantee</strong>
             <span>No questions asked. Try the training loop, then decide.</span>
           </div>
+          <div class="billing-trust-strip" aria-label="Billing trust and safety">
+            <div><i data-lucide="shield-check"></i><strong>Secure Stripe checkout</strong><span>Cards, invoices, and cancellations are handled through Stripe.</span></div>
+            <div><i data-lucide="rotate-ccw"></i><strong>Cancel anytime</strong><span>No hidden contracts. Manage your plan from your profile.</span></div>
+            <div><i data-lucide="book-open-check"></i><strong>Education only</strong><span>Replay training, not financial advice, signals, or brokerage execution.</span></div>
+          </div>
+          <div class="plan-proof-grid">
+            <article>
+              <span class="proof-icon"><i data-lucide="repeat"></i></span>
+              <strong>Player</strong>
+              <p>Unlimited Academy lessons and Arcade runs, XP, streaks, badges, and the Weekly XP Race.</p>
+            </article>
+            <article class="coach-proof">
+              <span class="proof-icon"><i data-lucide="brain"></i></span>
+              <strong>Coach</strong>
+              <p>The Trader Toolkit — risk calculator, mistake journal, analytics — plus +25% XP forever.</p>
+            </article>
+            <article class="elite-proof">
+              <span class="proof-icon"><i data-lucide="crown"></i></span>
+              <strong>Elite</strong>
+              <p>A weekly personal study plan, +50% XP, streak protection, and gold status on the leaderboard.</p>
+            </article>
+          </div>
           <div class="plan-compare">
             <div class="panel-title">What’s Included</div>
             <div class="compare-table">
               <div class="compare-head"><span>Feature</span><strong>Player</strong><strong>Coach</strong><strong>Elite</strong></div>
-              <div><span>Unlimited replay games</span><b>✓</b><b>✓</b><b>✓</b></div>
-              <div><span>Daily challenge + ranked</span><b>✓</b><b>✓</b><b>✓</b></div>
-              <div><span>Replay controls + XP progression</span><b>✓</b><b>✓</b><b>✓</b></div>
-              <div><span>Deeper mistake review</span><b>—</b><b>✓</b><b>✓</b></div>
-              <div><span>Coach reasoning after each replay</span><b>—</b><b>✓</b><b>✓</b></div>
-              <div><span>Weakness detection</span><b>—</b><b>—</b><b>✓</b></div>
-              <div><span>Custom playlists + scenario filters</span><b>—</b><b>—</b><b>✓</b></div>
-              <div><span>Weekly progress curriculum</span><b>—</b><b>—</b><b>✓</b></div>
+              <div><span>All 5 market Academies (futures, forex, stocks, options, crypto)</span><b>✓</b><b>✓</b><b>✓</b></div>
+              <div><span>Every Arcade game + Orderflow stage</span><b>✓</b><b>✓</b><b>✓</b></div>
+              <div><span>Compete: friends, 1v1 duels, lobbies, tournaments</span><b>✓</b><b>✓</b><b>✓</b></div>
+              <div><span>Weekly XP Race + rotating rank</span><b>✓</b><b>✓</b><b>✓</b></div>
+              <div><span>Permanent Arcade XP boost</span><b>—</b><b>+25%</b><b>+50%</b></div>
+              <div><span>Trader Toolkit: risk calculator, mistake journal, analytics</span><b>—</b><b>✓</b><b>✓</b></div>
+              <div><span>Weakness Radar with targeted drills</span><b>—</b><b>✓</b><b>✓</b></div>
+              <div><span>Weekly performance digest</span><b>—</b><b>✓</b><b>✓</b></div>
+              <div><span>AI Trade Review (instant desk-style breakdowns)</span><b>—</b><b>—</b><b>✓</b></div>
+              <div><span>Personal Study Plan, regenerated weekly</span><b>—</b><b>—</b><b>✓</b></div>
+              <div><span>Streak Freeze Bank + gold leaderboard identity ♛</span><b>—</b><b>—</b><b>✓</b></div>
             </div>
           </div>
-          <p class="fineprint">TradePulse is an educational replay simulator. It does not provide financial advice, trade alerts, personalized investment recommendations, or broker execution.</p>
+          <p class="fineprint">ReplayEdge is an educational replay simulator. It does not provide financial advice, trade alerts, personalized investment recommendations, or broker execution.</p>
         </section>
 
         <section class="elite-section page-section" id="elite" data-page="elite" data-view="elite">
           <div class="elite-hero">
-            <p class="signal">Elite Plan · $49.99/month</p>
+            <p class="signal">Elite Plan · $69.99/month</p>
             <h2>Your personal replay training system.</h2>
             <p>Elite does more than unlock games. It studies your performance, finds your weak spots, and builds a targeted practice path so every session has a purpose.</p>
             <button class="primary-button plan-button" data-plan="Elite">Choose Elite</button>
@@ -753,7 +725,7 @@
             <article>
               <span>02</span>
               <h3>Custom Practice Playlists</h3>
-              <p>TradePulse builds drills around your mistakes, like 10 no-trade discipline scenarios or 15 hard NQ liquidity sweeps.</p>
+              <p>ReplayEdge builds drills around your mistakes, like 10 no-trade discipline scenarios or 15 hard NQ liquidity sweeps.</p>
             </article>
             <article>
               <span>03</span>
@@ -893,101 +865,75 @@
         <section class="futures-section page-section" id="futures" data-page="futures" data-view="futures">
           <div class="futures-hero panel">
             <div>
-              <p class="signal">Beginner Guide</p>
-              <h2>Why serious beginners study futures first</h2>
+              <p class="signal">The Opportunity</p>
+              <h2>Trading is the highest-leverage skill you can learn</h2>
               <p>
-                Futures attract ambitious traders because the market is structured, liquid, fast-moving, and built around repeatable behavior. The edge is not magic. It comes from screen time, pattern recognition, disciplined risk, and constant practice.
+                Every single day, the world's markets move over ten trillion dollars. Nobody hands that money out — but a small group of disciplined people, armed with nothing more than a laptop and a trained eye, take their share of it from anywhere on earth. No degree required. No permission needed. No ceiling on what the skill is worth.
               </p>
-              <button class="primary-button mode-start" data-mode="replay">Start Learning With Replays</button>
+              <button class="primary-button nav-tab" data-page-target="academy" data-view-target="academy">Start Building the Skill — Free</button>
             </div>
             <div class="futures-diagram" aria-hidden="true">
               <div class="futures-scale">
-                <span>Stocks</span>
+                <span>Paycheck</span>
                 <i></i>
-                <span>Futures</span>
+                <span>Skill</span>
               </div>
               <div class="futures-meter"><b></b></div>
-              <strong>Structure + Practice = Faster Learning Curve</strong>
+              <strong>Salaries are capped. Skill compounds.</strong>
             </div>
           </div>
 
           <div class="futures-grid">
             <article class="panel futures-card">
-              <span class="futures-icon">24</span>
-              <h3>More opportunities to practice</h3>
-              <p>Popular futures markets move often and provide clean replay material across multiple sessions. That gives beginners more chances to study setups, mistakes, and timing without waiting for one stock to move.</p>
+              <span class="futures-icon">$</span>
+              <h3>The market pays for skill, not hours</h3>
+              <p>A job trades your time for a fixed number. Trading pays for judgment — and judgment scales. The same read that makes $50 on one contract makes $5,000 on a hundred. Your ceiling is your skill, not your schedule.</p>
             </article>
-
             <article class="panel futures-card">
-              <span class="futures-icon">LQ</span>
-              <h3>Liquidity and structure</h3>
-              <p>Markets like ES, NQ, CL, and GC often respect key areas, session highs and lows, VWAP, opening ranges, and liquidity sweeps. That structure makes futures valuable for pattern-recognition training.</p>
+              <span class="futures-icon">🌍</span>
+              <h3>The deepest opportunity pool on earth</h3>
+              <p>Forex alone turns over roughly $7.5 trillion a day. Futures, stocks, options, and crypto add trillions more. You don't need to beat the market — you need a sliver of one good move, a few times a week.</p>
             </article>
-
             <article class="panel futures-card">
-              <span class="futures-icon">⚖</span>
-              <h3>Risk can be defined clearly</h3>
-              <p>Good futures training is not about guessing direction. It is about learning where the idea is wrong, where the target makes sense, and whether the setup is worth the risk.</p>
+              <span class="futures-icon">💻</span>
+              <h3>No inventory. No employees. No boss.</h3>
+              <p>Every other business needs capital, staff, customers, and years of grind before profit. A trader's entire operation is a laptop, a process, and discipline. It is the leanest business model that has ever existed.</p>
             </article>
-
             <article class="panel futures-card">
-              <span class="futures-icon">XP</span>
-              <h3>Skill compounds with repetition</h3>
-              <p>The traders who improve fastest usually practice deliberately. They review scenarios, compare timeframes, track weak patterns, and repeat the process until decisions become sharper.</p>
+              <span class="futures-icon">⏰</span>
+              <h3>A market is always open</h3>
+              <p>Futures trade nearly 23 hours a day. Forex follows the sun around the globe. Crypto never sleeps. Whatever your timezone, your job, your life — there is a session that fits it. Opportunity waits for no one, but it does run on your schedule.</p>
+            </article>
+            <article class="panel futures-card">
+              <span class="futures-icon">📈</span>
+              <h3>Every rep is permanent</h3>
+              <p>Structure, liquidity, risk, psychology — the skills transfer across all five markets and never expire. A year of deliberate practice compounds for the rest of your life. Most people never start because nobody showed them the path. You're looking at the path.</p>
+            </article>
+            <article class="panel futures-card">
+              <span class="futures-icon">🛡</span>
+              <h3>The honest part: most people skip the training</h3>
+              <p>The market transfers money from the impatient to the prepared. The 90% who fail fund the 10% who trained first. That's exactly why ReplayEdge exists — build the skill in simulation, prove it with data, and step onto the live floor as the prepared one.</p>
             </article>
           </div>
 
-          <div class="futures-comparison panel">
+          <div class="futures-hero panel" style="margin-top:16px">
             <div>
-              <p class="signal">Compared To Stocks Or Crypto</p>
-              <h3>Why futures can be a cleaner training arena</h3>
-              <p>Stocks can be crowded with company-specific headlines. Crypto can be highly fragmented and sentiment-driven. Futures are often centered around major global instruments with deep liquidity, defined sessions, and repeatable intraday behavior.</p>
+              <p class="signal">Your Move</p>
+              <h2>The best time to start was five years ago.</h2>
+              <p>The second best time is your first lesson — it takes three minutes, and every lesson after it compounds. A year from now you'll wish you'd started today.</p>
+              <button class="primary-button nav-tab" data-page-target="academy" data-view-target="academy">Take Lesson One Now</button>
             </div>
-            <ul>
-              <li>Practice one market deeply instead of chasing hundreds of tickers.</li>
-              <li>Study repeatable session behavior like opens, closes, news reactions, and liquidity sweeps.</li>
-              <li>Use replay to build decision quality before risking real capital.</li>
-              <li>Track progress through accuracy, discipline, streaks, and pattern performance.</li>
-            </ul>
           </div>
-
-          <div class="futures-warning panel">
-            <strong>Important:</strong>
-            <p>Futures involve substantial risk and are not right for everyone. TradePulse is an educational simulator. It helps users practice reading historical-style scenarios; it does not tell users what to buy, sell, or trade live.</p>
-          </div>
+          <p class="fineprint">Education and skill-building only. Trading involves substantial risk of loss; most traders lose money without proper training. ReplayEdge provides simulation-based education, not financial advice.</p>
         </section>
 
-        <section class="faq-section panel page-section" data-page="faq" data-view="faq">
-          <div class="panel-title">FAQ</div>
-          <div class="faq-grid">
-            <article>
-              <h3>Is TradePulse giving trading advice?</h3>
-              <p>No. TradePulse is an educational replay simulator for pattern recognition practice. It does not give trade alerts, broker execution, or personalized financial recommendations.</p>
-            </article>
-            <article>
-              <h3>How many free plays do I get?</h3>
-              <p>You get 10 free plays total across the training games. After that, the subscription screen appears.</p>
-            </article>
-            <article>
-              <h3>What is included in the $19.99 plan?</h3>
-              <p>The Player plan unlocks unlimited access to the games, XP progression, streaks, leaderboards, achievements, and the full scenario pool.</p>
-            </article>
-            <article>
-              <h3>What does the $29.99 Coach plan add?</h3>
-              <p>The Coach plan adds deeper educational reasoning, mistake review, and practice tips after each replay so users understand the pattern more clearly.</p>
-            </article>
-            <article>
-              <h3>Will everyone see the same scenarios?</h3>
-              <p>A few featured scenarios are shared so everyone can compare scores. After that, the app uses a large personalized scenario pool so each user gets a different training path.</p>
-            </article>
-          </div>
-        </section>
+
 
         <section class="growth-section page-section" id="community-growth" data-page="community" data-view="community">
           <div class="section-heading">
             <p class="signal">Community Loops</p>
             <h2>Challenge friends. Flex your stats. Climb the season.</h2>
-            <p>TradePulse gets stronger when traders compare reads on the exact same replay.</p>
+            <p>ReplayEdge gets stronger when traders compare reads on the exact same replay.</p>
           </div>
           <div class="growth-grid">
             <article class="panel share-card-preview">
@@ -999,7 +945,7 @@
             <article class="panel">
               <div class="panel-title">Referral Code</div>
               <p>Give a friend your code. When referrals are live, each paid signup can credit free training time.</p>
-              <div class="referral-code" id="referral-code">TP-GUEST</div>
+              <div class="referral-code" id="referral-code">RE-GUEST</div>
               <button class="ghost-button" id="copy-referral" type="button">Copy Referral</button>
             </article>
             <article class="panel">
@@ -1010,116 +956,43 @@
             <article class="panel">
               <div class="panel-title">Discord Community</div>
               <p>Join the trading room for scenario drops, leaderboard talk, and launch updates.</p>
-              <a class="primary-button discord-link" href="https://discord.gg/tradepulse" target="_blank" rel="noreferrer">Open Discord</a>
+              <a class="primary-button discord-link" href="https://discord.gg/replayedge" target="_blank" rel="noreferrer">Open Discord</a>
             </article>
           </div>
         </section>
 
         <section class="profile-section page-section" id="profile" data-page="profile" data-view="profile">
-          <div class="profile-hero panel">
-            <div class="profile-avatar" id="profile-avatar">TP</div>
-            <div>
-              <p class="signal">Training Profile</p>
-              <h2><span id="profile-name">Guest Trader</span> <b class="plan-tier-badge plan-free" id="profile-plan-badge">Free</b></h2>
-              <p id="profile-email">Create a profile to save your training data.</p>
-            </div>
-            <div class="profile-access">
-              <span>Current Access</span>
-              <strong id="profile-access">Free</strong>
-              <small id="profile-trial">10 free plays available</small>
-            </div>
-          </div>
-
-          <div class="profile-empty-state panel hidden" id="profile-empty-state">
-            <div>
-              <p class="signal">Start Your Profile</p>
-              <h3>Complete your first scenario to build your training dashboard.</h3>
-              <p>Your accuracy, weak patterns, XP, rank, streak, and recent training history will appear here after your first replay.</p>
-            </div>
-            <button class="primary-button mode-start" data-mode="replay" type="button">Start First Scenario</button>
-          </div>
-
-          <div class="profile-grid">
-            <article class="panel profile-rank-card">
-              <span>Rank</span>
-              <strong id="profile-rank">Rookie</strong>
-              <div class="profile-ring"><b id="profile-level">1</b><small>Level</small></div>
-              <div class="xp-meter"><span id="profile-xp-label">0 / 500 XP</span><i id="profile-xp-fill"></i></div>
-            </article>
-
-            <article class="panel profile-stat-card">
-              <span>Accuracy</span>
-              <strong id="profile-accuracy">0%</strong>
-              <small>Correct reads across all modes</small>
-            </article>
-
-            <article class="panel profile-stat-card">
-              <span>Top Streak</span>
-              <strong id="profile-top-streak">0 Days</strong>
-              <small>Best training streak saved</small>
-            </article>
-
-            <article class="panel profile-stat-card freeze-card">
-              <span>Streak Freeze</span>
-              <strong id="profile-freeze">0</strong>
-              <small id="profile-freeze-copy">Reach a 5-day streak to bank one.</small>
-            </article>
-
-            <article class="panel profile-stat-card">
-              <span>Scenarios</span>
-              <strong id="profile-scenarios">0</strong>
-              <small>Total completed replays</small>
-            </article>
-
-            <article class="panel profile-wide">
-              <div class="panel-title">Mode Breakdown</div>
-              <div class="profile-mode-list" id="profile-modes"></div>
-            </article>
-
-            <article class="panel profile-wide">
-              <div class="panel-title">Pattern Report</div>
-              <div class="profile-patterns">
-                <div>
-                  <span>Strongest Setup</span>
-                  <strong id="profile-strongest">Not enough data</strong>
-                </div>
-                <div>
-                  <span>Needs Work</span>
-                  <strong id="profile-weakest">Not enough data</strong>
-                </div>
+          <div id="profile-root"></div>
+          <div class="profile-bottom-grid">
+            <article class="panel referral-card" id="profile-referral-card">
+              <div class="referral-loading">
+                <div class="referral-skeleton referral-skeleton-title"></div>
+                <div class="referral-skeleton referral-skeleton-copy"></div>
+                <div class="referral-skeleton referral-skeleton-input"></div>
               </div>
-              <div id="profile-pattern-bars"></div>
             </article>
-
-            <article class="panel profile-wide">
-              <div class="panel-title">Recent Training</div>
-              <div class="profile-recent" id="profile-recent"></div>
-            </article>
-
             <article class="panel profile-sub-card">
               <div class="panel-title">Subscription</div>
               <h3 id="profile-subscription">Free</h3>
-              <p id="profile-subscription-copy">Create a profile or start a trial to unlock more training.</p>
+              <p id="profile-subscription-copy">Upgrade to unlock the Trader Toolkit, XP boosts, and coach-level analytics.</p>
               <label class="digest-toggle" id="digest-toggle-wrap" title="Coach Plan only">
                 <span>
                   <strong>Weekly Digest</strong>
-                  <small>Email me a weekly training performance recap.</small>
+                  <small>Email me a weekly performance recap.</small>
                 </span>
                 <input id="weekly-digest-toggle" type="checkbox" />
               </label>
               <button class="ghost-button hidden" id="manage-billing" type="button">Manage Or Cancel Subscription</button>
-              <small class="profile-billing-note hidden" id="profile-billing-note">Cancellation, card changes, and invoices are handled securely through Stripe.</small>
-              <button class="primary-button nav-tab" data-page-target="plans" type="button"><span>View Plans</span></button>
-              <button class="ghost-button hidden" id="logout-profile" type="button">Logout</button>
+              <button class="primary-button nav-tab" data-page-target="plans" data-view-target="plans" type="button"><span>View Plans</span></button>
             </article>
           </div>
         </section>
 
         <section class="invite-section page-section" id="trial" data-page="home" data-view="home">
           <div>
-            <p class="invite-pill"><span></span> The replay room is opening</p>
-            <h2>Train without limits for 3 days. <span>Then continue for $19.99/month.</span></h2>
-            <p>Enter your details to start unlimited access across all nine training games.</p>
+            <p class="invite-pill"><span></span> Limited-time launch pricing</p>
+            <h2>3 days. Every market. <span>Everything unlocked.</span></h2>
+            <p>All five Academies, every Arcade game, duels, and the Trader Toolkit — see what your trading looks like with a real system behind it.</p>
           </div>
           <form class="invite-form trial-form" id="invite-form">
             <div class="trial-fields">
@@ -1129,20 +1002,43 @@
             </div>
             <label class="trial-consent">
               <input id="trial-consent" type="checkbox" required />
-              <span>I understand I get unlimited access for 3 days, then the Player plan begins automatically at $19.99/month unless I cancel.</span>
+              <span>I understand I get unlimited access for 3 days, then the Player plan begins automatically at $24.99/month unless I cancel.</span>
             </label>
             <small>No spam. No fake signals. Cancel or unsubscribe anytime before the trial ends.</small>
           </form>
         </section>
 
+        <div class="beta-banner hidden" id="beta-banner">
+          <span>ReplayEdge is in Beta — your feedback shapes what gets built next.</span>
+          <button type="button" id="open-feedback">Share feedback →</button>
+          <button type="button" id="dismiss-beta" aria-label="Dismiss beta banner">×</button>
+        </div>
+
+        <section class="social-proof-bar" id="social-proof-bar">
+          <strong><span id="proof-traders">1,400</span> traders training</strong>
+          <strong><span id="proof-replays">248,901</span> replays completed</strong>
+          <strong>Community accuracy: <span id="proof-accuracy">61.4%</span></strong>
+        </section>
+
         <footer class="site-footer">
-          <span>© 2026 TradePulse</span>
+          <span>© 2026 ReplayEdge</span>
           <a href="/privacy.html">Privacy</a>
           <a href="/terms.html">Terms</a>
           <a href="/refund.html">Refund Policy</a>
           <a href="/disclaimer.html">Education Disclaimer</a>
+          <a href="mailto:support@replayedge.io">Contact</a>
         </footer>
       </main>
+    </div>
+
+    <div class="modal hidden" id="onboarding-modal" aria-hidden="true">
+      <section class="modal-card onboarding-modal-card" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
+        <button class="modal-close" id="close-onboarding" type="button" aria-label="Close quick start">×</button>
+        <p class="signal">Pick your market</p>
+        <h2 id="onboarding-title">What do you want to trade?</h2>
+        <p class="onboarding-microcopy">Your Academy, games, and competition adapt to your market. Switch tracks anytime — progress in every track is saved.</p>
+        <div class="onboard-tracks" id="onboard-tracks"></div>
+      </section>
     </div>
 
     <div class="learning-modal hidden" id="learning-modal" aria-hidden="true">
@@ -1223,37 +1119,40 @@
         <h2>Choose your plan</h2>
         <p class="muted">Choose a plan to continue training. Billing is securely handled through Stripe.</p>
         <div class="paywall-progress-line" id="paywall-progress-line">Your progress is ready to continue.</div>
+        <div class="launch-deal-strip compact" aria-label="Limited time launch pricing">
+          <span>Limited-time launch deal</span>
+        </div>
         <div class="pricing-grid">
           <article>
             <h3>Player</h3>
-            <strong>$19.99/mo</strong>
-            <p>Unlimited access to all nine training games, progression, and replay controls.</p>
+            <strong class="launch-price compact"><small>Launch access</small><b>$24.99/mo</b></strong>
+            <p>Unlimited access to every ReplayEdge training game, progression, and replay controls.</p>
             <button class="primary-button plan-button" data-plan="Player">Choose Player</button>
           </article>
           <article class="featured-plan">
-            <h3>Coach</h3>
-            <strong>$29.99/mo</strong>
+            <h3>Coach <b class="popular-badge">Most Popular</b></h3>
+            <strong class="launch-price compact"><small><s>$74.99/mo</s><em>40% off</em></small><b>$44.99/mo</b></strong>
             <p>Everything in Player plus deeper educational reasoning, mistake review, and practice tips.</p>
             <button class="primary-button plan-button" data-plan="Coach">Choose Coach</button>
           </article>
           <article class="elite-paywall-plan">
             <h3>Elite</h3>
-            <strong>$49.99/mo</strong>
+            <strong class="launch-price compact"><small><s>$139.99/mo</s><em>50% off</em></small><b>$69.99/mo</b></strong>
             <p>Personalized weakness detection, custom drills, advanced analytics, mistake journal, and weekly progress planning.</p>
             <button class="primary-button plan-button" data-plan="Elite">Choose Elite</button>
           </article>
         </div>
-        <p class="fineprint">TradePulse is an educational replay simulator. It does not provide financial advice, trade alerts, personalized investment recommendations, or broker execution.</p>
+        <p class="fineprint">ReplayEdge is an educational replay simulator. It does not provide financial advice, trade alerts, personalized investment recommendations, or broker execution.</p>
         <button class="ghost-button" id="close-paywall">Maybe Later</button>
       </div>
     </div>
 
     <div class="exit-intent hidden" id="exit-intent">
       <div>
-        <strong>Before you go — your 10 free plays are waiting.</strong>
-        <span>Build your first replay score in under two minutes.</span>
+        <strong>Before you go — your first lesson takes 3 minutes.</strong>
+        <span>Earn XP in the Academy, then bet it in the Arcade.</span>
       </div>
-      <button class="primary-button" id="exit-claim" type="button">Claim Free Plays</button>
+      <button class="primary-button" id="exit-claim" type="button">Start Free</button>
       <button class="exit-close" id="exit-close" type="button" aria-label="Dismiss exit reminder">×</button>
     </div>
 
@@ -1261,7 +1160,7 @@
       <div class="modal-card feedback-card">
         <button class="modal-close" id="close-feedback" type="button" aria-label="Close feedback">×</button>
         <p class="signal">Beta feedback</p>
-        <h2>What should TradePulse improve?</h2>
+        <h2>What should ReplayEdge improve?</h2>
         <form id="feedback-form">
           <label>Rating
             <select id="feedback-rating">
@@ -1282,19 +1181,20 @@
     <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
 
     <div class="assistant-widget" id="assistant-widget">
-      <button class="assistant-fab" id="assistant-fab" type="button" aria-label="Open TradePulse Assistant">
+      <button class="assistant-fab" id="assistant-fab" type="button" aria-label="Open ReplayEdge Assistant">
         <span class="assistant-dot" id="assistant-notification"></span>
         <i data-lucide="message-circle"></i>
       </button>
-      <section class="assistant-panel hidden" id="assistant-panel" aria-label="TradePulse Assistant">
+      <section class="assistant-panel hidden" id="assistant-panel" aria-label="ReplayEdge Assistant">
         <header>
           <div>
-            <strong>TradePulse Assistant</strong>
+            <strong>ReplayEdge Assistant</strong>
             <span><i></i> Online</span>
           </div>
           <button id="assistant-close" type="button" aria-label="Close assistant">×</button>
         </header>
         <div class="assistant-messages" id="assistant-messages"></div>
+        <div class="assistant-chips" id="assistant-chips"></div>
         <form class="assistant-form" id="assistant-form">
           <input id="assistant-input" placeholder="Ask about plans, XP, or games..." autocomplete="off" />
           <button type="submit">Send</button>
@@ -1302,6 +1202,26 @@
       </section>
     </div>
 
+    <nav class="mobile-bottom-nav" aria-label="Mobile navigation">
+      <button class="nav-tab" data-page-target="leaderboard" data-view-target="leaderboard" type="button"><i data-lucide="trophy"></i><span>Board</span></button>
+      <button class="nav-tab mobile-play" data-page-target="arcade" data-view-target="arcade" type="button"><i data-lucide="gamepad-2"></i><span>Play</span></button>
+      <button class="nav-tab" data-page-target="profile" data-view-target="profile" type="button"><i data-lucide="user"></i><span>Profile</span></button>
+    </nav>
+
     <script src="app.js"></script>
+    <script src="academy.js"></script>
+    <script src="tracks.js"></script>
+    <script src="arcade.js"></script>
+    <script src="profile.js"></script>
+    <script src="toolkit.js"></script>
+    <script src="achievements.js"></script>
+    <script src="streak.js"></script>
+    <script src="mastery.js"></script>
+    <script src="trainer.js"></script>
+    <script src="compete.js"></script>
+    <script src="dashboard.js"></script>
+    <script src="elite.js"></script>
+    <script src="sync.js"></script>
+    <script src="admin.js"></script>
   </body>
 </html>

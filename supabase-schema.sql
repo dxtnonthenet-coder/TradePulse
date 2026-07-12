@@ -39,3 +39,39 @@ on public.subscriptions
 for all
 using (auth.role() = 'service_role')
 with check (auth.role() = 'service_role');
+
+create table if not exists public.attempts (
+  id text primary key,
+  created_at timestamptz default now(),
+  user_id text,
+  user_name text,
+  email text,
+  scenario_id text,
+  mode text,
+  market text,
+  pattern text,
+  answer text,
+  correct boolean,
+  correct_answer text,
+  confidence text,
+  xp_earned integer default 0,
+  time_to_answer numeric,
+  difficulty text,
+  session text,
+  source text,
+  metadata jsonb default '{}'::jsonb
+);
+
+alter table public.attempts enable row level security;
+
+drop policy if exists "service role can manage attempts" on public.attempts;
+
+create policy "service role can manage attempts"
+on public.attempts
+for all
+using (auth.role() = 'service_role')
+with check (auth.role() = 'service_role');
+
+create index if not exists attempts_scenario_idx on public.attempts (scenario_id);
+create index if not exists attempts_created_idx on public.attempts (created_at);
+create index if not exists attempts_user_idx on public.attempts (user_id);

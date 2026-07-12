@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "import:scenarios": "node scripts/import-csv-scenarios.js"
   },
   "dependencies": {},
   "devDependencies": {}

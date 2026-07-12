@@ -1,0 +1,781 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ReplayEdge Ad Creatives</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <style>
+      :root {
+        --bg: #0e1117;
+        --panel: #151a23;
+        --panel-2: #1a2430;
+        --green: #56d66d;
+        --mint: #68ffb1;
+        --cyan: #18cfa7;
+        --amber: #ffca4f;
+        --red: #ff5e5e;
+        --muted: rgba(235, 248, 240, 0.68);
+        --line: rgba(86, 214, 109, 0.22);
+        --white: #f5fff8;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          linear-gradient(rgba(86, 214, 109, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(86, 214, 109, 0.035) 1px, transparent 1px),
+          radial-gradient(circle at 18% 10%, rgba(86, 214, 109, 0.12), transparent 28%),
+          radial-gradient(circle at 88% 34%, rgba(24, 207, 167, 0.1), transparent 26%),
+          var(--bg);
+        background-size: 42px 42px, 42px 42px, auto, auto, auto;
+        color: var(--white);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .page {
+        width: min(1440px, calc(100% - 48px));
+        margin: 0 auto;
+        padding: 32px 0 56px;
+      }
+
+      .top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 28px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        letter-spacing: 0.02em;
+        font-weight: 950;
+        font-size: 28px;
+      }
+
+      .brand span {
+        color: var(--mint);
+      }
+
+      .mark {
+        width: 58px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(86, 214, 109, 0.48);
+        border-radius: 13px;
+        background: linear-gradient(145deg, rgba(86, 214, 109, 0.2), rgba(15, 23, 31, 0.9));
+      }
+
+      .top p {
+        margin: 0;
+        color: var(--muted);
+        max-width: 620px;
+        line-height: 1.45;
+        font-weight: 700;
+      }
+
+      .section-title {
+        margin: 34px 0 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .section-title h2 {
+        margin: 0;
+        font-size: clamp(24px, 3vw, 38px);
+        letter-spacing: -0.03em;
+      }
+
+      .section-title small {
+        color: var(--muted);
+        font-weight: 850;
+      }
+
+      .creative-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+      }
+
+      .creative {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(123, 255, 177, 0.2);
+        background: #0b1016;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+      }
+
+      .creative::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          linear-gradient(rgba(86, 214, 109, 0.06) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(86, 214, 109, 0.06) 1px, transparent 1px);
+        background-size: 42px 42px;
+        mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent 82%);
+      }
+
+      .creative-inner {
+        position: relative;
+        z-index: 1;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .ad-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 950;
+        letter-spacing: 0.02em;
+      }
+
+      .ad-brand span {
+        color: var(--mint);
+      }
+
+      .ad-brand svg {
+        width: 42px;
+        height: 32px;
+        flex: 0 0 auto;
+      }
+
+      .eyebrow {
+        color: var(--mint);
+        font-size: 13px;
+        font-weight: 950;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .headline {
+        margin: 10px 0 12px;
+        font-size: clamp(38px, 5vw, 78px);
+        line-height: 0.94;
+        letter-spacing: -0.055em;
+        font-weight: 1000;
+      }
+
+      .headline .green {
+        color: var(--mint);
+      }
+
+      .copy {
+        margin: 0;
+        color: rgba(240, 255, 247, 0.78);
+        font-size: 20px;
+        line-height: 1.28;
+        font-weight: 800;
+      }
+
+      .cta {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 54px;
+        padding: 0 24px;
+        border-radius: 10px;
+        color: #07130c;
+        background: linear-gradient(135deg, #70ffb6, #32df7c);
+        font-size: 20px;
+        font-weight: 1000;
+        box-shadow: 0 10px 22px rgba(86, 214, 109, 0.18);
+      }
+
+      .fine {
+        color: rgba(240, 255, 247, 0.48);
+        font-size: 12px;
+        font-weight: 800;
+        margin-top: 10px;
+      }
+
+      .chart-card {
+        border: 1px solid rgba(86, 214, 109, 0.24);
+        border-radius: 18px;
+        background: linear-gradient(180deg, rgba(25, 35, 49, 0.98), rgba(4, 12, 15, 0.98));
+        overflow: hidden;
+        box-shadow: 0 18px 34px rgba(0, 0, 0, 0.32);
+      }
+
+      .chart-head {
+        height: 54px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 18px;
+        background: #1b2231;
+        color: rgba(235, 248, 240, 0.78);
+        font-weight: 1000;
+        letter-spacing: 0.08em;
+      }
+
+      .timer {
+        color: var(--mint);
+      }
+
+      .chart {
+        position: relative;
+        height: 310px;
+        background:
+          linear-gradient(rgba(90, 120, 120, 0.08) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(90, 120, 120, 0.08) 1px, transparent 1px),
+          radial-gradient(circle at 75% 45%, rgba(86, 214, 109, 0.16), transparent 35%),
+          #071015;
+        background-size: 56px 56px, 56px 56px, auto, auto;
+      }
+
+      .candle {
+        position: absolute;
+        width: 18px;
+        border-radius: 5px;
+        background: var(--green);
+      }
+
+      .candle::before,
+      .candle::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        width: 3px;
+        transform: translateX(-50%);
+        background: inherit;
+        opacity: 0.85;
+      }
+
+      .candle::before {
+        top: -42px;
+        height: 42px;
+      }
+
+      .candle::after {
+        bottom: -36px;
+        height: 36px;
+      }
+
+      .red {
+        background: #f05252;
+      }
+
+      .vwap {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 55%;
+        border-top: 2px dashed #6b9dff;
+      }
+
+      .vwap::before {
+        content: "VWAP";
+        position: absolute;
+        left: 18px;
+        top: -28px;
+        color: #78a2ff;
+        font-weight: 1000;
+      }
+
+      .zone {
+        position: absolute;
+        left: 10%;
+        right: 8%;
+        bottom: 36px;
+        height: 44px;
+        border: 1px solid rgba(86, 214, 109, 0.35);
+        background: rgba(86, 214, 109, 0.12);
+        border-radius: 10px;
+      }
+
+      .choice-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        padding: 16px;
+        background: #1a2030;
+      }
+
+      .choice {
+        min-height: 48px;
+        display: grid;
+        place-items: center;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: var(--white);
+        font-weight: 950;
+        letter-spacing: 0.12em;
+      }
+
+      .choice:first-child {
+        color: var(--mint);
+      }
+
+      .choice:nth-child(2) {
+        color: #ff7777;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        margin-top: 20px;
+      }
+
+      .stat {
+        padding: 14px 16px;
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .stat:last-child {
+        border-right: 0;
+      }
+
+      .stat strong {
+        display: block;
+        color: var(--mint);
+        font-size: 30px;
+        line-height: 1;
+      }
+
+      .stat span {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .story {
+        aspect-ratio: 9 / 16;
+        max-width: 430px;
+        border-radius: 26px;
+      }
+
+      .feed {
+        aspect-ratio: 4 / 5;
+        border-radius: 24px;
+      }
+
+      .wide {
+        grid-column: 1 / -1;
+        aspect-ratio: 16 / 9;
+        border-radius: 24px;
+      }
+
+      .square {
+        aspect-ratio: 1 / 1;
+        border-radius: 24px;
+      }
+
+      .ad-hero {
+        padding: 34px;
+        display: grid;
+        grid-template-columns: 0.9fr 1fr;
+        gap: 26px;
+        align-items: center;
+        height: 100%;
+      }
+
+      .ad-stack {
+        padding: 34px;
+        justify-content: space-between;
+      }
+
+      .ad-stack .headline {
+        font-size: clamp(44px, 8vw, 86px);
+      }
+
+      .metric-strip {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .metric {
+        padding: 12px;
+        border: 1px solid rgba(86, 214, 109, 0.18);
+        border-radius: 14px;
+        background: rgba(21, 26, 35, 0.8);
+      }
+
+      .metric strong {
+        display: block;
+        color: var(--mint);
+        font-size: 26px;
+        line-height: 1;
+      }
+
+      .metric span {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .mode-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 22px;
+      }
+
+      .mode-card {
+        min-height: 120px;
+        padding: 14px;
+        border-radius: 16px;
+        background: #1a2030;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .mode-art {
+        height: 54px;
+        border-radius: 12px;
+        background:
+          radial-gradient(circle at 26% 42%, var(--mint) 0 10px, transparent 11px),
+          radial-gradient(circle at 64% 38%, #ffca4f 0 8px, transparent 9px),
+          linear-gradient(135deg, rgba(86, 214, 109, 0.2), rgba(24, 207, 167, 0.08));
+        margin-bottom: 10px;
+      }
+
+      .mode-card strong {
+        display: block;
+        font-size: 15px;
+      }
+
+      .mode-card span {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .problem-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 22px;
+      }
+
+      .problem {
+        padding: 16px;
+        min-height: 135px;
+        border-radius: 16px;
+        background: rgba(21, 26, 35, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .problem b {
+        display: block;
+        font-size: 20px;
+        line-height: 1.08;
+        margin: 8px 0;
+      }
+
+      .problem p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.3;
+        font-weight: 750;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 99px;
+        padding: 7px 11px;
+        background: rgba(86, 214, 109, 0.14);
+        border: 1px solid rgba(86, 214, 109, 0.26);
+        color: var(--mint);
+        font-size: 12px;
+        font-weight: 950;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .leaderboard {
+        margin-top: 20px;
+        border: 1px solid rgba(86, 214, 109, 0.18);
+        border-radius: 18px;
+        overflow: hidden;
+        background: rgba(21, 26, 35, 0.9);
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 44px 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 13px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        font-weight: 900;
+      }
+
+      .row:last-child {
+        border-bottom: 0;
+      }
+
+      .row.you {
+        color: var(--mint);
+        background: rgba(86, 214, 109, 0.08);
+      }
+
+      .split {
+        display: grid;
+        grid-template-columns: 1fr 0.9fr;
+        gap: 24px;
+        align-items: center;
+      }
+
+      .phone {
+        min-height: 520px;
+        border-radius: 34px;
+        border: 8px solid #1e2938;
+        background: linear-gradient(180deg, #111927, #070d12);
+        padding: 22px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.42);
+      }
+
+      .phone .chart-card {
+        border-radius: 22px;
+      }
+
+      .review-card {
+        margin-top: 16px;
+        padding: 18px;
+        border-radius: 18px;
+        background: rgba(86, 214, 109, 0.1);
+        border: 1px solid rgba(86, 214, 109, 0.25);
+      }
+
+      .review-card strong {
+        display: block;
+        font-size: 24px;
+      }
+
+      .review-card p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-weight: 800;
+      }
+
+      .challenge-card {
+        margin-top: 22px;
+        padding: 22px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, rgba(86, 214, 109, 0.18), rgba(255, 202, 79, 0.1));
+        border: 1px solid rgba(255, 202, 79, 0.28);
+      }
+
+      .challenge-card strong {
+        font-size: 28px;
+        color: #ffe191;
+      }
+
+      .challenge-card p {
+        margin: 8px 0 0;
+        color: rgba(255, 245, 205, 0.76);
+        font-weight: 800;
+      }
+
+      @media (max-width: 980px) {
+        .creative-grid,
+        .ad-hero,
+        .split,
+        .problem-row,
+        .mode-row {
+          grid-template-columns: 1fr;
+        }
+
+        .wide {
+          aspect-ratio: auto;
+          min-height: 760px;
+        }
+
+        .story {
+          max-width: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="top">
+        <div class="brand">
+          <span class="mark">
+            <svg viewBox="0 0 72 44" aria-hidden="true">
+              <path d="M13 12L30 5v34L13 32V12Z" fill="rgba(86,214,109,.18)" stroke="rgba(139,255,182,.42)" stroke-width="1.4"/>
+              <path d="M31 6L58 22L31 38V6Z" fill="#56d66d"/>
+              <path d="M25 29L34 20L40 25L49 13" fill="none" stroke="#06120c" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round" opacity=".74"/>
+              <circle cx="49" cy="13" r="2.8" fill="#eafff4" stroke="#06120c" stroke-width="1.2"/>
+            </svg>
+          </span>
+          REPLAY<span>EDGE</span>
+        </div>
+        <p>Ad creative board. Open this page in your browser, screenshot each frame, or use it as direction for Canva/video ads.</p>
+      </header>
+
+      <section class="section-title">
+        <h2>Core Launch Ads</h2>
+        <small>Best for X, Instagram, TikTok stills, landing retargeting</small>
+      </section>
+
+      <section class="creative-grid">
+        <article class="creative feed">
+          <div class="creative-inner ad-stack">
+            <div class="ad-brand">
+              <svg viewBox="0 0 72 44"><path d="M13 12L30 5v34L13 32V12Z" fill="rgba(86,214,109,.18)" stroke="rgba(139,255,182,.42)" stroke-width="1.4"/><path d="M31 6L58 22L31 38V6Z" fill="#56d66d"/><path d="M25 29L34 20L40 25L49 13" fill="none" stroke="#06120c" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round" opacity=".74"/><circle cx="49" cy="13" r="2.8" fill="#eafff4" stroke="#06120c" stroke-width="1.2"/></svg>
+              REPLAY<span>EDGE</span>
+            </div>
+            <div>
+              <div class="eyebrow">Replay real futures moments blind</div>
+              <h1 class="headline">Train your chart eye. <span class="green">Before money is on the line.</span></h1>
+              <p class="copy">No date. No context. Just price action, pressure, and your decision.</p>
+            </div>
+            <div>
+              <div class="chart-card">
+                <div class="chart-head"><span>NQ • ??/??/????</span><span class="timer">20S</span></div>
+                <div class="chart">
+                  <span class="vwap"></span><span class="zone"></span>
+                  <i class="candle" style="left:14%;top:54%;height:88px"></i>
+                  <i class="candle" style="left:27%;top:40%;height:102px"></i>
+                  <i class="candle red" style="left:40%;top:50%;height:72px"></i>
+                  <i class="candle" style="left:55%;top:30%;height:120px"></i>
+                  <i class="candle red" style="left:68%;top:52%;height:86px"></i>
+                  <i class="candle" style="left:82%;top:25%;height:138px"></i>
+                </div>
+                <div class="choice-row"><div class="choice">LONG</div><div class="choice">SHORT</div><div class="choice">FLAT</div></div>
+              </div>
+              <p class="fine">Education only. No trade alerts or personalized financial advice.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="creative feed">
+          <div class="creative-inner ad-stack">
+            <div>
+              <div class="eyebrow">For traders stuck in YouTube mode</div>
+              <h1 class="headline">Stop watching setups. <span class="green">Start reacting to them.</span></h1>
+              <p class="copy">ReplayEdge turns market replay into a fast, scored training game.</p>
+            </div>
+            <div class="problem-row">
+              <div class="problem"><span class="tag">Problem</span><b>You freeze live.</b><p>Watching theory is not the same as making a call under pressure.</p></div>
+              <div class="problem"><span class="tag">Fix</span><b>Blind reps.</b><p>Read the setup, make the call, see the reveal, learn the clue.</p></div>
+              <div class="problem"><span class="tag">Result</span><b>Pattern memory.</b><p>Build faster recognition without risking real capital.</p></div>
+            </div>
+            <div>
+              <div class="cta">Play 10 Free Replays</div>
+              <p class="fine">Replay-based education. Not financial advice.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="creative wide">
+          <div class="creative-inner ad-hero">
+            <div>
+              <div class="ad-brand">
+                <svg viewBox="0 0 72 44"><path d="M13 12L30 5v34L13 32V12Z" fill="rgba(86,214,109,.18)" stroke="rgba(139,255,182,.42)" stroke-width="1.4"/><path d="M31 6L58 22L31 38V6Z" fill="#56d66d"/><path d="M25 29L34 20L40 25L49 13" fill="none" stroke="#06120c" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round" opacity=".74"/><circle cx="49" cy="13" r="2.8" fill="#eafff4" stroke="#06120c" stroke-width="1.2"/></svg>
+                REPLAY<span>EDGE</span>
+              </div>
+              <div style="height:36px"></div>
+              <div class="eyebrow">The daily market exam</div>
+              <h1 class="headline">One scenario. One shot. <span class="green">Beat the board.</span></h1>
+              <p class="copy">Compare your read against other traders, earn XP, climb ranks, and keep your streak alive.</p>
+              <div class="metric-strip">
+                <div class="metric"><strong>20s</strong><span>Decision clock</span></div>
+                <div class="metric"><strong>XP</strong><span>Ranks & streaks</span></div>
+                <div class="metric"><strong>Blind</strong><span>No date hints</span></div>
+              </div>
+            </div>
+            <div>
+              <div class="leaderboard">
+                <div class="row"><span>#1</span><span>MarketNinja</span><b>922 pts</b></div>
+                <div class="row"><span>#2</span><span>FuturesKing</span><b>883 pts</b></div>
+                <div class="row you"><span>#3</span><span>You</span><b>520 pts</b></div>
+              </div>
+              <div class="challenge-card">
+                <strong>Only 31% got this read right.</strong>
+                <p>Hard scenarios feel better when the stakes are visible.</p>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="creative story">
+          <div class="creative-inner ad-stack">
+            <div class="ad-brand">
+              <svg viewBox="0 0 72 44"><path d="M13 12L30 5v34L13 32V12Z" fill="rgba(86,214,109,.18)" stroke="rgba(139,255,182,.42)" stroke-width="1.4"/><path d="M31 6L58 22L31 38V6Z" fill="#56d66d"/><path d="M25 29L34 20L40 25L49 13" fill="none" stroke="#06120c" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round" opacity=".74"/><circle cx="49" cy="13" r="2.8" fill="#eafff4" stroke="#06120c" stroke-width="1.2"/></svg>
+              REPLAY<span>EDGE</span>
+            </div>
+            <div>
+              <div class="eyebrow">Story ad</div>
+              <h1 class="headline">Can you read the next 10 candles?</h1>
+              <p class="copy">Make the call blind. Reveal the move. Learn what clue you missed.</p>
+            </div>
+            <div class="chart-card">
+              <div class="chart-head"><span>ES • HIDDEN DATE</span><span class="timer">08S</span></div>
+              <div class="chart" style="height:360px">
+                <span class="vwap"></span><span class="zone"></span>
+                <i class="candle" style="left:12%;top:50%;height:90px"></i>
+                <i class="candle red" style="left:25%;top:38%;height:112px"></i>
+                <i class="candle red" style="left:39%;top:43%;height:104px"></i>
+                <i class="candle" style="left:52%;top:56%;height:78px"></i>
+                <i class="candle" style="left:66%;top:32%;height:128px"></i>
+                <i class="candle" style="left:80%;top:22%;height:150px"></i>
+              </div>
+            </div>
+            <div>
+              <div class="cta" style="width:100%">Start Free</div>
+              <p class="fine">Replay training only. No broker execution.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="creative square">
+          <div class="creative-inner ad-stack">
+            <div>
+              <div class="eyebrow">Coach plan angle</div>
+              <h1 class="headline">Wrong answer? <span class="green">Good.</span></h1>
+              <p class="copy">ReplayEdge turns misses into a review queue, clue breakdowns, and smarter drills.</p>
+            </div>
+            <div class="review-card">
+              <strong>What clue did you miss?</strong>
+              <p>VWAP mattered because price reclaimed the level, accepted above it, and trapped late shorts.</p>
+            </div>
+            <div class="cta">Unlock Coach Reviews</div>
+          </div>
+        </article>
+
+        <article class="creative square">
+          <div class="creative-inner ad-stack">
+            <div>
+              <div class="eyebrow">Game modes angle</div>
+              <h1 class="headline">Trading education that feels like a game.</h1>
+              <p class="copy">XP, streaks, ranked battles, daily challenges, and scenario drills.</p>
+            </div>
+            <div class="mode-row">
+              <div class="mode-card"><div class="mode-art"></div><strong>Tape Sprint</strong><span>Fast reads</span></div>
+              <div class="mode-card"><div class="mode-art"></div><strong>Risk Lab</strong><span>Plan survival</span></div>
+              <div class="mode-card"><div class="mode-art"></div><strong>Prop Boss</strong><span>Pressure mode</span></div>
+            </div>
+            <div class="cta">Enter Training Arena</div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

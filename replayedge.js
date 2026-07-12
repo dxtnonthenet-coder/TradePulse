@@ -88,7 +88,7 @@ function insertScenario(code) {
 }
 
 async function addScenario() {
-  console.log("\nTradePulse Scenario Builder");
+  console.log("\nReplayEdge Scenario Builder");
   console.log("Answer each question. I will add it to the website for you.\n");
   console.log("If you make a mistake, type CANCEL and press Enter.\n");
 
@@ -139,7 +139,7 @@ function listScenarios() {
   const scenarioBlock = app.slice(start, end);
   const matches = [...scenarioBlock.matchAll(/title: "([^"]+)"/g)].map((match) => match[1]);
 
-  console.log("\nTradePulse scenarios:\n");
+  console.log("\nReplayEdge scenarios:\n");
   matches.forEach((title, index) => {
     console.log(`${index + 1}. ${title}`);
   });
@@ -161,8 +161,8 @@ async function main() {
   }
 
   console.log("\nUse one of these commands:\n");
-  console.log("node tradepulse.js add");
-  console.log("node tradepulse.js list\n");
+  console.log("node replayedge.js add");
+  console.log("node replayedge.js list\n");
   rl.close();
 }
 

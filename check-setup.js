@@ -22,18 +22,22 @@ function masked(value) {
 }
 
 const env = parseEnv();
+const stripeSecretLooksValid = (v) => v && (v.startsWith("sk_test_") || v.startsWith("sk_live_"));
 const checks = [
   ["PUBLIC_SITE_URL", (v) => v && v.startsWith("http")],
   ["SUPABASE_URL", (v) => v && v.startsWith("https://") && v.includes("supabase")],
   ["SUPABASE_SERVICE_ROLE_KEY", (v) => v && v.length > 30 && !v.includes("anon")],
-  ["STRIPE_SECRET_KEY", (v) => v && v.startsWith("sk_test_")],
+  ["STRIPE_SECRET_KEY", stripeSecretLooksValid],
   ["STRIPE_WEBHOOK_SECRET", (v) => v && v.startsWith("whsec_")],
   ["STRIPE_PRICE_PLAYER", (v) => v && v.startsWith("price_")],
   ["STRIPE_PRICE_COACH", (v) => v && v.startsWith("price_")],
-  ["STRIPE_PRICE_ELITE", (v) => v && v.startsWith("price_")]
+  ["STRIPE_PRICE_ELITE", (v) => v && v.startsWith("price_")],
+  ["STRIPE_PRICE_PLAYER_ANNUAL", (v) => v && v.startsWith("price_")],
+  ["STRIPE_PRICE_COACH_ANNUAL", (v) => v && v.startsWith("price_")],
+  ["STRIPE_PRICE_ELITE_ANNUAL", (v) => v && v.startsWith("price_")]
 ];
 
-console.log("\nTradePulse setup check\n");
+console.log("\nReplayEdge setup check\n");
 
 if (!fs.existsSync(envPath)) {
   console.log("Missing .env file.");
@@ -53,7 +57,7 @@ checks.forEach(([key, isValid]) => {
 if (ok) {
   console.log("\nAll keys look formatted correctly.");
   console.log("Now restart the server with:");
-  console.log("cd /Users/dxtnonthenet/Documents/TA/TradePulse");
+  console.log("cd /Users/dxtnonthenet/Documents/TA/ReplayEdge");
   console.log("/Users/dxtnonthenet/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node server.js\n");
 } else {
   console.log("\nSome values are missing or wrong.");
