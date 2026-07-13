@@ -6922,6 +6922,7 @@ els.closeOnboarding?.addEventListener("click", () => {
   els.onboardingModal?.classList.add("hidden");
   els.onboardingModal?.setAttribute("aria-hidden", "true");
   localStorage.setItem("tradePulseOnboardingSeen", "true");
+  if (typeof maybeStartFeatureTour === "function") maybeStartFeatureTour();
 });
 
 if (!localStorage.getItem("tradePulseOnboardingSeen") && els.onboardingModal) {

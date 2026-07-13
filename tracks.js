@@ -1176,17 +1176,25 @@ function renderMarketPickers() {
 document.addEventListener("click", (event) => {
   const pick = event.target.closest("[data-market-pick]");
   if (!pick) return;
+  // capture origin BEFORE renderMarketPickers() detaches the clicked node
+  const fromOnboard = !!pick.closest("#onboard-tracks");
+  const fromHero = !!pick.closest("#hero-markets");
   setTrack(pick.dataset.marketPick);
   renderMarketPickers();
   const modal = document.getElementById("onboarding-modal");
-  if (pick.closest("#onboard-tracks") && modal) {
+  if (fromOnboard && modal) {
     modal.classList.add("hidden");
     modal.setAttribute("aria-hidden", "true");
     localStorage.setItem("tradePulseOnboardingSeen", "true");
-    const next = academyNextLesson();
-    if (next) openAcademyLesson(next.lesson.id);
-    else navigateTo("academy");
-  } else if (pick.closest("#hero-markets")) {
+    const goFirstLesson = () => {
+      const next = academyNextLesson();
+      if (next) openAcademyLesson(next.lesson.id);
+      else navigateTo("academy");
+    };
+    // Feature tour plays once, then drops the user into their first lesson
+    if (typeof maybeStartFeatureTour === "function") maybeStartFeatureTour(goFirstLesson);
+    else goFirstLesson();
+  } else if (fromHero) {
     navigateTo("academy");
   }
 });
