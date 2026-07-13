@@ -542,6 +542,112 @@ function toolkitPlaybookAdd() {
   showToast("Setup added to your playbook.", "success");
 }
 
+/* ---------- trade journal (Coach) — the real one ---------- */
+
+const TK_EMOTIONS = ["Calm", "Confident", "FOMO", "Hesitant", "Revenge", "Bored"];
+
+function tradeLog() {
+  const p = progress();
+  if (!Array.isArray(p.tradeLog)) p.tradeLog = [];
+  return p.tradeLog;
+}
+
+function tradeLogStats() {
+  const log = tradeLog();
+  if (!log.length) return null;
+  const wins = log.filter((trade) => trade.r > 0);
+  const bySetup = {};
+  const byEmotion = {};
+  log.forEach((trade) => {
+    if (trade.setup) (bySetup[trade.setup] = bySetup[trade.setup] || []).push(trade.r);
+    if (trade.emotion) (byEmotion[trade.emotion] = byEmotion[trade.emotion] || []).push(trade.r);
+  });
+  const avgOf = (arr) => arr.reduce((sum, value) => sum + value, 0) / arr.length;
+  const best = Object.entries(bySetup).filter(([, arr]) => arr.length >= 2).sort((a, b) => avgOf(b[1]) - avgOf(a[1]))[0];
+  const worstEmotion = Object.entries(byEmotion).filter(([, arr]) => arr.length >= 2).sort((a, b) => avgOf(a[1]) - avgOf(b[1]))[0];
+  return {
+    trades: log.length,
+    winRate: Math.round((wins.length / log.length) * 100),
+    avgR: avgOf(log.map((trade) => trade.r)),
+    totalR: log.reduce((sum, trade) => sum + trade.r, 0),
+    best: best ? { name: best[0], avg: avgOf(best[1]) } : null,
+    worstEmotion: worstEmotion && avgOf(worstEmotion[1]) < 0 ? { name: worstEmotion[0], avg: avgOf(worstEmotion[1]) } : null
+  };
+}
+
+function toolkitTradeJournalCard() {
+  const log = [...tradeLog()].slice(-8).reverse();
+  const stats = tradeLogStats();
+  const setups = toolkitPlaybook();
+  let cum = 0;
+  const curve = tradeLog().map((trade) => (cum += trade.r));
+  const maxAbs = Math.max(1, ...curve.map((value) => Math.abs(value)));
+  return `
+    <article class="panel tk-card tk-wide">
+      <div class="tk-card-head">
+        <span class="tk-card-icon"><i data-lucide="book-open-check"></i></span>
+        <h3>Trade Journal</h3>
+        <span class="tk-plan-tag on">${stats ? `${stats.trades} trades · ${stats.winRate}% WR` : "Start logging"}</span>
+      </div>
+      <p class="tk-copy">Log every real (or replay) trade with the setup and the emotion behind it. The analytics find what's making you money — and what's bleeding it.</p>
+      <div class="tj-form">
+        <input id="tj-sym" type="text" maxlength="12" placeholder="Symbol" spellcheck="false" />
+        <select id="tj-dir"><option value="long">Long</option><option value="short">Short</option></select>
+        <select id="tj-setup">
+          <option value="">Setup…</option>
+          ${setups.map((setup) => `<option>${setup.name}</option>`).join("")}
+          <option>Unplanned</option>
+        </select>
+        <input id="tj-r" type="number" step="0.1" placeholder="Result (R)" />
+        <select id="tj-emotion">${TK_EMOTIONS.map((emotion) => `<option>${emotion}</option>`).join("")}</select>
+        <button class="arcade-btn primary cp-mini" type="button" id="tj-add">Log</button>
+      </div>
+      <input id="tj-note" type="text" maxlength="120" placeholder="Note — what did you see, what did you do? (optional)" class="tj-note" />
+      ${stats ? `
+      <div class="tk-analytics-stats tj-stats">
+        <div><span>Total</span><strong class="${stats.totalR >= 0 ? "" : "tk-neg"}">${stats.totalR >= 0 ? "+" : ""}${stats.totalR.toFixed(1)}R</strong></div>
+        <div><span>Avg / trade</span><strong class="${stats.avgR >= 0 ? "" : "tk-neg"}">${stats.avgR >= 0 ? "+" : ""}${stats.avgR.toFixed(2)}R</strong></div>
+        <div><span>Win rate</span><strong>${stats.winRate}%</strong></div>
+      </div>
+      <div class="tj-curve">${curve.slice(-40).map((value) => `<i style="height:${Math.max(4, Math.round((Math.abs(value) / maxAbs) * 46))}px" class="${value >= 0 ? "" : "neg"}"></i>`).join("")}</div>
+      ${stats.best ? `<p class="tj-insight">💰 Your money-maker: <b>${stats.best.name}</b> averages <b>+${stats.best.avg.toFixed(2)}R</b>. Trade it more.</p>` : ""}
+      ${stats.worstEmotion ? `<p class="tj-insight warn">🩸 Leak found: trades tagged <b>${stats.worstEmotion.name}</b> average <b>${stats.worstEmotion.avg.toFixed(2)}R</b>. That emotion is expensive.</p>` : ""}
+      ` : ""}
+      <div class="tj-rows">
+        ${log.length ? log.map((trade) => `
+          <div class="tj-row">
+            <span class="tj-dir ${trade.dir}">${trade.dir === "long" ? "▲" : "▼"}</span>
+            <b>${trade.sym}</b>
+            <small>${trade.setup || "—"} · ${trade.emotion}</small>
+            <em class="${trade.r >= 0 ? "up" : "down"}">${trade.r >= 0 ? "+" : ""}${trade.r.toFixed(1)}R</em>
+            <button class="tk-resolve" type="button" data-tj-del="${trade.id}" title="Delete">✕</button>
+          </div>`).join("") : `<p class="tk-empty">No trades logged yet. The journal is where amateurs become professionals — one honest entry at a time.</p>`}
+      </div>
+    </article>
+  `;
+}
+
+function toolkitTradeJournalAdd() {
+  const sym = (document.getElementById("tj-sym")?.value || "").trim().toUpperCase();
+  const r = Number(document.getElementById("tj-r")?.value);
+  if (!sym || !Number.isFinite(r)) { showToast("A journal entry needs a symbol and a result in R.", "info"); return; }
+  tradeLog().push({
+    id: `t_${Date.now()}`,
+    ts: Date.now(),
+    sym: sym.slice(0, 12),
+    dir: document.getElementById("tj-dir")?.value === "short" ? "short" : "long",
+    setup: document.getElementById("tj-setup")?.value || "",
+    emotion: document.getElementById("tj-emotion")?.value || "Calm",
+    note: (document.getElementById("tj-note")?.value || "").trim().slice(0, 120),
+    r: Math.max(-50, Math.min(50, r))
+  });
+  const p = progress();
+  if (p.tradeLog.length > 300) p.tradeLog = p.tradeLog.slice(-300);
+  saveProgress();
+  renderToolkit();
+  showToast("Logged. Honest journaling is a paid-trader habit. 📓", "success");
+}
+
 /* ---------- rendering ---------- */
 
 function toolkitLockedCard(feature, title, icon, copy) {
@@ -734,6 +840,7 @@ function renderToolkit() {
       ${hasAccess("monteCarlo") ? toolkitMonteCarloCard() : toolkitLockedCard("monteCarlo", "Monte Carlo Simulator", "waypoints", "Runs your strategy through 200 alternate futures and shows the drawdowns and risk-of-ruin hiding inside it.")}
       ${hasAccess("mistakeJournal") ? toolkitJournalCard() : toolkitLockedCard("mistakeJournal", "Mistake Journal", "notebook-pen", "Failed quizzes and arcade busts collect themselves into a re-drill list. Fix the one mistake costing you most.")}
       ${hasAccess("playbook") ? toolkitPlaybookCard() : toolkitLockedCard("playbook", "Trading Playbook", "book-marked", "Codify your setups — name, trigger, invalidation, target R. If it's not in the book, it's not a trade.")}
+      ${hasAccess("tradeJournal") ? toolkitTradeJournalCard() : toolkitLockedCard("tradeJournal", "Trade Journal", "book-open-check", "Log real trades with setup, emotion, and R-multiple. Analytics reveal your money-maker setup and your most expensive emotion.")}
       ${hasAccess("analytics") ? toolkitAnalyticsCard() : toolkitLockedCard("analytics", "Performance Analytics", "bar-chart-3", "Run-by-run XP graph, per-game records, and consistency stats across your whole arcade history.")}
       ${hasAccess("consistencyHeatmap") ? toolkitHeatmapCard() : toolkitLockedCard("consistencyHeatmap", "Consistency Heatmap", "calendar-heart", "12 weeks of your activity as a GitHub-style heatmap — because showing up is the edge.")}
       ${hasAccess("weaknessRadar") ? toolkitWeaknessCard() : toolkitLockedCard("weaknessRadar", "Weakness Radar", "radar", "Detects overtrading, late entries, chasing, tilt, and sizing leaks from your play — then assigns the exact drill that fixes each one.")}
@@ -827,6 +934,17 @@ function renderToolkit() {
     button.addEventListener("click", () => {
       const p = progress();
       p.playbook = toolkitPlaybook().filter((setup) => setup.id !== button.dataset.tkPbDel);
+      saveProgress();
+      renderToolkit();
+    });
+  });
+
+  // trade journal
+  root.querySelector("#tj-add")?.addEventListener("click", toolkitTradeJournalAdd);
+  root.querySelectorAll("[data-tj-del]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const p = progress();
+      p.tradeLog = tradeLog().filter((trade) => trade.id !== button.dataset.tjDel);
       saveProgress();
       renderToolkit();
     });

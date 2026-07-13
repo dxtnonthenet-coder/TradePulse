@@ -1072,6 +1072,7 @@ function navigateTo(viewName = "home", options = {}) {
   if (view === "compete" && typeof renderCompete === "function") renderCompete();
   if (view === "dashboard" && typeof renderTradersDashboard === "function") renderTradersDashboard();
   if (view === "propfirm" && typeof renderPropfirm === "function") renderPropfirm();
+  if (view === "replay" && typeof renderReplay === "function") renderReplay();
   if (view === "achievements" && typeof renderAchievements === "function") renderAchievements();
   if (view === "home") {
     if (typeof renderHomeAcademyPath === "function") renderHomeAcademyPath();
@@ -1644,6 +1645,10 @@ function hasAccess(feature) {
     fullAcademy: 1,
     tradersDashboard: 1,
     propfirm: 1,
+    replay: 1,
+    tradeJournal: 2,
+    priceAlerts: 3,
+    aiDebrief: 3,
     coachReview: 2,
     reviewQueue: 2,
     weeklyDigest: 2,
@@ -1682,6 +1687,10 @@ function requiredPlanForFeature(feature) {
     fullAcademy: "Player",
     tradersDashboard: "Player",
     propfirm: "Player",
+    replay: "Player",
+    tradeJournal: "Coach",
+    priceAlerts: "Elite",
+    aiDebrief: "Elite",
     coachReview: "Coach",
     reviewQueue: "Coach",
     weeklyDigest: "Coach",
@@ -1715,9 +1724,9 @@ function requiredPlanForFeature(feature) {
 function openUpgradeModal(feature) {
   const required = requiredPlanForFeature(feature);
   const bullets = {
-    Player: ["Full Academy: every tier across all 5 markets (190+ lessons)", "Unlimited Arcade plays — no daily cap", "Prop Firm Training Grounds: earn funded accounts and payouts (simulated dollars)", "Traders Dashboard: live market data, news, and AI session context"],
-    Coach: ["9-tool Trader Toolkit: Risk Calculator, Expectancy Engine, Monte Carlo Simulator, Trading Playbook, Pre-Session Checklist", "Weakness Radar, Mistake Journal, Analytics + 12-week Consistency Heatmap", "+25% XP on every Arcade run, weekly digest"],
-    Elite: ["The Elite Lab: Risk Lab Pro, Tilt Guard, Session DNA, Monthly Report Card, Goal Engine", "AI Trade Review + weekly Study Plan + Elite Command Center with live watchlist", "+50% XP on every run, streak freeze bank, gold leaderboard identity"]
+    Player: ["Full Academy: every tier across all 5 markets (190+ lessons)", "Chart Replay Trainer: trade real historical charts bar-by-bar", "Prop Firm Training Grounds + Traders Dashboard with paper portfolio", "Unlimited Arcade plays — no daily cap"],
+    Coach: ["10-tool Trader Toolkit incl. the full Trade Journal — setups, emotions, R-multiples, equity curve", "Expectancy Engine, Monte Carlo Simulator, Playbook, Pre-Session Checklist, Weakness Radar", "+25% XP on every Arcade run, weekly digest"],
+    Elite: ["The Elite Lab: Risk Lab Pro, Tilt Guard, Session DNA, Report Card, Goals + AI Desk Debrief", "Live watchlist with price alerts, AI Trade Review, weekly Study Plan", "+50% XP on every run, streak freeze bank, gold leaderboard identity"]
   }[required];
   renderPaywallProgress();
   const title = gate.paywallModal.querySelector("h2");

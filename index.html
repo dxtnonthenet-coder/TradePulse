@@ -69,6 +69,11 @@
           <span class="side-icon"><i data-lucide="gamepad-2"></i></span>
           <span class="side-label">Arcade</span>
         </button>
+        <button class="side-link replay-side-link nav-tab premium-lock" data-page-target="replay" data-view-target="replay" data-feature="replay" type="button" data-tooltip="Chart Replay">
+          <span class="side-icon"><i data-lucide="rewind"></i></span>
+          <span class="side-label">Chart Replay</span>
+          <span class="side-lock"><i data-lucide="lock"></i></span>
+        </button>
         <button class="side-link dashboard-side-link nav-tab premium-lock" data-page-target="dashboard" data-view-target="dashboard" data-feature="tradersDashboard" type="button" data-tooltip="Traders Dashboard">
           <span class="side-icon"><i data-lucide="radar"></i></span>
           <span class="side-label">Traders Dashboard</span>
@@ -590,6 +595,10 @@
           <div id="propfirm-root"></div>
         </section>
 
+        <section class="replay-section page-section" id="replay" data-page="replay" data-view="replay">
+          <div id="replay-root"></div>
+        </section>
+
         <section class="achievements-section page-section" id="achievements" data-page="achievements" data-view="achievements">
           <div id="achievements-root"></div>
         </section>
@@ -627,10 +636,10 @@
               </h3>
               <ul>
                 <li><b>Full Academy — every tier, all 5 markets (190+ lessons)</b></li>
-                <li><b>Unlimited Arcade plays (free plan: 5/day)</b></li>
+                <li><b>Chart Replay Trainer — trade real market history bar-by-bar</b></li>
+                <li>Unlimited Arcade plays (free plan: 5/day)</li>
                 <li>Prop Firm Training Grounds — evals, funding, payouts</li>
-                <li>Traders Dashboard — live market data + news</li>
-                <li>XP, streaks, levels, and badges</li>
+                <li>Traders Dashboard — live data, econ calendar + paper portfolio</li>
                 <li>Weekly XP Race leaderboard</li>
               </ul>
               <button class="primary-button plan-button" data-plan="Player">Choose Player</button>
@@ -643,8 +652,8 @@
               </h3>
               <ul>
                 <li>Everything in Player</li>
-                <li><b>9-tool Trader Toolkit</b> — Risk Calculator, Expectancy Engine, Monte Carlo Simulator</li>
-                <li>Trading Playbook + daily Pre-Session Checklist</li>
+                <li><b>Trade Journal</b> — setups, emotions, R-multiples, leak-finding analytics</li>
+                <li><b>10-tool Trader Toolkit</b> — Expectancy Engine, Monte Carlo Simulator, Playbook, Checklist</li>
                 <li>Weakness Radar, Mistake Journal, Analytics + 12-week Consistency Heatmap</li>
                 <li><b>+25% XP on every Arcade run</b></li>
                 <li>Weekly performance digest</li>
@@ -659,8 +668,8 @@
               </h3>
               <ul>
                 <li>Everything in Coach</li>
-                <li><b>The Elite Lab</b> — Risk Lab Pro, Tilt Guard, Session DNA</li>
-                <li>Monthly Report Card + weekly Goal Engine</li>
+                <li><b>The Elite Lab</b> — Risk Lab Pro, Tilt Guard, Session DNA + AI Desk Debrief</li>
+                <li>Live watchlist <b>price alerts</b> + Monthly Report Card + Goal Engine</li>
                 <li>AI Trade Review + Personal Study Plan</li>
                 <li>Elite Command Center — live watchlist, discipline grade, daily game plan</li>
                 <li><b>+50% XP on every Arcade run</b></li>
@@ -702,11 +711,14 @@
               <div><span>Full Academy — all tiers, 5 markets (free plan: Tier 1 only)</span><b>✓</b><b>✓</b><b>✓</b></div>
               <div><span>Unlimited Arcade plays (free plan: 5/day)</span><b>✓</b><b>✓</b><b>✓</b></div>
               <div><span>Prop Firm Training Grounds — evals, funding, payouts</span><b>✓</b><b>✓</b><b>✓</b></div>
-              <div><span>Traders Dashboard — live market data + news</span><b>✓</b><b>✓</b><b>✓</b></div>
+              <div><span>Chart Replay Trainer — real history, bar by bar, graded in R</span><b>✓</b><b>✓</b><b>✓</b></div>
+              <div><span>Traders Dashboard + econ calendar + paper portfolio</span><b>✓</b><b>✓</b><b>✓</b></div>
+              <div><span>Trade Journal — setup + emotion analytics</span><b>—</b><b>✓</b><b>✓</b></div>
+              <div><span>Price alerts + AI Desk Debrief</span><b>—</b><b>—</b><b>✓</b></div>
               <div><span>Compete: friends, 1v1 duels, lobbies, tournaments</span><b>✓</b><b>✓</b><b>✓</b></div>
               <div><span>Weekly XP Race + rotating rank</span><b>✓</b><b>✓</b><b>✓</b></div>
               <div><span>Permanent Arcade XP boost</span><b>—</b><b>+25%</b><b>+50%</b></div>
-              <div><span>9-tool Trader Toolkit (risk calc, expectancy, Monte Carlo, playbook, checklist…)</span><b>—</b><b>✓</b><b>✓</b></div>
+              <div><span>10-tool Trader Toolkit (risk calc, expectancy, Monte Carlo, playbook, checklist…)</span><b>—</b><b>✓</b><b>✓</b></div>
               <div><span>Weakness Radar + Mistake Journal + Consistency Heatmap</span><b>—</b><b>✓</b><b>✓</b></div>
               <div><span>Weekly performance digest</span><b>—</b><b>✓</b><b>✓</b></div>
               <div><span>The Elite Lab: Risk Lab Pro, Tilt Guard, Session DNA</span><b>—</b><b>—</b><b>✓</b></div>
@@ -1275,5 +1287,8 @@
     <script src="tour.js"></script>
     <script src="admin.js"></script>
     <script src="auth.js"></script>
+    <script src="dailysetup.js"></script>
+    <script src="replay.js"></script>
+    <script src="extras.js"></script>
   </body>
 </html>

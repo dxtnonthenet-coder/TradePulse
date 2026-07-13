@@ -67,7 +67,53 @@ async function eliteRefreshQuotes(rerender = false) {
   const results = await Promise.all(eliteWatchlist().map((symbol) => eliteFetchQuote(symbol)));
   results.forEach((quote) => { eliteState.quotes[quote.symbol] = quote; });
   eliteState.loading = false;
+  eliteCheckAlerts();
   if (rerender || state.currentView === "elite") renderEliteWatchRows();
+}
+
+/* ---------- price alerts (Elite) ---------- */
+
+function eliteAlerts() {
+  const p = progress();
+  if (!Array.isArray(p.priceAlerts)) p.priceAlerts = [];
+  return p.priceAlerts;
+}
+
+function eliteCheckAlerts() {
+  if (typeof hasAccess === "function" && !hasAccess("priceAlerts")) return;
+  const alerts = eliteAlerts();
+  if (!alerts.length) return;
+  const fired = [];
+  alerts.forEach((alert) => {
+    const quote = eliteState.quotes[alert.symbol];
+    if (!quote || !quote.last) return;
+    if ((alert.dir === "above" && quote.last >= alert.price) || (alert.dir === "below" && quote.last <= alert.price)) fired.push(alert);
+  });
+  if (!fired.length) return;
+  const p = progress();
+  p.priceAlerts = alerts.filter((alert) => !fired.includes(alert));
+  saveProgress();
+  fired.forEach((alert) => {
+    const display = typeof tdashDisplaySymbol === "function" ? tdashDisplaySymbol(alert.symbol) : alert.symbol;
+    const message = `🔔 ${display} crossed ${alert.dir} ${alert.price}`;
+    showToast(message, "success");
+    if (typeof arcadeSound === "function") arcadeSound("cashout");
+    if ("Notification" in window && Notification.permission === "granted") {
+      try { new Notification("ReplayEdge price alert", { body: message }); } catch { /* ignore */ }
+    }
+  });
+  if (state.currentView === "elite") renderEliteDashboard();
+}
+
+function eliteAlertAdd(symbol, dir, price) {
+  if (!symbol || !Number.isFinite(price) || price <= 0) { showToast("Pick a symbol and a valid price.", "info"); return; }
+  const alerts = eliteAlerts();
+  if (alerts.length >= 10) { showToast("Alert list is full (10). Remove one first.", "warning"); return; }
+  alerts.push({ id: `al_${Date.now()}`, symbol, dir, price });
+  saveProgress();
+  if ("Notification" in window && Notification.permission === "default") Notification.requestPermission();
+  renderEliteDashboard();
+  showToast(`Alert set — ${dir} ${price} on ${typeof tdashDisplaySymbol === "function" ? tdashDisplaySymbol(symbol) : symbol}.`, "success");
 }
 
 function eliteEnsureTimer() {
@@ -309,6 +355,38 @@ function eliteGoalProgress() {
   ];
 }
 
+/* ---------- ELITE LAB: AI desk debrief ---------- */
+
+function eliteDebrief() {
+  const discipline = eliteDiscipline();
+  const tilt = eliteTiltGuard();
+  const dna = eliteSessionDna();
+  const report = eliteReportCard();
+  const trend = eliteWinTrend();
+  const goals = eliteGoalProgress();
+  const journal = typeof tradeLogStats === "function" ? tradeLogStats() : null;
+  const week = eliteXpByDay(7).reduce((sum, value) => sum + value, 0);
+  const goalsHit = goals.filter((goal) => goal.value >= goal.target).length;
+
+  const lines = [];
+  lines.push(`You banked <b>${week.toLocaleString()} XP</b> this week with a discipline grade of <b>${discipline.grade}</b>${trend.current !== null ? ` and a ${trend.current}% win rate over your last ${trend.sampled} runs${trend.delta !== null ? ` (${trend.delta >= 0 ? "up" : "down"} ${Math.abs(trend.delta)} pts)` : ""}` : ""}.`);
+  if (tilt.status === "TILTED") lines.push(`<b class="down">Priority one: your tilt score is ${tilt.score}.</b> ${tilt.signals[0] || ""} Nothing else on this desk matters until that's under control.`);
+  else if (tilt.status === "WARM") lines.push(`Tilt Guard reads <b>WARM (${tilt.score})</b> — ${tilt.signals[0] || "watch your re-entries after losses"}. Catch it now, before it prices itself in.`);
+  else lines.push(`Tilt Guard reads <b class="up">COOL</b> — your emotional control is an edge this week. Protect it.`);
+  if (dna.best) lines.push(`Your Session DNA says you're sharpest in the <b>${dna.best.label.toLowerCase()}</b> (${dna.best.winRate}% WR)${dna.worst && dna.worst.key !== dna.best.key ? ` and weakest ${dna.worst.label.toLowerCase()} (${dna.worst.winRate}%)` : ""} — schedule accordingly.`);
+  if (journal?.worstEmotion) lines.push(`The journal found your most expensive emotion: trades tagged <b>${journal.worstEmotion.name}</b> average <b class="down">${journal.worstEmotion.avg.toFixed(2)}R</b>. That's a named, fixable leak.`);
+  else if (journal?.best) lines.push(`Journal says your money-maker is <b>${journal.best.name}</b> at <b class="up">+${journal.best.avg.toFixed(2)}R</b> average — size it with confidence, skip the rest.`);
+  lines.push(`Month-to-date report card: <b>${report.overall}</b> overall. Goals: <b>${goalsHit}/${goals.length}</b> hit so far this week.`);
+
+  const actions = [];
+  if (tilt.status !== "COOL") actions.push("After any 2 losses in a row: 15-minute hard stop before the next click.");
+  const weakRow = report.rows.filter((row) => row.pct !== null).sort((a, b) => a.pct - b.pct)[0];
+  if (weakRow) actions.push(`Lowest report-card line is ${weakRow.label.toLowerCase()} (${weakRow.grade}) — make it this week's single focus.`);
+  if (dna.best) actions.push(`Book your practice inside your ${dna.best.label.toLowerCase()} window — it's statistically your best brain.`);
+  if (!actions.length) actions.push("Nothing is on fire. Raise your weekly goals 10% and keep compounding.");
+  return { lines, actions: actions.slice(0, 3) };
+}
+
 /* ---------- render ---------- */
 
 function eliteXpChip(value) {
@@ -399,6 +477,21 @@ function renderEliteDashboard() {
               </div>
             </div>
             <div id="elite-watch-rows" class="elite-watch-rows"></div>
+            <div class="elite-alerts">
+              <div class="elite-alerts-head"><b>🔔 Price alerts</b><small>${eliteAlerts().length}/10 · fires here + browser notification</small></div>
+              ${eliteAlerts().map((alert) => `
+                <div class="elite-alert-row">
+                  <b>${typeof tdashDisplaySymbol === "function" ? tdashDisplaySymbol(alert.symbol) : alert.symbol}</b>
+                  <span>${alert.dir === "above" ? "≥" : "≤"} ${alert.price}</span>
+                  <button class="tk-resolve" type="button" data-alert-x="${alert.id}" title="Remove">✕</button>
+                </div>`).join("")}
+              <div class="elite-alert-form">
+                <select id="elite-alert-sym">${eliteWatchlist().map((symbol) => `<option value="${symbol}">${typeof tdashDisplaySymbol === "function" ? tdashDisplaySymbol(symbol) : symbol}</option>`).join("")}</select>
+                <select id="elite-alert-dir"><option value="above">crosses above</option><option value="below">crosses below</option></select>
+                <input id="elite-alert-price" type="number" step="any" placeholder="Price" />
+                <button class="arcade-btn ghost cp-mini" type="button" id="elite-alert-add">Set</button>
+              </div>
+            </div>
             <small class="elite-foot-note">Delayed public feeds · educational context, not advice. Full analysis lives in the <button class="elite-inline-link" type="button" data-elite-nav="dashboard">Traders Dashboard →</button></small>
           </section>
 
@@ -622,6 +715,19 @@ function renderEliteDashboard() {
               : `Targets auto-set from last week +10%. Edit the numbers to make them yours.`}</p>
           </section>`;
         })()}
+
+        ${(() => {
+          const memo = eliteDebrief();
+          return `
+          <section class="elite-card elab-wide elab-debrief">
+            <p class="tdash-card-kicker gold">🧠 AI DESK DEBRIEF <span class="elab-debrief-tag">generated from your data</span></p>
+            <div class="elab-memo">${memo.lines.map((line) => `<p>${line}</p>`).join("")}</div>
+            <div class="elab-actions">
+              <b>THIS WEEK'S ORDERS</b>
+              ${memo.actions.map((action, i) => `<div class="elab-action"><span>${i + 1}</span>${action}</div>`).join("")}
+            </div>
+          </section>`;
+        })()}
       </div>
     </div>
   `;
@@ -643,6 +749,21 @@ function renderEliteDashboard() {
       const goals = eliteGoals();
       const value = Math.max(1, Math.round(Number(goalInput.value) || 1));
       goals[goalInput.dataset.eliteGoal] = value;
+      saveProgress();
+      renderEliteDashboard();
+    });
+  });
+  root.querySelector("#elite-alert-add")?.addEventListener("click", () => {
+    eliteAlertAdd(
+      root.querySelector("#elite-alert-sym")?.value,
+      root.querySelector("#elite-alert-dir")?.value === "below" ? "below" : "above",
+      Number(root.querySelector("#elite-alert-price")?.value)
+    );
+  });
+  root.querySelectorAll("[data-alert-x]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const p = progress();
+      p.priceAlerts = eliteAlerts().filter((alert) => alert.id !== button.dataset.alertX);
       saveProgress();
       renderEliteDashboard();
     });
