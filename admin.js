@@ -5,11 +5,60 @@
    users — it only mutates this browser's localStorage progress.
 
    Triggers (any of):
+     • Owner email  — auto-unlocks when the owner signs in (matched by hash,
+                      so the personal email never appears in the public source);
+                      follows the account across devices.
      • URL param  ?admin=1        (auto-runs on load — survives hash routing)
      • URL hash   #admin-unlock   (auto-runs if it reaches boot)
      • Console:   adminUnlock()   /  adminReset()
      • Keyboard:  Ctrl/Cmd + Shift + A  toggles it
 */
+
+/* Owner allowlist — cyrb53 hashes of authorized emails (lowercased/trimmed).
+   Hashing keeps real addresses out of the public repo; this is a convenience
+   auto-trigger, not a security boundary (admin mode is a local-only cosmetic
+   unlock that grants no server privileges). */
+const ADMIN_EMAIL_HASHES = new Set([
+  "28gbcrrcw9q" // dxtnonthenet@gmail.com
+]);
+
+function adminHashEmail(str) {
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0, ch; i < str.length; i++) {
+    ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+  h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+  h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+
+function adminCurrentEmail() {
+  const p = (typeof progress === "function") ? progress() : {};
+  const raw = p.signup?.email || p.inviteEmail || p.googleUser?.email || "";
+  return String(raw).trim().toLowerCase();
+}
+
+function adminEmailIsOwner() {
+  const email = adminCurrentEmail();
+  if (!email) return false;
+  return ADMIN_EMAIL_HASHES.has(adminHashEmail(email));
+}
+
+/* Auto-unlock for the owner; no-op for everyone else and when already on.
+   Safe to call repeatedly (idempotent). */
+function adminMaybeAutoUnlock() {
+  if (typeof progress !== "function") return false;
+  if (progress().adminMode) { adminBadge(true); return true; }
+  if (adminEmailIsOwner()) {
+    adminUnlock();
+    return true;
+  }
+  return false;
+}
 
 function adminAllLessonIds() {
   const ids = new Set();
@@ -148,6 +197,9 @@ function adminBadge(on) {
     if (wantsUnlock) {
       history.replaceState(null, "", location.pathname);
       adminUnlock();
+    } else {
+      // owner already signed in from a previous session / synced device
+      adminMaybeAutoUnlock();
     }
   };
   if (document.readyState === "loading") {
@@ -163,4 +215,5 @@ function adminBadge(on) {
   });
   window.adminUnlock = adminUnlock;
   window.adminReset = adminReset;
+  window.adminMaybeAutoUnlock = adminMaybeAutoUnlock;
 })();

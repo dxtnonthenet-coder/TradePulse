@@ -1330,6 +1330,7 @@ async function handleGoogleAuthReturn() {
     showToast("Google sign-in complete. Your training profile is ready.", "success");
     history.replaceState({}, "", window.location.pathname);
     updateProgressUi();
+    if (typeof adminMaybeAutoUnlock === "function") adminMaybeAutoUnlock();
   } catch (error) {
     showToast(`Google sign-in needs attention: ${error.message}`, "error");
   }
@@ -6964,6 +6965,7 @@ gate.signupForm.addEventListener("submit", (event) => {
   closeModals();
   refreshSubscriptionStatus();
   startMode(state.activeMode);
+  if (typeof adminMaybeAutoUnlock === "function") adminMaybeAutoUnlock();
 });
 
 document.getElementById("close-signup").addEventListener("click", () => {
