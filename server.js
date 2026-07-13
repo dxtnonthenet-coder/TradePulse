@@ -18,6 +18,7 @@ const attemptsPath = path.join(dataDir, "attempts.json");
 const scenarioStatsPath = path.join(dataDir, "scenario-stats.json");
 const friendsPath = path.join(dataDir, "friends.json");
 const lobbiesPath = path.join(dataDir, "lobbies.json");
+const usersPath = path.join(dataDir, "users.json");
 const envPath = path.join(root, ".env");
 const types = {
   ".html": "text/html; charset=utf-8",
@@ -50,6 +51,7 @@ const publicFiles = new Set([
   "sync.js",
   "propfirm.js",
   "tour.js",
+  "auth.js",
   "favicon.svg",
   "privacy.html",
   "terms.html",
@@ -88,6 +90,7 @@ function ensureDataFiles() {
   if (!fs.existsSync(scenarioStatsPath)) fs.writeFileSync(scenarioStatsPath, "{}");
   if (!fs.existsSync(friendsPath)) fs.writeFileSync(friendsPath, "{}");
   if (!fs.existsSync(lobbiesPath)) fs.writeFileSync(lobbiesPath, "{}");
+  if (!fs.existsSync(usersPath)) fs.writeFileSync(usersPath, "{}");
   if (!fs.existsSync(signupsCsvPath)) {
     fs.writeFileSync(signupsCsvPath, "createdAt,type,name,email,plan,source,details\n");
   }
@@ -936,6 +939,117 @@ function publicSubscription(record) {
   };
 }
 
+/* ============================================================
+   Email + password accounts
+   - passwords are scrypt-hashed with a per-user random salt
+     (never stored or logged in plaintext)
+   - sessions are random tokens; only their sha256 hash is stored,
+     so a leak of users.json cannot be replayed as a live session
+   ============================================================ */
+
+function readUsers() {
+  return readJsonFile(usersPath, {});
+}
+
+function writeUsers(users) {
+  ensureDataFiles();
+  fs.writeFileSync(usersPath, JSON.stringify(users, null, 2));
+}
+
+function normalizeEmail(email) {
+  return String(email || "").trim().toLowerCase();
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 200;
+}
+
+// Mirror of the client-side rule set — the server is the real gate.
+function passwordProblem(password) {
+  const pw = String(password || "");
+  if (pw.length < 8) return "Password must be at least 8 characters.";
+  if (pw.length > 200) return "Password is too long.";
+  if (!/[a-z]/.test(pw)) return "Password needs at least one lowercase letter.";
+  if (!/[A-Z]/.test(pw)) return "Password needs at least one uppercase letter.";
+  if (!/[0-9]/.test(pw)) return "Password needs at least one number.";
+  return null;
+}
+
+function scryptHash(password, salt) {
+  return crypto.scryptSync(String(password), salt, 64).toString("hex");
+}
+
+function makePasswordRecord(password) {
+  const salt = crypto.randomBytes(16).toString("hex");
+  return { salt, hash: scryptHash(password, salt) };
+}
+
+function verifyPassword(password, salt, expectedHex) {
+  if (!salt || !expectedHex) return false;
+  const actual = Buffer.from(scryptHash(password, salt), "hex");
+  const expected = Buffer.from(expectedHex, "hex");
+  return actual.length === expected.length && crypto.timingSafeEqual(actual, expected);
+}
+
+function hashSessionToken(token) {
+  return crypto.createHash("sha256").update(String(token)).digest("hex");
+}
+
+function issueSession(user) {
+  const token = crypto.randomBytes(32).toString("hex");
+  user.sessions = Array.isArray(user.sessions) ? user.sessions : [];
+  user.sessions.push({ tokenHash: hashSessionToken(token), createdAt: Date.now(), lastSeen: Date.now() });
+  // keep the 12 most recent sessions (roughly one per device)
+  if (user.sessions.length > 12) user.sessions = user.sessions.slice(-12);
+  return token;
+}
+
+function findSession(user, token) {
+  if (!user || !Array.isArray(user.sessions) || !token) return null;
+  const wanted = hashSessionToken(token);
+  return user.sessions.find((session) => session.tokenHash === wanted) || null;
+}
+
+function publicUser(user) {
+  return {
+    email: user.email,
+    name: user.name || user.email?.split("@")[0] || "Trader",
+    provider: user.provider || "password",
+    createdAt: user.createdAt || null,
+    avatar: user.avatar || null
+  };
+}
+
+function authPayload(user) {
+  return {
+    user: publicUser(user),
+    subscription: publicSubscription(subscriptionForEmail(user.email))
+  };
+}
+
+// crude in-memory throttle: 5 failed logins per email+IP → 15-minute cooldown
+const loginAttempts = new Map();
+function loginThrottleKey(email, req) {
+  const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket.remoteAddress || "";
+  return `${normalizeEmail(email)}|${ip}`;
+}
+function loginIsThrottled(key) {
+  const entry = loginAttempts.get(key);
+  return Boolean(entry && entry.until && entry.until > Date.now());
+}
+function noteLoginFailure(key) {
+  const entry = loginAttempts.get(key) || { fails: 0, until: 0 };
+  entry.fails += 1;
+  if (entry.fails >= 5) {
+    entry.until = Date.now() + 15 * 60 * 1000;
+    entry.fails = 0;
+  }
+  loginAttempts.set(key, entry);
+}
+function clearLoginFailures(key) {
+  loginAttempts.delete(key);
+}
+
 async function createCheckoutSession(payload) {
   const secret = process.env.STRIPE_SECRET_KEY;
   const billingPeriod = payload.billingPeriod === "annual" ? "annual" : "monthly";
@@ -1399,13 +1513,156 @@ const server = http.createServer((req, res) => {
   if (req.method === "POST" && parsedUrl.pathname === "/api/auth-user") {
     readBody(req)
       .then((body) => handleGoogleAuthUser(JSON.parse(body || "{}")))
-      .then((user) => {
+      .then((googleUser) => {
+        // Give Google accounts a first-class user record + session token too,
+        // so the whole app has one consistent notion of "signed in".
+        const email = normalizeEmail(googleUser.email);
+        const users = readUsers();
+        if (!users[email]) {
+          users[email] = { email, name: googleUser.name || "", provider: "google", createdAt: Date.now(), sessions: [] };
+        }
+        const account = users[email];
+        account.provider = account.provider === "password" ? "password" : "google";
+        if (googleUser.name) account.name = googleUser.name;
+        if (googleUser.avatar) account.avatar = googleUser.avatar;
+        const token = issueSession(account);
+        writeUsers(users);
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: true, user }));
+        res.end(JSON.stringify({ ok: true, user: { ...publicUser(account), id: googleUser.id }, token, subscription: authPayload(account).subscription }));
       })
       .catch((error) => {
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: false, error: error.message }));
+      });
+    return;
+  }
+
+  if (req.method === "POST" && parsedUrl.pathname === "/api/auth/register") {
+    readBody(req)
+      .then((body) => {
+        const data = JSON.parse(body || "{}");
+        const email = normalizeEmail(data.email);
+        const name = String(data.name || "").trim().slice(0, 60);
+        if (!isValidEmail(email)) throw new Error("Please enter a valid email address.");
+        const problem = passwordProblem(data.password);
+        if (problem) throw new Error(problem);
+        const users = readUsers();
+        if (users[email] && users[email].provider === "password") {
+          throw new Error("An account with this email already exists. Try logging in instead.");
+        }
+        const existing = users[email] || {};
+        const pw = makePasswordRecord(data.password);
+        const account = {
+          ...existing,
+          email,
+          name: name || existing.name || email.split("@")[0],
+          provider: "password",
+          salt: pw.salt,
+          hash: pw.hash,
+          createdAt: existing.createdAt || Date.now(),
+          sessions: Array.isArray(existing.sessions) ? existing.sessions : []
+        };
+        const token = issueSession(account);
+        users[email] = account;
+        writeUsers(users);
+        return { ok: true, token, ...authPayload(account) };
+      })
+      .then((result) => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(result));
+      })
+      .catch((error) => {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      });
+    return;
+  }
+
+  if (req.method === "POST" && parsedUrl.pathname === "/api/auth/login") {
+    readBody(req)
+      .then((body) => {
+        const data = JSON.parse(body || "{}");
+        const email = normalizeEmail(data.email);
+        const key = loginThrottleKey(email, req);
+        if (loginIsThrottled(key)) {
+          const err = new Error("Too many failed attempts. Please wait 15 minutes and try again.");
+          err.status = 429;
+          throw err;
+        }
+        const users = readUsers();
+        const account = users[email];
+        const ok = account && account.provider === "password" && verifyPassword(data.password, account.salt, account.hash);
+        if (!ok) {
+          noteLoginFailure(key);
+          // Deliberately generic — don't reveal whether the email exists.
+          const err = new Error(
+            account && account.provider === "google"
+              ? "This email uses Google sign-in. Use the Google button above."
+              : "Incorrect email or password."
+          );
+          err.status = 401;
+          throw err;
+        }
+        clearLoginFailures(key);
+        const token = issueSession(account);
+        writeUsers(users);
+        return { ok: true, token, ...authPayload(account) };
+      })
+      .then((result) => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(result));
+      })
+      .catch((error) => {
+        res.writeHead(error.status || 400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      });
+    return;
+  }
+
+  // Restore a "remember me" session on load.
+  if (req.method === "POST" && parsedUrl.pathname === "/api/auth/session") {
+    readBody(req)
+      .then((body) => {
+        const data = JSON.parse(body || "{}");
+        const email = normalizeEmail(data.email);
+        const users = readUsers();
+        const account = users[email];
+        const session = findSession(account, data.token);
+        if (!session) throw new Error("Session expired. Please log in again.");
+        session.lastSeen = Date.now();
+        writeUsers(users);
+        return { ok: true, ...authPayload(account) };
+      })
+      .then((result) => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(result));
+      })
+      .catch((error) => {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      });
+    return;
+  }
+
+  if (req.method === "POST" && parsedUrl.pathname === "/api/auth/logout") {
+    readBody(req)
+      .then((body) => {
+        const data = JSON.parse(body || "{}");
+        const email = normalizeEmail(data.email);
+        const users = readUsers();
+        const account = users[email];
+        if (account && Array.isArray(account.sessions) && data.token) {
+          const wanted = hashSessionToken(data.token);
+          account.sessions = account.sessions.filter((session) => session.tokenHash !== wanted);
+          writeUsers(users);
+        }
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true }));
+      })
+      .catch(() => {
+        // logout is best-effort; never surface an error to the client
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true }));
       });
     return;
   }

@@ -1318,6 +1318,14 @@ async function handleGoogleAuthReturn() {
       provider: "google",
       avatar: user.avatar || null
     };
+    // persist the session token so Google users stay logged in like everyone else
+    if (result.token && typeof authRemember === "function") {
+      authRemember(result.token, user.email || "", true);
+    }
+    if (result.subscription) {
+      p.subscriptionStatus = result.subscription;
+      if (result.subscription.active && result.subscription.plan) p.plan = result.subscription.plan;
+    }
     startFreshScenarioSession();
     saveProgress();
     await saveLead("google_signin", {
@@ -1520,8 +1528,9 @@ function toggleSidebar() {
 }
 
 function logoutUser() {
-  const ok = confirm("Logout clears this browser's current ReplayEdge profile and training session. Your Stripe subscription is not cancelled. Continue?");
+  const ok = confirm("Log out of ReplayEdge on this device? Your account, progress, and subscription stay safe — just sign back in anytime. (Your Stripe subscription is not cancelled.)");
   if (!ok) return;
+  if (typeof authLogout === "function") authLogout();
   localStorage.removeItem("tradePulseProgress");
   sessionStorage.removeItem("tradePulseVisitStarted");
   state.progress = defaultProgress();
@@ -2255,12 +2264,16 @@ function freePlaysLeft() {
   return Math.max(0, FREE_PLAY_LIMIT - used);
 }
 
-function openSignup() {
+function openSignup(mode = "register") {
   const p = progress();
   const market = document.getElementById("signup-market");
   const experience = document.getElementById("signup-experience");
   if (market && p.signup?.market) market.value = p.signup.market;
   if (experience && p.signup?.experience) experience.value = p.signup.experience;
+  if (typeof authOpen === "function") {
+    authOpen(mode);
+    return;
+  }
   gate.signupModal.classList.remove("hidden");
 }
 
@@ -6941,32 +6954,41 @@ if (!localStorage.getItem("tradePulseOnboardingSeen") && els.onboardingModal) {
 
 gate.signupForm.addEventListener("submit", (event) => {
   event.preventDefault();
+  // Email + password auth is owned by auth.js; it validates, calls the
+  // server, and applies the signed-in identity on success.
+  if (typeof authSubmit === "function") {
+    authSubmit();
+    return;
+  }
+  // Fallback (should not happen once auth.js is loaded): capture the basics.
   const p = progress();
   p.signup = {
-    name: document.getElementById("signup-name").value,
-    email: document.getElementById("signup-email").value,
-    experience: document.getElementById("signup-experience").value,
-    market: document.getElementById("signup-market").value,
+    name: document.getElementById("signup-name")?.value || "",
+    email: document.getElementById("signup-email")?.value || "",
     referredBy: p.referredBy || ""
   };
   startFreshScenarioSession();
   saveProgress();
-  saveLead("free_signup", {
-    name: p.signup.name,
-    email: p.signup.email,
-    plan: "Free",
-    details: {
-      experience: p.signup.experience,
-      market: p.signup.market,
-      mode: state.activeMode
-    }
-  });
   syncReferralSignup();
   closeModals();
-  refreshSubscriptionStatus();
   startMode(state.activeMode);
-  if (typeof adminMaybeAutoUnlock === "function") adminMaybeAutoUnlock();
 });
+
+// After a successful email/password sign-in, record the lead + referral once.
+window.authOnSignedIn = function authOnSignedIn(mode) {
+  const p = progress();
+  if (!p.signup?.email) return;
+  if (mode === "register") {
+    startFreshScenarioSession();
+    saveLead("free_signup", {
+      name: p.signup.name,
+      email: p.signup.email,
+      plan: "Free",
+      details: { experience: p.signup.experience, market: p.signup.market, mode: state.activeMode }
+    });
+    syncReferralSignup();
+  }
+};
 
 document.getElementById("close-signup").addEventListener("click", () => {
   gate.signupModal.classList.add("hidden");
