@@ -5,12 +5,12 @@
    synthetic series so the desk always works. */
 
 const REPLAY_PRESETS = [
-  { sym: "NQ=F", label: "Nasdaq futures" },
-  { sym: "ES=F", label: "S&P futures" },
-  { sym: "BTC-USD", label: "Bitcoin" },
-  { sym: "EURUSD=X", label: "Euro / USD" },
-  { sym: "AAPL", label: "Apple" },
-  { sym: "TSLA", label: "Tesla" }
+  { sym: "NQ=F", label: "Nasdaq futures", ticker: "NQ", name: "Nasdaq 100", cat: "futures" },
+  { sym: "ES=F", label: "S&P futures", ticker: "ES", name: "S&P 500", cat: "futures" },
+  { sym: "BTC-USD", label: "Bitcoin", ticker: "BTC", name: "Bitcoin", cat: "crypto" },
+  { sym: "EURUSD=X", label: "Euro / USD", ticker: "EUR", name: "Euro / USD", cat: "forex" },
+  { sym: "AAPL", label: "Apple", ticker: "AAPL", name: "Apple", cat: "stocks" },
+  { sym: "TSLA", label: "Tesla", ticker: "TSLA", name: "Tesla", cat: "stocks" }
 ];
 
 const replayState = {
@@ -90,15 +90,32 @@ function renderReplay() {
   if (replayState.running) { replayRenderDesk(root); return; }
 
   const stats = replayData();
+  const catLabel = { futures: "FUTURES", crypto: "CRYPTO", forex: "FOREX", stocks: "STOCKS" };
   root.innerHTML = `
-    <div class="rp-setup">
-      <p class="arcade-kicker">// CHART REPLAY TRAINER</p>
-      <h2>Pick a market. <span class="ds-green">Trade its past.</span></h2>
-      <p class="arcade-sub">A real chart, revealed candle by candle. You won't know the symbol or the dates — just the tape. Long it, short it, or sit out. Every trade is graded in R.</p>
-      <div class="rp-presets">
-        ${REPLAY_PRESETS.map((preset) => `<button class="rp-preset" type="button" data-rp-sym="${preset.sym}">${preset.label}</button>`).join("")}
-        <button class="rp-preset surprise" type="button" data-rp-sym="__random">🎲 Surprise me</button>
+    <div class="rp-landing">
+      <div class="rp-hero">
+        <div class="rp-hero-copy">
+          <p class="arcade-kicker">// CHART REPLAY TRAINER</p>
+          <h2>Trade the past.<br><span class="ds-green">Keep the lesson.</span></h2>
+          <p class="rp-hero-lead">A real historical chart, revealed one candle at a time. You won't know the symbol or the dates — just the raw tape. Long it, short it, or sit out. Every trade graded in R, like a real desk.</p>
+          <div class="rp-steps">
+            <div class="rp-step"><span>1</span><b>Pick a market</b><small>A random slice of real history loads — symbol hidden.</small></div>
+            <div class="rp-step"><span>2</span><b>Read the tape</b><small>Reveal it candle by candle. Enter long, short, or stay flat.</small></div>
+            <div class="rp-step"><span>3</span><b>Get graded</b><small>Every trade scored in R against a volatility stop.</small></div>
+          </div>
+        </div>
+        <div class="rp-hero-visual" aria-hidden="true">
+          <div class="rp-terminal">
+            <div class="rp-terminal-bar">
+              <span class="rp-dot"></span><span class="rp-dot"></span><span class="rp-dot"></span>
+              <span class="rp-terminal-sym">🕶 SYMBOL HIDDEN</span>
+            </div>
+            <canvas id="rp-hero-chart" width="440" height="220"></canvas>
+            <div class="rp-terminal-foot"><span>REVEALING…</span><b class="ds-green">graded in R</b></div>
+          </div>
+        </div>
       </div>
+
       ${stats.sessions ? `
       <div class="rp-career">
         <div><span>SESSIONS</span><b>${stats.sessions}</b></div>
@@ -106,10 +123,75 @@ function renderReplay() {
         <div><span>WIN RATE</span><b>${stats.trades ? Math.round((stats.wins / stats.trades) * 100) : 0}%</b></div>
         <div><span>BEST SESSION</span><b>+${stats.bestR.toFixed(1)}R</b></div>
       </div>` : ""}
+
+      <div class="rp-choose">
+        <div class="rp-choose-head">
+          <h3>Choose your market</h3>
+          <p>Six liquid instruments across futures, crypto, forex, and stocks — or leave it to chance.</p>
+        </div>
+        <div class="rp-market-grid">
+          ${REPLAY_PRESETS.map((preset) => `
+            <button class="rp-market ${preset.cat}" type="button" data-rp-sym="${preset.sym}">
+              <span class="rp-market-cat">${catLabel[preset.cat] || preset.cat.toUpperCase()}</span>
+              <b class="rp-market-ticker">${preset.ticker}</b>
+              <span class="rp-market-name">${preset.name}</span>
+              <span class="rp-market-go">Trade the tape →</span>
+            </button>`).join("")}
+          <button class="rp-market surprise" type="button" data-rp-sym="__random">
+            <span class="rp-market-cat">🎲 RANDOM</span>
+            <b class="rp-market-ticker">?</b>
+            <span class="rp-market-name">Surprise me</span>
+            <span class="rp-market-go">Blind pick →</span>
+          </button>
+        </div>
+      </div>
+      <p class="fp-foot">Real historical price data, anonymized for training. Educational simulation only — not a signal, quote, or financial advice.</p>
     </div>`;
+  replayDrawHeroChart();
   root.querySelectorAll("[data-rp-sym]").forEach((button) => {
     button.addEventListener("click", () => replayStart(button.dataset.rpSym));
   });
+}
+
+/* decorative hero chart: candles that fade into "hidden" on the right */
+function replayDrawHeroChart() {
+  const canvas = document.getElementById("rp-hero-chart");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  let seed = 20260713;
+  const rng = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  const n = 30;
+  let price = H * 0.62;
+  const bars = [];
+  for (let i = 0; i < n; i += 1) {
+    const drift = (rng() - 0.46) * 9;
+    const o = price;
+    const c = Math.max(24, Math.min(H - 24, price + drift));
+    price = c;
+    bars.push({ o, c, h: Math.min(o, c) - rng() * 8, l: Math.max(o, c) + rng() * 8 });
+  }
+  const bw = W / n;
+  const reveal = Math.floor(n * 0.62);
+  bars.forEach((bar, i) => {
+    const x = i * bw + bw / 2;
+    const up = bar.c <= bar.o; // canvas y inverted
+    const alpha = i < reveal ? 1 : Math.max(0.06, 1 - (i - reveal) / (n - reveal) * 1.3);
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = up ? "#4dffab" : "#ff5f57";
+    ctx.lineWidth = 1.3;
+    ctx.beginPath(); ctx.moveTo(x, bar.h); ctx.lineTo(x, bar.l); ctx.stroke();
+    ctx.fillStyle = up ? "#4dffab" : "#ff5f57";
+    ctx.fillRect(x - bw * 0.3, Math.min(bar.o, bar.c), bw * 0.6, Math.max(2, Math.abs(bar.o - bar.c)));
+    ctx.globalAlpha = 1;
+  });
+  // reveal seam
+  const seamX = reveal * bw;
+  ctx.strokeStyle = "rgba(246,195,78,0.55)";
+  ctx.setLineDash([5, 5]); ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(seamX, 8); ctx.lineTo(seamX, H - 8); ctx.stroke();
+  ctx.setLineDash([]);
 }
 
 async function replayStart(symbol) {
