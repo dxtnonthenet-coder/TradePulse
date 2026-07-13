@@ -55,6 +55,8 @@ const publicFiles = new Set([
   "dailysetup.js",
   "replay.js",
   "extras.js",
+  "fundedpath.js",
+  "strategies.js",
   "favicon.svg",
   "privacy.html",
   "terms.html",

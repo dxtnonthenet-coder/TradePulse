@@ -1073,6 +1073,7 @@ function navigateTo(viewName = "home", options = {}) {
   if (view === "dashboard" && typeof renderTradersDashboard === "function") renderTradersDashboard();
   if (view === "propfirm" && typeof renderPropfirm === "function") renderPropfirm();
   if (view === "replay" && typeof renderReplay === "function") renderReplay();
+  if (view === "strategies" && typeof renderStrategies === "function") renderStrategies();
   if (view === "achievements" && typeof renderAchievements === "function") renderAchievements();
   if (view === "home") {
     if (typeof renderHomeAcademyPath === "function") renderHomeAcademyPath();
@@ -1646,6 +1647,7 @@ function hasAccess(feature) {
     tradersDashboard: 1,
     propfirm: 1,
     replay: 1,
+    strategies: 1,
     tradeJournal: 2,
     priceAlerts: 3,
     aiDebrief: 3,
@@ -1688,6 +1690,7 @@ function requiredPlanForFeature(feature) {
     tradersDashboard: "Player",
     propfirm: "Player",
     replay: "Player",
+    strategies: "Player",
     tradeJournal: "Coach",
     priceAlerts: "Elite",
     aiDebrief: "Elite",

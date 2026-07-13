@@ -488,6 +488,7 @@ function renderPropfirm() {
 
       <nav class="prop-tabs">
         <button class="prop-tab ${pfState.tab === "desk" ? "active" : ""}" data-pf-tab="desk" type="button">📉 Trading Desk</button>
+        <button class="prop-tab ${pfState.tab === "path" ? "active" : ""}" data-pf-tab="path" type="button">🎯 Funded Path</button>
         <button class="prop-tab ${pfState.tab === "accounts" ? "active" : ""}" data-pf-tab="accounts" type="button">🏦 My Accounts</button>
         <button class="prop-tab ${pfState.tab === "calendar" ? "active" : ""}" data-pf-tab="calendar" type="button">📅 PnL Calendar</button>
         <button class="prop-tab ${pfState.tab === "shop" ? "active" : ""}" data-pf-tab="shop" type="button">🏆 Prize Shop</button>
@@ -509,6 +510,7 @@ function renderPropfirm() {
 
   const body = root.querySelector("#prop-tab-body");
   if (pfState.tab === "desk") pfRenderDesk(body, account);
+  else if (pfState.tab === "path" && typeof pfRenderPath === "function") pfRenderPath(body);
   else if (pfState.tab === "accounts") pfRenderAccounts(body);
   else if (pfState.tab === "calendar") pfRenderCalendar(body);
   else pfRenderShop(body);
@@ -661,6 +663,15 @@ function pfRenderAccountPanel() {
         <div class="prop-meter-head"><small>TRAILING DRAWDOWN</small><small id="prop-dd-label"></small></div>
         <div class="prop-meter-track"><i id="prop-dd-fill" class="bad" style="width:0%"></i></div>
       </div>
+      <div class="prop-guardian" id="prop-guardian">
+        <div class="prop-guardian-head"><b>🛡 RULES GUARDIAN</b><span id="prop-guardian-status" class="ok">GREEN</span></div>
+        <div class="prop-guardian-nums">
+          <div><small>SAFE NEXT RISK</small><b id="prop-guardian-risk">—</b></div>
+          <div><small>DAILY ROOM</small><b id="prop-guardian-daily">—</b></div>
+          <div><small>TRAIL ROOM</small><b id="prop-guardian-trail">—</b></div>
+        </div>
+        <p class="prop-guardian-note" id="prop-guardian-note">Watching every tick. I'll warn you before a rule can take this account.</p>
+      </div>
       <button class="prop-rules-toggle" type="button" id="prop-rules-toggle">House rules ${pfState.rulesOpen ? "▴" : "▾"}</button>
       <ul class="prop-rules ${pfState.rulesOpen ? "open" : ""}">
         <li>Hit <b>${pfMoney(tier.target, true)}</b> realized profit to pass the evaluation.</li>
@@ -718,6 +729,48 @@ function pfUpdateHud() {
   if (ddFill) ddFill.style.width = `${Math.min(100, Math.max(0, (1 - room / tier.trailing) * 100))}%`;
   const ddLabel = document.getElementById("prop-dd-label");
   if (ddLabel) ddLabel.textContent = `${pfMoney(Math.max(0, Math.round(room)))} above the floor`;
+
+  // ---- Rules Guardian: live pre-breach protection ----
+  const guardian = document.getElementById("prop-guardian");
+  if (guardian && account.state !== "failed") {
+    const dailyLeft = Math.max(0, tier.dailyLoss - dllUsed);
+    const trailLeft = Math.max(0, Math.round(room));
+    const binding = Math.min(dailyLeft, trailLeft);
+    const safeRisk = Math.max(0, Math.floor(binding * 0.25));
+    const usedPct = dllUsed / tier.dailyLoss;
+    const trailPct = 1 - room / tier.trailing;
+    const worst = Math.max(usedPct, trailPct);
+    const status = worst >= 0.85 ? "stop" : worst >= 0.6 ? "warn" : "ok";
+    guardian.className = `prop-guardian ${status}`;
+    const statusEl = document.getElementById("prop-guardian-status");
+    if (statusEl) { statusEl.textContent = status === "stop" ? "STOP TRADING" : status === "warn" ? "AMBER" : "GREEN"; statusEl.className = status; }
+    const riskEl = document.getElementById("prop-guardian-risk");
+    if (riskEl) riskEl.textContent = status === "stop" ? "$0" : pfMoney(safeRisk);
+    const dEl = document.getElementById("prop-guardian-daily");
+    if (dEl) dEl.textContent = pfMoney(dailyLeft);
+    const tEl = document.getElementById("prop-guardian-trail");
+    if (tEl) tEl.textContent = pfMoney(trailLeft);
+    const note = document.getElementById("prop-guardian-note");
+    if (note) {
+      note.textContent = status === "stop"
+        ? "You're one bad trade from losing this account. Pros stop here — the target will still be there tomorrow."
+        : status === "warn"
+          ? `Over 60% of your loss buffer is gone. Cap the next trade at ${pfMoney(safeRisk)} and slow down.`
+          : "Watching every tick. Size each trade at or below Safe Next Risk and the rules can never take this account.";
+    }
+    // one alarm per day per account when crossing into amber/stop
+    const todayKey = new Date().toDateString();
+    if (status !== "ok" && account.guardWarned !== `${todayKey}-${status}`) {
+      account.guardWarned = `${todayKey}-${status}`;
+      saveProgress();
+      if (typeof showToast === "function") {
+        showToast(status === "stop"
+          ? "🛡 GUARDIAN: STOP TRADING — one more loss can breach your rules."
+          : "🛡 Guardian: 60% of your loss buffer is used. Reduce size.", status === "stop" ? "error" : "warning");
+      }
+      if (typeof arcadeSound === "function") arcadeSound("flip");
+    }
+  }
 }
 
 /* ---------- chart ---------- */

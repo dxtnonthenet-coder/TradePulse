@@ -69,6 +69,10 @@
           <span class="side-icon"><i data-lucide="gamepad-2"></i></span>
           <span class="side-label">Arcade</span>
         </button>
+        <button class="side-link strategies-side-link nav-tab" data-page-target="strategies" data-view-target="strategies" type="button" data-tooltip="Strategy Library">
+          <span class="side-icon"><i data-lucide="route"></i></span>
+          <span class="side-label">Strategies</span>
+        </button>
         <button class="side-link replay-side-link nav-tab premium-lock" data-page-target="replay" data-view-target="replay" data-feature="replay" type="button" data-tooltip="Chart Replay">
           <span class="side-icon"><i data-lucide="rewind"></i></span>
           <span class="side-label">Chart Replay</span>
@@ -603,6 +607,10 @@
           <div id="replay-root"></div>
         </section>
 
+        <section class="strategies-section page-section" id="strategies" data-page="strategies" data-view="strategies">
+          <div id="strategies-root"></div>
+        </section>
+
         <section class="achievements-section page-section" id="achievements" data-page="achievements" data-view="achievements">
           <div id="achievements-root"></div>
         </section>
@@ -641,8 +649,9 @@
               <ul>
                 <li><b>Full Academy — every tier, all 5 markets (190+ lessons)</b></li>
                 <li><b>Chart Replay Trainer — trade real market history bar-by-bar</b></li>
+                <li><b>Strategy Library — 9 playbooks with A+ setup &amp; loss walkthroughs</b></li>
+                <li>Prop Firm with <b>Funded Path</b> pass-probability planner + Rules Guardian</li>
                 <li>Unlimited Arcade plays (free plan: 5/day)</li>
-                <li>Prop Firm Training Grounds — evals, funding, payouts</li>
                 <li>Traders Dashboard — live data, econ calendar + paper portfolio</li>
                 <li>Weekly XP Race leaderboard</li>
               </ul>
@@ -716,6 +725,8 @@
               <div><span>Unlimited Arcade plays (free plan: 5/day)</span><b>✓</b><b>✓</b><b>✓</b></div>
               <div><span>Prop Firm Training Grounds — evals, funding, payouts</span><b>✓</b><b>✓</b><b>✓</b></div>
               <div><span>Chart Replay Trainer — real history, bar by bar, graded in R</span><b>✓</b><b>✓</b><b>✓</b></div>
+              <div><span>Strategy Library — 9 playbooks with win + loss chart walkthroughs</span><b>✓</b><b>✓</b><b>✓</b></div>
+              <div><span>Funded Path planner + live Rules Guardian</span><b>✓</b><b>✓</b><b>✓</b></div>
               <div><span>Traders Dashboard + econ calendar + paper portfolio</span><b>✓</b><b>✓</b><b>✓</b></div>
               <div><span>Trade Journal — setup + emotion analytics</span><b>—</b><b>✓</b><b>✓</b></div>
               <div><span>Price alerts + AI Desk Debrief</span><b>—</b><b>—</b><b>✓</b></div>
@@ -1293,6 +1304,8 @@
     <script src="auth.js"></script>
     <script src="dailysetup.js"></script>
     <script src="replay.js"></script>
+    <script src="fundedpath.js"></script>
+    <script src="strategies.js"></script>
     <script src="extras.js"></script>
   </body>
 </html>
