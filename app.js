@@ -2185,6 +2185,25 @@ function updatePlanSurfaces() {
   const sideProfileLabel = document.getElementById("side-profile-label");
   if (sideProfileLabel) sideProfileLabel.textContent = hasProfileSession() ? "Profile" : "Login";
   if (els.topbarLogin) els.topbarLogin.classList.toggle("hidden", hasProfileSession());
+  // Hero auth: signed-out users see "Sign in with Google"; signed-in users see
+  // a personalized "Continue training" CTA instead — same layout footprint.
+  {
+    const signedIn = hasProfileSession();
+    const heroGoogle = document.getElementById("hero-google-signin");
+    const heroContinue = document.getElementById("hero-continue");
+    const ctaNote = document.getElementById("hero-cta-note");
+    const welcomeNote = document.getElementById("hero-welcome-note");
+    heroGoogle?.classList.toggle("hidden", signedIn);
+    heroContinue?.classList.toggle("hidden", !signedIn);
+    ctaNote?.classList.toggle("hidden", signedIn);
+    if (welcomeNote) {
+      welcomeNote.classList.toggle("hidden", !signedIn);
+      if (signedIn) {
+        const first = (progress().signup?.name || "").trim().split(/\s+/)[0];
+        welcomeNote.textContent = first ? `Welcome back, ${first}. Pick up where you left off.` : "Welcome back. Pick up where you left off.";
+      }
+    }
+  }
   if (els.topbarAvatar) {
     els.topbarAvatar.classList.toggle("hidden", !hasProfileSession());
     const p = progress();
@@ -6979,6 +6998,12 @@ if (!localStorage.getItem("tradePulseOnboardingSeen") && els.onboardingModal) {
 
 [els.googleSignin, els.heroGoogleSignin].forEach((button) => {
   button?.addEventListener("click", startGoogleSignin);
+});
+
+document.getElementById("hero-continue")?.addEventListener("click", () => {
+  const next = typeof academyNextLesson === "function" ? academyNextLesson() : null;
+  if (next && typeof openAcademyLesson === "function") openAcademyLesson(next.lesson.id);
+  else navigateTo("academy");
 });
 
 gate.signupForm.addEventListener("submit", (event) => {

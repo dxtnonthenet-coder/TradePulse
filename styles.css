@@ -22245,6 +22245,9 @@ body[data-page="home"] .hero-grid { padding-top: 18px !important; }
 @media (max-width: 760px) { .prop-cal-cell { min-height: 52px; padding: 5px 6px; } .prop-cal-cell b { font-size: 10px; } }
 
 /* ===================== Google sign-in button — official style ===================== */
+/* .hidden must win over the !important display below (signed-in users) */
+body .google-auth-button.hidden { display: none !important; }
+
 body .google-auth-button {
   display: inline-flex !important;
   align-items: center !important;
@@ -23950,4 +23953,36 @@ body .google-auth-button .g-label {
   .x-port-form { grid-template-columns: 1fr 1fr; }
   .elite-alert-form { grid-template-columns: 1fr 1fr; }
   .ds-result-stats { grid-template-columns: 1fr 1fr; }
+}
+
+/* ============================================================
+   HERO — signed-in "Continue training" CTA (replaces Google button)
+   ============================================================ */
+
+.hero-continue {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 52px;
+  padding: 0 26px;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  border-radius: 12px;
+}
+
+.hero-continue-arrow {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(6, 18, 12, 0.22);
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.cta-note.welcome {
+  color: var(--green);
+  font-weight: 700;
 }
