@@ -237,6 +237,311 @@ function aiReviewSubmit() {
   if (typeof arcadeSound === "function") arcadeSound(review.grade === "A" ? "cashout" : "win");
 }
 
+/* ---------- expectancy engine (Coach) ---------- */
+
+function toolkitArcadeWinRate() {
+  const history = arcadeData().history || [];
+  if (history.length < 8) return null;
+  return Math.round((history.filter((run) => run.xp > 0).length / history.length) * 100);
+}
+
+function toolkitExpectancyCard() {
+  return `
+    <article class="panel tk-card">
+      <div class="tk-card-head">
+        <span class="tk-card-icon"><i data-lucide="sigma"></i></span>
+        <h3>Expectancy Engine</h3>
+        <span class="tk-plan-tag on">Active</span>
+      </div>
+      <p class="tk-copy">The single number that decides if a strategy makes money. Feed it your stats — it tells you the truth.</p>
+      <div class="tk-risk-grid">
+        <label>Win rate % <input id="tk-ex-wr" type="number" value="50" min="1" max="99" /></label>
+        <label>Avg win (R) <input id="tk-ex-win" type="number" value="1.8" min="0.1" step="0.1" /></label>
+        <label>Avg loss (R) <input id="tk-ex-loss" type="number" value="1" min="0.1" step="0.1" /></label>
+        <label>Trades / week <input id="tk-ex-tpw" type="number" value="10" min="1" /></label>
+      </div>
+      <button class="arcade-btn ghost cp-mini" type="button" id="tk-ex-mystats">Use my arcade win rate</button>
+      <div class="tk-risk-result" id="tk-ex-result"></div>
+    </article>
+  `;
+}
+
+function toolkitExpectancyCompute() {
+  const out = document.getElementById("tk-ex-result");
+  if (!out) return;
+  const wr = Math.min(99, Math.max(1, Number(document.getElementById("tk-ex-wr")?.value || 0))) / 100;
+  const avgWin = Number(document.getElementById("tk-ex-win")?.value || 0);
+  const avgLoss = Number(document.getElementById("tk-ex-loss")?.value || 0);
+  const tpw = Math.max(1, Number(document.getElementById("tk-ex-tpw")?.value || 1));
+  if (!avgWin || !avgLoss) { out.innerHTML = ""; return; }
+  const expectancy = wr * avgWin - (1 - wr) * avgLoss;
+  const weekly = expectancy * tpw;
+  const profitFactor = ((wr * avgWin) / ((1 - wr) * avgLoss));
+  const breakevenWr = (avgLoss / (avgWin + avgLoss)) * 100;
+  out.innerHTML = `
+    <div><span>Per trade</span><strong class="${expectancy >= 0 ? "" : "tk-neg"}">${expectancy >= 0 ? "+" : ""}${expectancy.toFixed(2)}R</strong></div>
+    <div><span>Per week</span><strong class="${weekly >= 0 ? "" : "tk-neg"}">${weekly >= 0 ? "+" : ""}${weekly.toFixed(1)}R</strong></div>
+    <div><span>Profit factor</span><strong>${profitFactor.toFixed(2)}</strong></div>
+    <div class="tk-risk-final ${expectancy >= 0 ? "" : "warn"}"><span>Breakeven WR</span><strong>${breakevenWr.toFixed(0)}%</strong></div>
+    <small>${expectancy >= 0
+      ? `Positive edge. At 1% risk per trade this profile compounds ≈ ${(weekly).toFixed(1)}% of account per week.`
+      : `Negative edge — this profile loses money no matter how disciplined you are. Raise the win rate or the R multiple.`}</small>
+  `;
+}
+
+/* ---------- monte carlo drawdown simulator (Coach) ---------- */
+
+function toolkitMonteCarloCard() {
+  return `
+    <article class="panel tk-card tk-wide">
+      <div class="tk-card-head">
+        <span class="tk-card-icon"><i data-lucide="waypoints"></i></span>
+        <h3>Monte Carlo Simulator</h3>
+        <span class="tk-plan-tag on">Active</span>
+      </div>
+      <p class="tk-copy">Runs your strategy through 200 alternate futures. See the drawdowns hiding inside a "profitable" system before your real account finds them.</p>
+      <div class="tk-risk-grid tk-mc-grid">
+        <label>Win rate % <input id="tk-mc-wr" type="number" value="52" min="1" max="99" /></label>
+        <label>Reward : Risk <input id="tk-mc-rr" type="number" value="1.5" min="0.2" step="0.1" /></label>
+        <label>Risk / trade % <input id="tk-mc-risk" type="number" value="1" min="0.1" step="0.1" max="25" /></label>
+        <label>Trades <input id="tk-mc-n" type="number" value="100" min="20" max="400" /></label>
+      </div>
+      <button class="arcade-btn primary" type="button" id="tk-mc-run">Run 200 simulations</button>
+      <canvas id="tk-mc-canvas" class="tk-mc-canvas" width="640" height="200"></canvas>
+      <div class="tk-risk-result tk-mc-result" id="tk-mc-result"></div>
+    </article>
+  `;
+}
+
+function toolkitMonteCarloRun() {
+  const canvas = document.getElementById("tk-mc-canvas");
+  const out = document.getElementById("tk-mc-result");
+  if (!canvas || !out) return;
+  const wr = Math.min(99, Math.max(1, Number(document.getElementById("tk-mc-wr")?.value || 52))) / 100;
+  const rr = Math.max(0.2, Number(document.getElementById("tk-mc-rr")?.value || 1.5));
+  const risk = Math.max(0.1, Math.min(25, Number(document.getElementById("tk-mc-risk")?.value || 1))) / 100;
+  const trades = Math.max(20, Math.min(400, Number(document.getElementById("tk-mc-n")?.value || 100)));
+
+  const sims = 200;
+  const curves = [];
+  const finals = [];
+  const maxDds = [];
+  let ruined = 0;
+  for (let s = 0; s < sims; s += 1) {
+    let bal = 100, peak = 100, maxDd = 0, dead = false;
+    const curve = [100];
+    for (let t = 0; t < trades; t += 1) {
+      bal *= Math.random() < wr ? (1 + risk * rr) : (1 - risk);
+      peak = Math.max(peak, bal);
+      maxDd = Math.max(maxDd, (peak - bal) / peak);
+      if (bal <= 50) dead = true;
+      curve.push(bal);
+    }
+    if (dead) ruined += 1;
+    curves.push(curve);
+    finals.push(bal);
+    maxDds.push(maxDd);
+  }
+  const sortedFinals = [...finals].sort((a, b) => a - b);
+  const sortedDds = [...maxDds].sort((a, b) => a - b);
+  const median = sortedFinals[Math.floor(sims / 2)];
+  const worst5 = sortedFinals[Math.floor(sims * 0.05)];
+  const medianDd = sortedDds[Math.floor(sims / 2)] * 100;
+  const ruinPct = (ruined / sims) * 100;
+
+  // draw: 60 sampled curves + the median path
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  const allVals = curves.flat();
+  const lo = Math.min(...allVals, 50), hi = Math.max(...allVals, 150);
+  const x = (t) => (t / trades) * (W - 8) + 4;
+  const y = (v) => H - 6 - ((v - lo) / (hi - lo || 1)) * (H - 12);
+  ctx.strokeStyle = "rgba(141,166,158,0.28)"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(4, y(100)); ctx.lineTo(W - 4, y(100)); ctx.stroke();
+  for (let s = 0; s < sims; s += Math.ceil(sims / 60)) {
+    ctx.beginPath();
+    curves[s].forEach((v, t) => { t === 0 ? ctx.moveTo(x(t), y(v)) : ctx.lineTo(x(t), y(v)); });
+    ctx.strokeStyle = finals[s] >= 100 ? "rgba(77,255,171,0.16)" : "rgba(255,95,87,0.16)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  const medianCurve = [];
+  for (let t = 0; t <= trades; t += 1) {
+    const vals = curves.map((c) => c[t]).sort((a, b) => a - b);
+    medianCurve.push(vals[Math.floor(sims / 2)]);
+  }
+  ctx.beginPath();
+  medianCurve.forEach((v, t) => { t === 0 ? ctx.moveTo(x(t), y(v)) : ctx.lineTo(x(t), y(v)); });
+  ctx.strokeStyle = "#f6c34e"; ctx.lineWidth = 2.2; ctx.stroke();
+
+  out.innerHTML = `
+    <div><span>Median result</span><strong class="${median >= 100 ? "" : "tk-neg"}">${median >= 100 ? "+" : ""}${(median - 100).toFixed(0)}%</strong></div>
+    <div><span>Worst 5%</span><strong class="${worst5 >= 100 ? "" : "tk-neg"}">${worst5 >= 100 ? "+" : ""}${(worst5 - 100).toFixed(0)}%</strong></div>
+    <div><span>Median max DD</span><strong>${medianDd.toFixed(0)}%</strong></div>
+    <div class="tk-risk-final ${ruinPct <= 5 ? "" : "warn"}"><span>Risk of ruin</span><strong>${ruinPct.toFixed(1)}%</strong></div>
+    <small>${ruinPct > 5
+      ? `⚠ ${ruinPct.toFixed(0)}% of futures lose half the account — this risk size is gambling with this edge. Cut risk per trade.`
+      : `Gold line = median path. Even winning systems spend a lot of time underwater — that's the drawdown you must be able to sit through.`}</small>
+  `;
+}
+
+/* ---------- consistency heatmap (Coach) ---------- */
+
+function toolkitActivityMap(days = 84) {
+  const map = {};
+  const bump = (ts) => {
+    if (!ts) return;
+    const d = new Date(ts);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    map[key] = (map[key] || 0) + 1;
+  };
+  (arcadeData().history || []).forEach((run) => bump(run.ts));
+  Object.values(progress().academy?.lessons || {}).forEach((lesson) => bump(lesson.passedAt));
+  return map;
+}
+
+function toolkitHeatmapCard() {
+  const map = toolkitActivityMap();
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const cells = [];
+  let activeDays = 0;
+  for (let i = 83; i >= 0; i -= 1) {
+    const d = new Date(today.getTime() - i * 86400000);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const count = map[key] || 0;
+    if (count > 0) activeDays += 1;
+    const lvl = count === 0 ? 0 : count <= 2 ? 1 : count <= 5 ? 2 : count <= 9 ? 3 : 4;
+    cells.push(`<i class="hm-l${lvl}" title="${d.toLocaleDateString()} · ${count} action${count === 1 ? "" : "s"}"></i>`);
+  }
+  const p = progress();
+  return `
+    <article class="panel tk-card">
+      <div class="tk-card-head">
+        <span class="tk-card-icon"><i data-lucide="calendar-heart"></i></span>
+        <h3>Consistency Heatmap</h3>
+        <span class="tk-plan-tag on">Active</span>
+      </div>
+      <p class="tk-copy">12 weeks of showing up. Pros aren't smarter — they're greener.</p>
+      <div class="tk-heatmap">${cells.join("")}</div>
+      <div class="tk-analytics-stats">
+        <div><span>Active days</span><strong>${activeDays}/84</strong></div>
+        <div><span>Streak</span><strong>🔥 ${p.streak || 0}</strong></div>
+        <div><span>Best streak</span><strong>${Math.max(p.topStreak || 0, p.streak || 0)}</strong></div>
+      </div>
+    </article>
+  `;
+}
+
+/* ---------- pre-session checklist (Coach) ---------- */
+
+const TK_CHECKLIST_RULES = [
+  "Read today's session brief",
+  "Max daily loss + stop time written down",
+  "News calendar checked for red folders",
+  "The ONE setup I'm allowed to trade is defined",
+  "Position size pre-computed from the stop",
+  "Yesterday's mistakes reviewed in the journal"
+];
+
+function toolkitChecklistState() {
+  const p = progress();
+  if (!p.toolkit || typeof p.toolkit !== "object") p.toolkit = {};
+  const today = new Date().toDateString();
+  if (!p.toolkit.checklist || p.toolkit.checklist.date !== today) {
+    p.toolkit.checklist = { date: today, checked: TK_CHECKLIST_RULES.map(() => false) };
+  }
+  if (typeof p.toolkit.fullDays !== "number") p.toolkit.fullDays = 0;
+  return p.toolkit.checklist;
+}
+
+function toolkitChecklistCard() {
+  const state = toolkitChecklistState();
+  const done = state.checked.filter(Boolean).length;
+  return `
+    <article class="panel tk-card">
+      <div class="tk-card-head">
+        <span class="tk-card-icon"><i data-lucide="clipboard-check"></i></span>
+        <h3>Pre-Session Checklist</h3>
+        <span class="tk-plan-tag on">${done}/${TK_CHECKLIST_RULES.length} today</span>
+      </div>
+      <p class="tk-copy">The 60 seconds that separate a session from a gamble. Resets every morning.</p>
+      <div class="tk-check-list">
+        ${TK_CHECKLIST_RULES.map((rule, index) => `
+          <label class="tk-check-item ${state.checked[index] ? "done" : ""}">
+            <input type="checkbox" data-tk-check="${index}" ${state.checked[index] ? "checked" : ""} />
+            <span>${rule}</span>
+          </label>
+        `).join("")}
+      </div>
+      <div class="tk-check-meter"><i style="width:${Math.round((done / TK_CHECKLIST_RULES.length) * 100)}%"></i></div>
+      <small class="tk-check-note">${done === TK_CHECKLIST_RULES.length ? `✅ Fully prepped — ${(progress().toolkit?.fullDays || 0)} perfect prep day${(progress().toolkit?.fullDays || 0) === 1 ? "" : "s"} logged.` : `Complete all ${TK_CHECKLIST_RULES.length} before you touch a chart.`}</small>
+    </article>
+  `;
+}
+
+/* ---------- trading playbook (Coach) ---------- */
+
+function toolkitPlaybook() {
+  const p = progress();
+  if (!Array.isArray(p.playbook)) p.playbook = [];
+  return p.playbook;
+}
+
+function toolkitPlaybookCard() {
+  const setups = toolkitPlaybook();
+  const rows = setups.length ? setups.map((setup) => `
+    <div class="tk-pb-setup">
+      <div class="tk-pb-top"><b>${setup.name}</b><span class="tk-pb-market">${setup.market || "ANY"}</span><span class="tk-pb-r">1:${setup.targetR || "2"}</span><button class="tk-resolve" type="button" data-tk-pb-del="${setup.id}" title="Delete">✕</button></div>
+      <small><b>Trigger:</b> ${setup.trigger}</small>
+      <small><b>Invalid when:</b> ${setup.invalid}</small>
+    </div>
+  `).join("") : `<p class="tk-empty">No setups yet. If it isn't written here, you're not allowed to trade it — that's the rule that ends impulse entries.</p>`;
+  return `
+    <article class="panel tk-card">
+      <div class="tk-card-head">
+        <span class="tk-card-icon"><i data-lucide="book-marked"></i></span>
+        <h3>Trading Playbook</h3>
+        <span class="tk-plan-tag on">${setups.length} setup${setups.length === 1 ? "" : "s"}</span>
+      </div>
+      <p class="tk-copy">Codify your setups like a prop desk. If it's not in the book, it's not a trade.</p>
+      <div class="tk-pb-list">${rows}</div>
+      <div class="tk-pb-form">
+        <div class="tk-pb-form-row">
+          <input id="tk-pb-name" type="text" maxlength="30" placeholder="Setup name (e.g. VWAP reclaim)" />
+          <input id="tk-pb-market" type="text" maxlength="8" placeholder="Mkt" />
+          <input id="tk-pb-r" type="number" min="0.5" step="0.5" placeholder="R" />
+        </div>
+        <input id="tk-pb-trigger" type="text" maxlength="90" placeholder="Trigger — what must happen before entry" />
+        <input id="tk-pb-invalid" type="text" maxlength="90" placeholder="Invalidation — what kills the idea" />
+        <button class="arcade-btn ghost cp-mini" type="button" id="tk-pb-add">+ Add to playbook</button>
+      </div>
+    </article>
+  `;
+}
+
+function toolkitPlaybookAdd() {
+  const grab = (id) => (document.getElementById(id)?.value || "").trim();
+  const name = grab("tk-pb-name");
+  const trigger = grab("tk-pb-trigger");
+  const invalid = grab("tk-pb-invalid");
+  if (!name || !trigger || !invalid) {
+    showToast("A setup needs a name, a trigger, and an invalidation.", "info");
+    return;
+  }
+  const setups = toolkitPlaybook();
+  if (setups.length >= 12) { showToast("Playbook is full (12) — a pro book is short. Delete one first.", "warning"); return; }
+  setups.push({
+    id: `pb_${Date.now()}`,
+    name, trigger, invalid,
+    market: grab("tk-pb-market").toUpperCase(),
+    targetR: Number(grab("tk-pb-r")) || 2
+  });
+  saveProgress();
+  renderToolkit();
+  showToast("Setup added to your playbook.", "success");
+}
+
 /* ---------- rendering ---------- */
 
 function toolkitLockedCard(feature, title, icon, copy) {
@@ -424,12 +729,23 @@ function renderToolkit() {
     </div>
     <div class="tk-grid">
       ${hasAccess("riskCalculator") ? toolkitRiskCard() : toolkitLockedCard("riskCalculator", "Risk Calculator", "calculator", "Size every position from the stop with futures tick presets — the discipline tool most traders skip.")}
+      ${hasAccess("expectancy") ? toolkitExpectancyCard() : toolkitLockedCard("expectancy", "Expectancy Engine", "sigma", "Win rate + R multiples → the one number that decides if your strategy makes money, per trade and per week.")}
+      ${hasAccess("sessionChecklist") ? toolkitChecklistCard() : toolkitLockedCard("sessionChecklist", "Pre-Session Checklist", "clipboard-check", "The 6-point pro prep ritual, reset daily — max loss written, news checked, size pre-computed, one setup defined.")}
+      ${hasAccess("monteCarlo") ? toolkitMonteCarloCard() : toolkitLockedCard("monteCarlo", "Monte Carlo Simulator", "waypoints", "Runs your strategy through 200 alternate futures and shows the drawdowns and risk-of-ruin hiding inside it.")}
       ${hasAccess("mistakeJournal") ? toolkitJournalCard() : toolkitLockedCard("mistakeJournal", "Mistake Journal", "notebook-pen", "Failed quizzes and arcade busts collect themselves into a re-drill list. Fix the one mistake costing you most.")}
+      ${hasAccess("playbook") ? toolkitPlaybookCard() : toolkitLockedCard("playbook", "Trading Playbook", "book-marked", "Codify your setups — name, trigger, invalidation, target R. If it's not in the book, it's not a trade.")}
       ${hasAccess("analytics") ? toolkitAnalyticsCard() : toolkitLockedCard("analytics", "Performance Analytics", "bar-chart-3", "Run-by-run XP graph, per-game records, and consistency stats across your whole arcade history.")}
+      ${hasAccess("consistencyHeatmap") ? toolkitHeatmapCard() : toolkitLockedCard("consistencyHeatmap", "Consistency Heatmap", "calendar-heart", "12 weeks of your activity as a GitHub-style heatmap — because showing up is the edge.")}
       ${hasAccess("weaknessRadar") ? toolkitWeaknessCard() : toolkitLockedCard("weaknessRadar", "Weakness Radar", "radar", "Detects overtrading, late entries, chasing, tilt, and sizing leaks from your play — then assigns the exact drill that fixes each one.")}
       ${hasAccess("aiReview") ? toolkitAiReviewCard() : toolkitLockedCard("aiReview", "AI Trade Review", "scan-search", "Log any real trade and get an instant desk-style breakdown: entry mistake, risk flaw, better alternative, letter grade.")}
       ${hasAccess("studyPlan") ? toolkitStudyPlanCard() : toolkitLockedCard("studyPlan", "Personal Study Plan", "map", "A 7-day plan generated weekly from your weakest tiers — lessons and run targets, checked off as you go.")}
     </div>
+    ${getUserPlan() === "coach" ? `
+    <button class="tk-elite-teaser" type="button" id="tk-elite-teaser">
+      <span>⚡ THE ELITE LAB</span>
+      <b>Risk Lab Pro · Tilt Guard · Session DNA · Monthly Report Card · Goal Engine</b>
+      <em>See what Elite unlocks →</em>
+    </button>` : ""}
   `;
 
   root.querySelectorAll("[data-tk-upgrade]").forEach((button) => {
@@ -472,5 +788,52 @@ function renderToolkit() {
     document.getElementById(id)?.addEventListener("input", toolkitRiskCompute);
   });
   toolkitRiskCompute();
+
+  // expectancy engine
+  ["tk-ex-wr", "tk-ex-win", "tk-ex-loss", "tk-ex-tpw"].forEach((id) => {
+    document.getElementById(id)?.addEventListener("input", toolkitExpectancyCompute);
+  });
+  root.querySelector("#tk-ex-mystats")?.addEventListener("click", () => {
+    const wr = toolkitArcadeWinRate();
+    if (wr === null) { showToast("Play at least 8 arcade runs first so there's a real win rate to use.", "info"); return; }
+    const input = document.getElementById("tk-ex-wr");
+    if (input) { input.value = wr; toolkitExpectancyCompute(); }
+  });
+  toolkitExpectancyCompute();
+
+  // monte carlo
+  root.querySelector("#tk-mc-run")?.addEventListener("click", toolkitMonteCarloRun);
+  if (document.getElementById("tk-mc-canvas")) toolkitMonteCarloRun();
+
+  // pre-session checklist
+  root.querySelectorAll("[data-tk-check]").forEach((input) => {
+    input.addEventListener("change", () => {
+      const p = progress();
+      const state = toolkitChecklistState();
+      const wasFull = state.checked.every(Boolean);
+      state.checked[Number(input.dataset.tkCheck)] = input.checked;
+      if (!wasFull && state.checked.every(Boolean)) {
+        p.toolkit.fullDays = (p.toolkit.fullDays || 0) + 1;
+        showToast("Fully prepped. This is what professional looks like. 🏁", "success");
+      }
+      saveProgress();
+      renderToolkit();
+    });
+  });
+
+  // playbook
+  root.querySelector("#tk-pb-add")?.addEventListener("click", toolkitPlaybookAdd);
+  root.querySelectorAll("[data-tk-pb-del]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const p = progress();
+      p.playbook = toolkitPlaybook().filter((setup) => setup.id !== button.dataset.tkPbDel);
+      saveProgress();
+      renderToolkit();
+    });
+  });
+
+  // elite lab teaser (coach plan only)
+  root.querySelector("#tk-elite-teaser")?.addEventListener("click", () => openUpgradeModal("riskLab"));
+
   if (window.lucide) window.lucide.createIcons();
 }

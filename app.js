@@ -1653,6 +1653,16 @@ function hasAccess(feature) {
     mistakeJournal: 2,
     analytics: 2,
     weaknessRadar: 2,
+    expectancy: 2,
+    monteCarlo: 2,
+    consistencyHeatmap: 2,
+    sessionChecklist: 2,
+    playbook: 2,
+    riskLab: 3,
+    tiltGuard: 3,
+    sessionDna: 3,
+    reportCard: 3,
+    goalEngine: 3,
     aiReview: 3,
     studyPlan: 3,
     eliteDashboard: 3,
@@ -1681,6 +1691,16 @@ function requiredPlanForFeature(feature) {
     mistakeJournal: "Coach",
     analytics: "Coach",
     weaknessRadar: "Coach",
+    expectancy: "Coach",
+    monteCarlo: "Coach",
+    consistencyHeatmap: "Coach",
+    sessionChecklist: "Coach",
+    playbook: "Coach",
+    riskLab: "Elite",
+    tiltGuard: "Elite",
+    sessionDna: "Elite",
+    reportCard: "Elite",
+    goalEngine: "Elite",
     aiReview: "Elite",
     studyPlan: "Elite",
     eliteDashboard: "Elite",
@@ -1696,8 +1716,8 @@ function openUpgradeModal(feature) {
   const required = requiredPlanForFeature(feature);
   const bullets = {
     Player: ["Full Academy: every tier across all 5 markets (190+ lessons)", "Unlimited Arcade plays — no daily cap", "Prop Firm Training Grounds: earn funded accounts and payouts (simulated dollars)", "Traders Dashboard: live market data, news, and AI session context"],
-    Coach: ["Trader Toolkit: risk calculator, mistake journal, performance analytics", "+25% XP on every Arcade run", "Weekly digest and coach-level review"],
-    Elite: ["Everything in Coach plus the personal Study Plan generator", "+50% XP on every Arcade run", "Elite dashboard, streak freeze bank, gold leaderboard identity"]
+    Coach: ["9-tool Trader Toolkit: Risk Calculator, Expectancy Engine, Monte Carlo Simulator, Trading Playbook, Pre-Session Checklist", "Weakness Radar, Mistake Journal, Analytics + 12-week Consistency Heatmap", "+25% XP on every Arcade run, weekly digest"],
+    Elite: ["The Elite Lab: Risk Lab Pro, Tilt Guard, Session DNA, Monthly Report Card, Goal Engine", "AI Trade Review + weekly Study Plan + Elite Command Center with live watchlist", "+50% XP on every run, streak freeze bank, gold leaderboard identity"]
   }[required];
   renderPaywallProgress();
   const title = gate.paywallModal.querySelector("h2");

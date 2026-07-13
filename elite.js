@@ -132,6 +132,183 @@ function eliteWinTrend() {
   return { current, previous, delta: current !== null && previous !== null ? current - previous : null, sampled: Math.min(20, history.length) };
 }
 
+/* ---------- ELITE LAB: risk lab pro ---------- */
+
+function eliteWinRateOverall() {
+  const history = eliteHistory();
+  if (history.length < 8) return null;
+  return (history.filter((run) => run.xp > 0).length / history.length) * 100;
+}
+
+function eliteMcScenario(wr, rr, riskPct, trades = 100, sims = 300) {
+  const finals = [], dds = [];
+  let ruined = 0;
+  for (let s = 0; s < sims; s += 1) {
+    let bal = 100, peak = 100, dd = 0;
+    for (let t = 0; t < trades; t += 1) {
+      bal *= Math.random() < wr ? (1 + riskPct * rr) : (1 - riskPct);
+      peak = Math.max(peak, bal);
+      dd = Math.max(dd, (peak - bal) / peak);
+    }
+    if (bal <= 50) ruined += 1;
+    finals.push(bal); dds.push(dd);
+  }
+  finals.sort((a, b) => a - b); dds.sort((a, b) => a - b);
+  return {
+    median: finals[Math.floor(sims / 2)] - 100,
+    dd: dds[Math.floor(sims / 2)] * 100,
+    ruin: (ruined / sims) * 100
+  };
+}
+
+function eliteRiskLabRows() {
+  const wrPct = eliteWinRateOverall();
+  const wr = (wrPct === null ? 52 : Math.max(25, Math.min(85, wrPct))) / 100;
+  const rr = 1.5;
+  const rows = [0.005, 0.01, 0.02, 0.03].map((risk) => ({ risk, ...eliteMcScenario(wr, rr, risk) }));
+  // recommended: best median growth among scenarios with ruin < 5%
+  const safe = rows.filter((row) => row.ruin < 5);
+  const pick = (safe.length ? safe : rows).reduce((best, row) => (row.median > best.median ? row : best));
+  // Kelly fraction for reference: f = wr - (1-wr)/rr
+  const kelly = Math.max(0, wr - (1 - wr) / rr) * 100;
+  return { rows, pick, wrUsed: Math.round(wr * 100), sampled: wrPct !== null, kelly };
+}
+
+/* ---------- ELITE LAB: tilt guard ---------- */
+
+function eliteTiltGuard() {
+  const history = [...eliteHistory()].sort((a, b) => a.ts - b.ts);
+  const dayAgo = Date.now() - 86400000;
+  const weekAgo = Date.now() - 7 * 86400000;
+  const week = history.filter((run) => run.ts >= weekAgo);
+  const signals = [];
+  let score = 0;
+
+  // loss clusters: 3+ consecutive busts in the last 7d
+  let cluster = 0, maxCluster = 0;
+  week.forEach((run) => {
+    cluster = run.xp === 0 ? cluster + 1 : 0;
+    maxCluster = Math.max(maxCluster, cluster);
+  });
+  if (maxCluster >= 3) { score += 30; signals.push(`A ${maxCluster}-loss streak without a break — the classic revenge-trading launchpad.`); }
+
+  // instant re-entry after a bust (<2 min) in the last 24h
+  const day = history.filter((run) => run.ts >= dayAgo);
+  let rapidAfterLoss = 0;
+  for (let i = 1; i < day.length; i += 1) {
+    if (day[i - 1].xp === 0 && day[i].ts - day[i - 1].ts < 2 * 60000) rapidAfterLoss += 1;
+  }
+  if (rapidAfterLoss >= 2) { score += 30; signals.push(`${rapidAfterLoss} instant re-entries within 2 minutes of a bust today — that's emotion clicking, not analysis.`); }
+
+  // late-night grinding (midnight–5am) this week
+  const nightRuns = week.filter((run) => { const h = new Date(run.ts).getHours(); return h >= 0 && h < 5; }).length;
+  if (nightRuns >= 4) { score += 20; signals.push(`${nightRuns} runs between midnight and 5am this week — fatigue is a position-size multiplier for mistakes.`); }
+
+  // tilt telemetry from the games themselves
+  const p = progress();
+  const tiltEvents = (Array.isArray(p.telemetry) ? p.telemetry : []).filter((entry) => entry.type === "tilt" && entry.ts >= weekAgo).length;
+  if (tiltEvents >= 2) { score += 20; signals.push(`The games flagged ${tiltEvents} tilt patterns this week (revenge flips after losses).`); }
+
+  score = Math.min(100, score);
+  const status = score >= 60 ? "TILTED" : score >= 30 ? "WARM" : "COOL";
+  return { score, status, signals, sampled: week.length };
+}
+
+/* ---------- ELITE LAB: session DNA ---------- */
+
+function eliteSessionDna() {
+  const history = eliteHistory();
+  const windows = [
+    { key: "morning", label: "Morning", range: "5a–11a", test: (h) => h >= 5 && h < 11 },
+    { key: "midday", label: "Midday", range: "11a–4p", test: (h) => h >= 11 && h < 16 },
+    { key: "evening", label: "Evening", range: "4p–10p", test: (h) => h >= 16 && h < 22 },
+    { key: "night", label: "Late night", range: "10p–5a", test: (h) => h >= 22 || h < 5 }
+  ].map((win) => {
+    const runs = history.filter((run) => win.test(new Date(run.ts).getHours()));
+    const wins = runs.filter((run) => run.xp > 0).length;
+    return { ...win, runs: runs.length, winRate: runs.length >= 4 ? Math.round((wins / runs.length) * 100) : null };
+  });
+  const rated = windows.filter((win) => win.winRate !== null);
+  const best = rated.length ? rated.reduce((a, b) => (b.winRate > a.winRate ? b : a)) : null;
+  const worst = rated.length > 1 ? rated.reduce((a, b) => (b.winRate < a.winRate ? b : a)) : null;
+  return { windows, best, worst, sampled: history.length };
+}
+
+/* ---------- ELITE LAB: monthly report card ---------- */
+
+function eliteMonthStats(offsetMonths = 0) {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth() - offsetMonths, 1).getTime();
+  const end = new Date(now.getFullYear(), now.getMonth() - offsetMonths + 1, 1).getTime();
+  const p = progress();
+  const runs = eliteHistory().filter((run) => run.ts >= start && run.ts < end);
+  const lessons = Object.values(p.academy?.lessons || {}).filter((lesson) => lesson.passedAt >= start && lesson.passedAt < end);
+  const activeDays = new Set([...runs.map((r) => new Date(r.ts).getDate()), ...lessons.map((l) => new Date(l.passedAt).getDate())]).size;
+  const xp = runs.reduce((sum, run) => sum + Math.max(0, run.xp), 0) + lessons.reduce((sum, lesson) => sum + (lesson.xpEarned || 0), 0);
+  const wins = runs.filter((run) => run.xp > 0).length;
+  const leaks = (Array.isArray(p.telemetry) ? p.telemetry : []).filter((entry) => entry.ts >= start && entry.ts < end).length;
+  return { runs: runs.length, lessons: lessons.length, activeDays, xp, winRate: runs.length >= 6 ? (wins / runs.length) * 100 : null, leaks };
+}
+
+function eliteGradeLetter(pct) {
+  return pct >= 90 ? "A" : pct >= 75 ? "B" : pct >= 55 ? "C" : pct >= 35 ? "D" : "F";
+}
+
+function eliteReportCard() {
+  const now = new Date();
+  const daysElapsed = Math.max(1, now.getDate());
+  const month = eliteMonthStats(0);
+  const prior = eliteMonthStats(1);
+  const rows = [
+    { label: "Consistency", detail: `${month.activeDays}/${daysElapsed} days active`, pct: Math.min(100, (month.activeDays / daysElapsed) * 118) },
+    { label: "Volume", detail: `${month.runs} runs · ${month.lessons} lessons`, pct: Math.min(100, ((month.runs + month.lessons * 2) / (daysElapsed * 2.4)) * 100) },
+    { label: "Accuracy", detail: month.winRate === null ? "needs 6+ runs" : `${Math.round(month.winRate)}% win rate`, pct: month.winRate === null ? null : Math.min(100, month.winRate * 1.45) },
+    { label: "Discipline", detail: `${month.leaks} leak${month.leaks === 1 ? "" : "s"} logged`, pct: month.runs < 4 ? null : Math.max(0, 100 - (month.leaks / Math.max(1, month.runs)) * 130) },
+    { label: "Growth", detail: prior.xp > 0 ? `${month.xp.toLocaleString()} vs ${prior.xp.toLocaleString()} XP` : `${month.xp.toLocaleString()} XP this month`, pct: prior.xp > 0 ? Math.min(100, (month.xp / prior.xp) * 68) : (month.xp > 0 ? 70 : null) }
+  ].map((row) => ({ ...row, grade: row.pct === null ? "—" : eliteGradeLetter(row.pct) }));
+  const graded = rows.filter((row) => row.pct !== null);
+  const gpa = graded.length ? graded.reduce((sum, row) => sum + row.pct, 0) / graded.length : null;
+  return { rows, gpa, overall: gpa === null ? "—" : eliteGradeLetter(gpa), monthLabel: now.toLocaleDateString(undefined, { month: "long", year: "numeric" }) };
+}
+
+/* ---------- ELITE LAB: goal engine ---------- */
+
+function eliteGoalWeekKey() {
+  const now = new Date();
+  const start = new Date(now);
+  start.setDate(now.getDate() - now.getDay());
+  return start.toDateString();
+}
+
+function eliteGoals() {
+  const p = progress();
+  if (!p.eliteGoals || p.eliteGoals.weekOf !== eliteGoalWeekKey()) {
+    const lastWeekXp = eliteXpByDay(7, 7).reduce((sum, value) => sum + value, 0);
+    p.eliteGoals = {
+      weekOf: eliteGoalWeekKey(),
+      xp: Math.max(500, Math.round((lastWeekXp * 1.1) / 50) * 50),
+      lessons: 5,
+      runs: 15
+    };
+    saveProgress();
+  }
+  return p.eliteGoals;
+}
+
+function eliteGoalProgress() {
+  const goals = eliteGoals();
+  const weekAgo = Date.now() - 7 * 86400000;
+  const p = progress();
+  const xp = eliteXpByDay(7).reduce((sum, value) => sum + value, 0);
+  const lessons = Object.values(p.academy?.lessons || {}).filter((lesson) => lesson.passedAt >= weekAgo).length;
+  const runs = eliteHistory().filter((run) => run.ts >= weekAgo).length;
+  return [
+    { key: "xp", label: "XP banked", value: xp, target: goals.xp },
+    { key: "lessons", label: "Lessons passed", value: lessons, target: goals.lessons },
+    { key: "runs", label: "Arcade runs", value: runs, target: goals.runs }
+  ];
+}
+
 /* ---------- render ---------- */
 
 function eliteXpChip(value) {
@@ -149,9 +326,13 @@ function renderEliteDashboard() {
         <h2>The desk the top 1% open first.</h2>
         <p class="elite-locked-sub">One screen with everything an Elite trader runs their day from:</p>
         <div class="elite-locked-grid">
+          <div>🧪 <b>Risk Lab Pro</b><span>Monte Carlo optimizer that finds YOUR ideal risk % from your real win rate</span></div>
+          <div>🧯 <b>Tilt Guard</b><span>Detects revenge trading, loss chains, and fatigue grinding before they cost you</span></div>
+          <div>🧬 <b>Session DNA</b><span>The hours your brain actually wins — scheduled from your data</span></div>
+          <div>📋 <b>Monthly Report Card</b><span>A–F grades on consistency, accuracy, discipline, and growth</span></div>
+          <div>🎯 <b>Goal Engine</b><span>Weekly targets that auto-set from your performance +10%</span></div>
           <div>📡 <b>Live Watchlist</b><span>Up to 5 real instruments with live quotes & sparklines</span></div>
           <div>🛡 <b>Discipline Score</b><span>A weekly A–F grade computed from your actual behavior</span></div>
-          <div>🗺 <b>Today's Game Plan</b><span>Your lesson, drill, and challenges — auto-built every morning</span></div>
           <div>📈 <b>Weekly Report</b><span>XP by day, win-rate trend, and your weakest game called out</span></div>
           <div>🧠 <b>AI Trade Review</b><span>Grade real trade ideas before you ever risk a dollar</span></div>
           <div>📚 <b>Study Plan</b><span>A fresh weekly curriculum aimed at your weakest tiers</span></div>
@@ -327,6 +508,121 @@ function renderEliteDashboard() {
           </section>
         </div>
       </div>
+
+      <header class="elite-lab-head">
+        <div>
+          <p class="arcade-kicker gold-kicker">// THE ELITE LAB</p>
+          <h2>Analysis nobody else gets.</h2>
+          <p class="arcade-sub">Five systems that study <b>you</b> — your risk, your psychology, your hours, your month.</p>
+        </div>
+        <span class="elite-member-chip">⚡ LAB</span>
+      </header>
+
+      <div class="elite-lab-grid">
+        ${(() => {
+          const lab = eliteRiskLabRows();
+          return `
+          <section class="elite-card elab-wide">
+            <p class="tdash-card-kicker gold">🧪 RISK LAB PRO</p>
+            <p class="elite-discipline-note">${lab.sampled
+              ? `Simulated with <b>your real ${lab.wrUsed}% win rate</b> at 1:1.5 over 100 trades × 300 futures per risk size.`
+              : `Calibrating on a 52% baseline until you've logged 8+ runs — then it uses <b>your</b> real win rate.`}</p>
+            <div class="elab-risk-table">
+              <div class="elab-risk-row head"><span>Risk / trade</span><span>Median</span><span>Max DD</span><span>Ruin</span></div>
+              ${lab.rows.map((row) => `
+                <div class="elab-risk-row ${row === lab.pick ? "pick" : ""} ${row.ruin >= 5 ? "danger" : ""}">
+                  <span>${(row.risk * 100).toFixed(1)}%${row === lab.pick ? " ★" : ""}</span>
+                  <span class="${row.median >= 0 ? "up" : "down"}">${row.median >= 0 ? "+" : ""}${row.median.toFixed(0)}%</span>
+                  <span>${row.dd.toFixed(0)}%</span>
+                  <span class="${row.ruin >= 5 ? "down" : ""}">${row.ruin.toFixed(1)}%</span>
+                </div>
+              `).join("")}
+            </div>
+            <p class="elab-verdict">★ Optimal for your edge: <b>${(lab.pick.risk * 100).toFixed(1)}% risk per trade</b> — best growth with ruin under control. Theoretical Kelly is ${lab.kelly.toFixed(1)}%, but pros trade a fraction of Kelly for exactly the drawdowns you see above.</p>
+          </section>`;
+        })()}
+
+        ${(() => {
+          const tilt = eliteTiltGuard();
+          return `
+          <section class="elite-card">
+            <p class="tdash-card-kicker gold">🧯 TILT GUARD</p>
+            <div class="elab-tilt">
+              <div class="elab-tilt-dial ${tilt.status.toLowerCase()}">
+                <b>${tilt.score}</b>
+                <span>${tilt.status}</span>
+              </div>
+              <div class="elab-tilt-body">
+                ${tilt.signals.length
+                  ? tilt.signals.map((signal) => `<p>⚠ ${signal}</p>`).join("")
+                  : `<p>${tilt.sampled < 5 ? "Watching your sessions for revenge patterns, loss chains, and fatigue grinding." : "No tilt signals this week. Calm is a trading edge — protect it."}</p>`}
+                ${tilt.status === "TILTED" ? `<p class="elab-tilt-order"><b>Desk order:</b> step away for 15 minutes. The market will still be there — your edge won't be if you keep clicking.</p>` : ""}
+              </div>
+            </div>
+          </section>`;
+        })()}
+
+        ${(() => {
+          const dna = eliteSessionDna();
+          const maxRuns = Math.max(1, ...dna.windows.map((win) => win.runs));
+          return `
+          <section class="elite-card">
+            <p class="tdash-card-kicker gold">🧬 SESSION DNA</p>
+            <div class="elab-dna">
+              ${dna.windows.map((win) => `
+                <div class="elab-dna-row">
+                  <span class="elab-dna-label">${win.label}<small>${win.range}</small></span>
+                  <div class="elab-dna-track"><i style="width:${Math.round((win.runs / maxRuns) * 100)}%" class="${dna.best && win.key === dna.best.key ? "best" : ""}"></i></div>
+                  <b>${win.winRate === null ? `${win.runs} runs` : `${win.winRate}%`}</b>
+                </div>
+              `).join("")}
+            </div>
+            <p class="elab-verdict">${dna.best
+              ? `You're sharpest in the <b>${dna.best.label.toLowerCase()}</b> (${dna.best.winRate}% WR)${dna.worst && dna.worst.key !== dna.best.key ? ` and weakest ${dna.worst.label.toLowerCase()} (${dna.worst.winRate}%) — schedule your real sessions accordingly` : ""}.`
+              : `Play 4+ runs in a time window and this tells you when your brain actually wins.`}</p>
+          </section>`;
+        })()}
+
+        ${(() => {
+          const report = eliteReportCard();
+          return `
+          <section class="elite-card">
+            <p class="tdash-card-kicker gold">📋 REPORT CARD · ${report.monthLabel.toUpperCase()}</p>
+            <div class="elab-report">
+              ${report.rows.map((row) => `
+                <div class="elab-report-row">
+                  <span>${row.label}</span>
+                  <small>${row.detail}</small>
+                  <b class="elab-grade g-${row.grade.replace("—", "none")}">${row.grade}</b>
+                </div>
+              `).join("")}
+            </div>
+            <div class="elab-gpa">Overall <b class="elab-grade g-${report.overall.replace("—", "none")}">${report.overall}</b></div>
+          </section>`;
+        })()}
+
+        ${(() => {
+          const goals = eliteGoals();
+          const rows = eliteGoalProgress();
+          return `
+          <section class="elite-card">
+            <p class="tdash-card-kicker gold">🎯 GOAL ENGINE · THIS WEEK</p>
+            <div class="elab-goals">
+              ${rows.map((row) => {
+                const pct = Math.min(100, Math.round((row.value / Math.max(1, row.target)) * 100));
+                return `
+                  <div class="elab-goal">
+                    <div class="elab-goal-top"><span>${row.label}</span><b>${row.value.toLocaleString()} / <input type="number" class="elab-goal-input" data-elite-goal="${row.key}" value="${row.target}" min="1" /></b></div>
+                    <div class="elab-goal-track"><i style="width:${pct}%" class="${pct >= 100 ? "hit" : ""}"></i></div>
+                  </div>`;
+              }).join("")}
+            </div>
+            <p class="elab-verdict">${rows.every((row) => row.value >= row.target)
+              ? `All three goals hit. That's a professional week — raise the bar.`
+              : `Targets auto-set from last week +10%. Edit the numbers to make them yours.`}</p>
+          </section>`;
+        })()}
+      </div>
     </div>
   `;
 
@@ -341,6 +637,15 @@ function renderEliteDashboard() {
   root.querySelector("#elite-watch-add")?.addEventListener("click", () => { eliteWatchAdd(input.value); input.value = ""; });
   input?.addEventListener("keydown", (event) => {
     if (event.key === "Enter") { eliteWatchAdd(input.value); input.value = ""; }
+  });
+  root.querySelectorAll("[data-elite-goal]").forEach((goalInput) => {
+    goalInput.addEventListener("change", () => {
+      const goals = eliteGoals();
+      const value = Math.max(1, Math.round(Number(goalInput.value) || 1));
+      goals[goalInput.dataset.eliteGoal] = value;
+      saveProgress();
+      renderEliteDashboard();
+    });
   });
   if (window.lucide) window.lucide.createIcons();
 }
