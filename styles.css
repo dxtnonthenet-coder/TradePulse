@@ -23022,3 +23022,126 @@ body .google-auth-button .g-label {
   .feature-tour *, .feature-tour { animation: none !important; }
   .tv-equity polyline, .tv-tile svg polyline { stroke-dashoffset: 0; }
 }
+
+/* ============================================================
+   FREE-PLAN GATING — plan-locked tiers + arcade daily plays
+   ============================================================ */
+
+.academy-tier.plan-locked {
+  border-color: rgba(246, 195, 78, 0.28);
+}
+
+.academy-tier.plan-locked .trail-node {
+  cursor: pointer;
+}
+
+.academy-tier-plannote {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  margin: 4px 0 0;
+  padding: 11px 14px;
+  border: 1px solid rgba(246, 195, 78, 0.4);
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(246, 195, 78, 0.1), rgba(246, 195, 78, 0.03));
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.academy-tier-plannote:hover {
+  border-color: rgba(246, 195, 78, 0.7);
+  background: linear-gradient(90deg, rgba(246, 195, 78, 0.16), rgba(246, 195, 78, 0.05));
+}
+
+.academy-tier-plannote svg,
+.academy-tier-plannote i {
+  width: 15px;
+  height: 15px;
+  color: var(--gold);
+  flex: none;
+}
+
+.academy-tier-plannote b {
+  color: var(--gold);
+}
+
+.academy-continue.upsell {
+  border-color: rgba(246, 195, 78, 0.5);
+  background: linear-gradient(90deg, rgba(246, 195, 78, 0.14), rgba(246, 195, 78, 0.04));
+  color: var(--text);
+}
+
+.academy-continue.upsell b {
+  color: var(--gold);
+}
+
+.academy-continue.upsell svg,
+.academy-continue.upsell i {
+  color: var(--gold);
+}
+
+.path-node.plan-locked .path-node-ring {
+  border-color: rgba(246, 195, 78, 0.4);
+}
+
+.path-node.plan-locked .path-node-ring svg,
+.path-node.plan-locked .path-node-ring i {
+  color: var(--gold);
+}
+
+/* arcade free-plays strip */
+.arcade-freeplays {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  margin: 2px 0 12px;
+  padding: 9px 14px;
+  border: 1px solid rgba(246, 195, 78, 0.4);
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(246, 195, 78, 0.1), rgba(246, 195, 78, 0.02));
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.arcade-freeplays:hover {
+  border-color: rgba(246, 195, 78, 0.75);
+}
+
+.arcade-freeplays svg,
+.arcade-freeplays i {
+  width: 14px;
+  height: 14px;
+  color: var(--gold);
+  flex: none;
+}
+
+.arcade-freeplays b {
+  color: var(--gold);
+}
+
+.arcade-freeplays em {
+  font-style: normal;
+  color: var(--gold);
+}
+
+@media (max-width: 640px) {
+  .arcade-freeplays {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .academy-tier-plannote {
+    font-size: 0.74rem;
+  }
+}

@@ -1631,6 +1631,7 @@ function hasAccess(feature) {
   const required = {
     paid: 1,
     unlimited: 1,
+    fullAcademy: 1,
     tradersDashboard: 1,
     propfirm: 1,
     coachReview: 2,
@@ -1658,6 +1659,7 @@ function requiredPlanForFeature(feature) {
   return {
     paid: "Player",
     unlimited: "Player",
+    fullAcademy: "Player",
     tradersDashboard: "Player",
     propfirm: "Player",
     coachReview: "Coach",
@@ -1683,7 +1685,7 @@ function requiredPlanForFeature(feature) {
 function openUpgradeModal(feature) {
   const required = requiredPlanForFeature(feature);
   const bullets = {
-    Player: ["Prop Firm Training Grounds: earn funded accounts and payouts (simulated dollars)", "Traders Dashboard: live market data, news, and AI session context", "XP, streaks, levels, and leaderboards"],
+    Player: ["Full Academy: every tier across all 5 markets (190+ lessons)", "Unlimited Arcade plays — no daily cap", "Prop Firm Training Grounds: earn funded accounts and payouts (simulated dollars)", "Traders Dashboard: live market data, news, and AI session context"],
     Coach: ["Trader Toolkit: risk calculator, mistake journal, performance analytics", "+25% XP on every Arcade run", "Weekly digest and coach-level review"],
     Elite: ["Everything in Coach plus the personal Study Plan generator", "+50% XP on every Arcade run", "Elite dashboard, streak freeze bank, gold leaderboard identity"]
   }[required];

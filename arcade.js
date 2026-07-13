@@ -471,6 +471,44 @@ function arcadePlanBoost() {
   return plan === "elite" ? 1.5 : plan === "coach" ? 1.25 : 1;
 }
 
+/* ---------- free-plan daily play cap ---------- */
+
+const ARCADE_FREE_DAILY_PLAYS = 5;
+
+function arcadeUnlimited() {
+  return typeof hasAccess === "function" && hasAccess("unlimited");
+}
+
+function arcadeLocalDayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function arcadeDayPlays() {
+  const data = arcadeData();
+  const today = arcadeLocalDayKey();
+  if (!data.dayPlays || data.dayPlays.date !== today) data.dayPlays = { date: today, used: 0 };
+  return data.dayPlays;
+}
+
+function arcadeFreePlaysLeft() {
+  return Math.max(0, ARCADE_FREE_DAILY_PLAYS - Number(arcadeDayPlays().used || 0));
+}
+
+function arcadeConsumeFreePlay() {
+  if (arcadeUnlimited()) return true;
+  if (arcadeFreePlaysLeft() <= 0) {
+    if (typeof showToast === "function") showToast(`You've used today's ${ARCADE_FREE_DAILY_PLAYS} free plays. Any plan unlocks unlimited runs.`, "warning");
+    if (typeof openUpgradeModal === "function") openUpgradeModal("unlimited");
+    return false;
+  }
+  arcadeDayPlays().used += 1;
+  saveProgress();
+  const left = arcadeFreePlaysLeft();
+  if (left === 1 && typeof showToast === "function") showToast("1 free play left today — plans unlock unlimited runs.", "info");
+  return true;
+}
+
 function arcadeAwardXp(gameId, amount, score) {
   const clean = Math.max(0, Math.round(amount));
   const data = arcadeData();
@@ -567,6 +605,7 @@ function openArcadeGame(gameId) {
     return;
   }
   if (arcadeGateGuest()) return;
+  if (!arcadeConsumeFreePlay()) return;
   if (arcadeState.cleanup) arcadeState.cleanup();
   const overlay = ensureArcadeOverlay();
   overlay.classList.remove("hidden");
@@ -2152,12 +2191,21 @@ function renderArcade() {
         <div class="boost"><strong>${boostGame ? arcadeGameMeta(boostGame).title : "—"}</strong><span>2x XP this week · ${arcadeWeeklyResetLabel()}</span></div>
       </div>
     </div>
+    ${arcadeUnlimited() ? "" : `
+    <button class="arcade-freeplays" type="button" id="arcade-freeplays">
+      <i data-lucide="zap"></i>
+      <span>FREE PLAN · <b>${arcadeFreePlaysLeft()}/${ARCADE_FREE_DAILY_PLAYS}</b> plays left today</span>
+      <em>Unlock unlimited →</em>
+    </button>`}
     ${typeof trackBarMarkup === "function" ? trackBarMarkup() : ""}
     ${sessionBriefMarkup(typeof currentTrackId === "function" ? currentTrackId() : "futures", { compact: true })}
     <div class="arcade-games-grid">
       ${arcadeVisibleGames().map((game) => arcadeCardMarkup(game)).join("")}
     </div>
   `;
+  root.querySelector("#arcade-freeplays")?.addEventListener("click", () => {
+    if (typeof openUpgradeModal === "function") openUpgradeModal("unlimited");
+  });
   bindArcadeCards(root);
   if (typeof bindTrackControls === "function") bindTrackControls(root);
   if (typeof renderTrainer === "function") renderTrainer();

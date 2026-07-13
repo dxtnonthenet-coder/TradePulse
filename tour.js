@@ -12,7 +12,7 @@ const TOUR_SLIDES = [
     id: "academy",
     kicker: "LEARN",
     title: "The Academy",
-    plan: { label: "FREE", cls: "free" },
+    plan: { label: "TIER 1 FREE", cls: "free" },
     body: "190+ bite-size lessons take you from “what’s a candlestick?” to reading markets like a pro. Every lesson pays out XP, badges, and practice dollars.",
     visual: `
       <div class="tv-path">
@@ -29,7 +29,7 @@ const TOUR_SLIDES = [
     id: "arcade",
     kicker: "PRACTICE",
     title: "The Arcade",
-    plan: { label: "FREE", cls: "free" },
+    plan: { label: "5 FREE PLAYS / DAY", cls: "free" },
     body: "Trading games built on real historical price action — call the next move, dodge the traps, beat the clock. Wins sharpen your instincts and pay practice dollars.",
     visual: `
       <div class="tv-chart">

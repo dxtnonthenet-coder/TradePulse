@@ -1779,6 +1779,15 @@ function academyTierUnlocked(tierIndex) {
   return stats.done >= stats.needed;
 }
 
+/* Free plan = Tier 1 of every track only. Any paid plan unlocks all tiers. */
+function academyPlanGated() {
+  return !(typeof hasAccess === "function" && hasAccess("fullAcademy"));
+}
+
+function academyTierPlanLocked(tierIndex) {
+  return tierIndex >= 1 && academyPlanGated();
+}
+
 function academyOverallStats() {
   const lessons = academyTiers.flatMap((tier) => tier.lessons);
   const done = lessons.filter((lesson) => academyLessonPassed(lesson.id)).length;
@@ -1787,7 +1796,7 @@ function academyOverallStats() {
 
 function academyNextLesson() {
   for (let i = 0; i < academyTiers.length; i += 1) {
-    if (!academyTierUnlocked(i)) continue;
+    if (!academyTierUnlocked(i) || academyTierPlanLocked(i)) continue;
     const lesson = academyTiers[i].lessons.find((item) => !academyLessonPassed(item.id));
     if (lesson) return { tier: academyTiers[i], lesson };
   }
@@ -1819,7 +1828,8 @@ function renderAcademy() {
   const next = academyNextLesson();
 
   const tiersMarkup = academyTiers.map((tier, index) => {
-    const unlocked = academyTierUnlocked(index);
+    const planLocked = academyTierPlanLocked(index);
+    const unlocked = academyTierUnlocked(index) && !planLocked;
     const stats = academyTierStats(tier);
     const complete = stats.done >= stats.total;
     const firstOpenIndex = tier.lessons.findIndex((lesson) => !academyLessonPassed(lesson.id));
@@ -1834,7 +1844,7 @@ function renderAcademy() {
           const side = lessonIndex % 2 === 0 ? "left" : "right";
           return `
             <div class="trail-step ${side} ${status}">
-              <button class="trail-node" type="button" data-academy-lesson="${lesson.id}" ${status === "locked" ? "disabled" : ""} aria-label="${lesson.title}">
+              <button class="trail-node" type="button" data-academy-lesson="${lesson.id}" ${status === "locked" && !planLocked ? "disabled" : ""} aria-label="${lesson.title}">
                 <i data-lucide="${status === "locked" ? "lock" : passed ? "check" : "candlestick-chart"}"></i>
                 ${isCurrent ? `<span class="trail-flag">START</span>` : ""}
               </button>
@@ -1850,10 +1860,12 @@ function renderAcademy() {
 
     const lockNote = unlocked
       ? ""
-      : `<p class="academy-tier-locknote"><i data-lucide="lock"></i> Pass ${academyTierStats(academyTiers[index - 1]).needed} lessons in ${academyTiers[index - 1].title} to unlock.</p>`;
+      : planLocked
+        ? `<button class="academy-tier-plannote" type="button" data-academy-upsell><i data-lucide="lock"></i> <span>Tier ${index + 1} is part of the full curriculum. <b>Unlock every tier with any plan →</b></span></button>`
+        : `<p class="academy-tier-locknote"><i data-lucide="lock"></i> Pass ${academyTierStats(academyTiers[index - 1]).needed} lessons in ${academyTiers[index - 1].title} to unlock.</p>`;
 
     return `
-      <article class="academy-tier ${unlocked ? "unlocked" : "locked"} ${complete ? "complete" : ""}">
+      <article class="academy-tier ${unlocked ? "unlocked" : "locked"} ${planLocked ? "plan-locked" : ""} ${complete ? "complete" : ""}">
         <header class="academy-tier-head">
           <span class="academy-tier-icon"><i data-lucide="${tier.icon}"></i></span>
           <div class="academy-tier-title">
@@ -1884,7 +1896,11 @@ function renderAcademy() {
       <div class="academy-summary-progress">
         <strong>${overall.done}/${overall.total} lessons</strong>
         <div class="academy-summary-bar"><i style="width:${overallPercent}%"></i></div>
-        ${next ? `<button class="academy-continue" type="button" data-academy-lesson="${next.lesson.id}"><i data-lucide="play"></i> ${overall.done ? "Continue" : "Start"}: ${next.lesson.title}</button>` : `<span class="academy-complete-note">Academy complete — go dominate the arena.</span>`}
+        ${next
+          ? `<button class="academy-continue" type="button" data-academy-lesson="${next.lesson.id}"><i data-lucide="play"></i> ${overall.done ? "Continue" : "Start"}: ${next.lesson.title}</button>`
+          : academyPlanGated() && overall.done < overall.total
+            ? `<button class="academy-continue upsell" type="button" data-academy-upsell><i data-lucide="lock"></i> Tier 1 complete — unlock every tier with any plan</button>`
+            : `<span class="academy-complete-note">Academy complete — go dominate the arena.</span>`}
       </div>
     </div>
     <div class="academy-tiers">${tiersMarkup}</div>
@@ -1893,6 +1909,11 @@ function renderAcademy() {
 
   root.querySelectorAll("[data-academy-lesson]").forEach((button) => {
     button.addEventListener("click", () => openAcademyLesson(button.dataset.academyLesson));
+  });
+  root.querySelectorAll("[data-academy-upsell]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (typeof openUpgradeModal === "function") openUpgradeModal("fullAcademy");
+    });
   });
   if (typeof bindTrackControls === "function") bindTrackControls(root);
 
@@ -1909,13 +1930,14 @@ function renderHomeAcademyPath() {
   const overallPercent = overall.total ? Math.round((overall.done / overall.total) * 100) : 0;
 
   const nodes = academyTiers.map((tier, index) => {
-    const unlocked = academyTierUnlocked(index);
+    const planLocked = academyTierPlanLocked(index);
+    const unlocked = academyTierUnlocked(index) && !planLocked;
     const stats = academyTierStats(tier);
     const complete = stats.done >= stats.total;
     const current = unlocked && !complete && (!next || next.tier.id === tier.id || stats.done > 0);
     const status = complete ? "complete" : !unlocked ? "locked" : current && next && next.tier.id === tier.id ? "current" : "open";
     return `
-      <button class="path-node ${status}" type="button" data-path-tier="${tier.id}" ${unlocked ? "" : "disabled"}>
+      <button class="path-node ${status} ${planLocked ? "plan-locked" : ""}" type="button" data-path-tier="${tier.id}" ${unlocked || planLocked ? "" : "disabled"}>
         <span class="path-node-ring">
           <i data-lucide="${complete ? "check" : unlocked ? tier.icon : "lock"}"></i>
         </span>
@@ -1946,6 +1968,10 @@ function renderHomeAcademyPath() {
       <button class="academy-continue big" type="button" id="home-academy-continue">
         <i data-lucide="play"></i>
         <span>${overall.done ? "Continue" : "Start"}: <b>${next.lesson.title}</b> · +${next.lesson.xp} XP</span>
+      </button>` : academyPlanGated() && overall.done < overall.total ? `
+      <button class="academy-continue big upsell" type="button" id="home-academy-upsell">
+        <i data-lucide="lock"></i>
+        <span>Tier 1 complete — <b>unlock every tier with any plan</b></span>
       </button>` : `<p class="academy-complete-note">Academy complete — the arcade is your proving ground now.</p>`}
   `;
 
@@ -1957,6 +1983,9 @@ function renderHomeAcademyPath() {
   });
   root.querySelector("#home-academy-continue")?.addEventListener("click", () => {
     if (next) openAcademyLesson(next.lesson.id);
+  });
+  root.querySelector("#home-academy-upsell")?.addEventListener("click", () => {
+    if (typeof openUpgradeModal === "function") openUpgradeModal("fullAcademy");
   });
   if (window.lucide) window.lucide.createIcons();
   if (typeof homeMotion === "function") homeMotion();
@@ -2104,6 +2133,13 @@ function ensureAcademyModal() {
 function openAcademyLesson(lessonId) {
   const found = findAcademyLesson(lessonId);
   if (!found) return;
+  // Hard gate: tiers past Tier 1 require a paid plan
+  const gateIndex = academyTiers.indexOf(found.tier);
+  if (academyTierPlanLocked(gateIndex)) {
+    if (typeof showToast === "function") showToast(`Tier ${gateIndex + 1} unlocks with any plan.`, "info");
+    if (typeof openUpgradeModal === "function") openUpgradeModal("fullAcademy");
+    return;
+  }
   academyModalState.lessonId = lessonId;
   academyModalState.slideIndex = 0;
   academyModalState.phase = "slides";
