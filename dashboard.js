@@ -531,7 +531,7 @@ function renderTradersDashboard() {
             <li>📰 Headlines that can move your market, on one screen</li>
             <li>⚡ Trade Pulse & Market Flow — know when the tape is worth trading</li>
           </ul>
-          <button class="primary-button" type="button" id="tdash-unlock">Unlock with any plan — from $24.99/mo</button>
+          <button class="primary-button" type="button" id="tdash-unlock">Unlock with any plan — from $3.99/mo</button>
           <small>Included in Player, Coach, and Elite.</small>
         </div>
       </div>

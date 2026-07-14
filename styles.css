@@ -24285,3 +24285,111 @@ body .google-auth-button .g-label {
   .rp-market-ticker { font-size: 1.3rem; }
   .rp-market-go { opacity: 1; transform: none; }
 }
+
+/* ============================================================
+   STRATEGY — Setup Hunter + live formation + tell/trap
+   ============================================================ */
+
+/* "watch it form" button in the win/loss example headers */
+.st-play {
+  margin-left: auto;
+  font: 800 0.68rem/1 inherit;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  background: var(--green);
+  border: none;
+  padding: 6px 11px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.1s;
+}
+.st-example.loss .st-play { background: var(--red); color: #fff; }
+.st-play:hover { filter: brightness(1.1); }
+.st-play:active { transform: translateY(1px); }
+.st-play:disabled { opacity: 0.6; cursor: default; }
+
+/* big "hunt live setups" CTA banner in the detail view */
+.st-hunt-banner {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin: 16px 0 18px;
+  padding: 18px 20px;
+  border: 1px solid rgba(23, 201, 100, 0.4);
+  border-radius: 15px;
+  background:
+    radial-gradient(120% 160% at 100% 0%, rgba(23, 201, 100, 0.14), transparent 60%),
+    rgba(23, 201, 100, 0.05);
+}
+.st-hunt-copy { flex: 1 1 300px; }
+.st-hunt-eyebrow { font-size: 0.6rem; font-weight: 900; letter-spacing: 0.14em; color: var(--green); }
+.st-hunt-copy b { display: block; font-size: 1.15rem; margin: 4px 0 6px; letter-spacing: -0.01em; }
+.st-hunt-copy p { margin: 0; font-size: 0.84rem; color: var(--muted); line-height: 1.55; max-width: 60ch; }
+.st-hunt-go { flex: 0 0 auto; white-space: nowrap; }
+
+/* tell vs trap side by side */
+.st-tell { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 4px 0 18px; }
+.st-tell-col { padding: 13px 15px; border-radius: 12px; border: 1px solid var(--line); }
+.st-tell-col.real { border-color: rgba(23, 201, 100, 0.4); background: rgba(23, 201, 100, 0.05); }
+.st-tell-col.trap { border-color: rgba(255, 95, 87, 0.4); background: rgba(255, 95, 87, 0.05); }
+.st-tell-col span { font-size: 0.62rem; font-weight: 900; letter-spacing: 0.1em; }
+.st-tell-col.real span { color: var(--green); }
+.st-tell-col.trap span { color: var(--red); }
+.st-tell-col p { margin: 8px 0 0; font-size: 0.82rem; color: var(--text); line-height: 1.55; }
+
+/* the Setup Hunter desk (rendered into the Chart Replay view) */
+.sth { display: grid; gap: 14px; }
+.sth-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.sth-top h2 { margin: 4px 0 0; font-size: clamp(1.5rem, 3vw, 2rem); }
+.sth-top h2 small { font-size: 0.9rem; color: var(--muted); font-weight: 600; }
+.sth-score { display: flex; gap: 10px; }
+.sth-score > div { display: grid; gap: 2px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255, 255, 255, 0.02); text-align: right; }
+.sth-score span { font-size: 0.52rem; font-weight: 800; letter-spacing: 0.1em; color: var(--muted); }
+.sth-score b { font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.sth-score b small { font-size: 0.7rem; color: var(--muted); font-weight: 600; }
+.sth canvas { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 12px; background: linear-gradient(180deg, #0a1119, #081018); }
+
+.sth-coach {
+  padding: 13px 16px; border-radius: 11px; font-size: 0.86rem; line-height: 1.5;
+  border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); color: var(--text);
+  transition: background 0.2s, border-color 0.2s;
+}
+.sth-coach i { color: var(--gold); font-style: italic; }
+.sth-coach b.up { color: var(--green); }
+.sth-coach b.down { color: var(--red); }
+.sth-coach.warn { border-color: rgba(246, 195, 78, 0.5); background: rgba(246, 195, 78, 0.08); }
+.sth-coach.decide { border-color: rgba(246, 195, 78, 0.65); background: rgba(246, 195, 78, 0.1); }
+.sth-coach.good { border-color: rgba(23, 201, 100, 0.55); background: rgba(23, 201, 100, 0.09); }
+.sth-coach.bad { border-color: rgba(255, 95, 87, 0.55); background: rgba(255, 95, 87, 0.09); }
+
+.sth-action { display: flex; gap: 12px; align-items: center; min-height: 46px; flex-wrap: wrap; }
+.sth-hint { font-size: 0.78rem; color: var(--muted); font-style: italic; }
+.sth-btn {
+  font: 900 0.9rem/1 inherit; letter-spacing: 0.03em; padding: 13px 24px; border-radius: 11px;
+  border: 1px solid var(--line); cursor: pointer; transition: filter 0.15s, transform 0.1s; color: var(--ink);
+}
+.sth-btn:active { transform: translateY(1px); }
+.sth-btn.take { background: var(--green); border-color: transparent; }
+.sth-btn.skip { background: rgba(255, 255, 255, 0.06); color: var(--text); }
+.sth-btn.next { background: var(--gold); border-color: transparent; }
+.sth-btn:hover { filter: brightness(1.1); }
+.sth-exit { justify-self: start; align-self: start; }
+
+.sth .up { color: var(--green); }
+.sth .down { color: var(--red); }
+
+/* hunter scorecard */
+.sth-summary { display: flex; align-items: center; gap: 18px; margin: 6px 0 4px; }
+.sth-summary h2 { margin: 0 0 4px; font-size: clamp(1.4rem, 3vw, 1.9rem); }
+.sth-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 8px 0 16px; }
+.sth-stats > div { display: grid; gap: 3px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 11px; background: rgba(255, 255, 255, 0.02); }
+.sth-stats span { font-size: 0.52rem; font-weight: 800; letter-spacing: 0.09em; color: var(--muted); }
+.sth-stats b { font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+.sth-done-ctas { display: flex; gap: 10px; flex-wrap: wrap; }
+
+@media (max-width: 640px) {
+  .st-tell { grid-template-columns: 1fr; }
+  .sth-stats { grid-template-columns: 1fr 1fr; }
+  .sth-btn { flex: 1 1 auto; }
+}

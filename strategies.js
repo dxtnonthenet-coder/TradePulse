@@ -242,12 +242,13 @@ function stratSeries(spec, seedStr) {
   return bars;
 }
 
-function stratDraw(canvas, spec, mode, seedStr) {
+function stratDraw(canvas, spec, mode, seedStr, opts = {}) {
   const ctx = canvas.getContext("2d");
   const W = canvas.width, H = canvas.height;
   const padR = 86, padT = 18, padB = 14;
   ctx.clearRect(0, 0, W, H);
   const bars = stratSeries(spec, seedStr + mode);
+  const visible = opts.visible == null ? bars.length : opts.visible;
   const levels = [spec.stop, spec.target, spec.hline?.p, ...(spec.zone || [])].filter((v) => v !== undefined);
   const lo = Math.min(...bars.map((b) => b.l), ...levels) - 0.15;
   const hi = Math.max(...bars.map((b) => b.h), ...levels) + 0.15;
@@ -272,6 +273,7 @@ function stratDraw(canvas, spec, mode, seedStr) {
   }
   // candles
   bars.forEach((bar, i) => {
+    if (i >= visible) return;
     const x = i * bw + bw / 2;
     const up = bar.c >= bar.o;
     ctx.strokeStyle = up ? "#4dffab" : "#ff5f57";
@@ -287,24 +289,30 @@ function stratDraw(canvas, spec, mode, seedStr) {
     ctx.fillStyle = color; ctx.font = "800 11px Arial"; ctx.textAlign = "left";
     ctx.fillText(label, W - padR + 6, y(price) + 4);
   };
-  line(spec.target, "#4dffab", "TARGET");
-  line(spec.stop, "#ff5f57", "STOP");
-  // entry marker
-  const ex = spec.entry[0] * bw + bw / 2;
-  ctx.fillStyle = "#f6c34e";
-  ctx.beginPath();
-  ctx.moveTo(ex, y(spec.entry[1]) + 16); ctx.lineTo(ex - 7, y(spec.entry[1]) + 27); ctx.lineTo(ex + 7, y(spec.entry[1]) + 27);
-  ctx.closePath(); ctx.fill();
-  ctx.font = "800 11px Arial"; ctx.textAlign = "center";
-  ctx.fillText("ENTRY", ex, y(spec.entry[1]) + 40);
-  // exit marker
-  const xx = spec.exit * bw + bw / 2;
-  const exitPrice = mode === "win" ? spec.target : spec.stop;
-  ctx.fillStyle = mode === "win" ? "#4dffab" : "#ff5f57";
-  ctx.beginPath(); ctx.arc(xx, y(exitPrice), 5, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = "#06120c"; ctx.lineWidth = 1.6; ctx.stroke();
-  ctx.textAlign = "center";
-  ctx.fillText(mode === "win" ? "TARGET HIT" : "STOPPED −1R", xx, y(exitPrice) - 10);
+  const showEntry = !opts.hideMarkers && (visible >= bars.length || visible > spec.entry[0]);
+  const showExit = !opts.hideMarkers && (visible >= bars.length || visible > spec.exit);
+  if (showEntry) {
+    line(spec.target, "#4dffab", "TARGET");
+    line(spec.stop, "#ff5f57", "STOP");
+    // entry marker
+    const ex = spec.entry[0] * bw + bw / 2;
+    ctx.fillStyle = "#f6c34e";
+    ctx.beginPath();
+    ctx.moveTo(ex, y(spec.entry[1]) + 16); ctx.lineTo(ex - 7, y(spec.entry[1]) + 27); ctx.lineTo(ex + 7, y(spec.entry[1]) + 27);
+    ctx.closePath(); ctx.fill();
+    ctx.font = "800 11px Arial"; ctx.textAlign = "center";
+    ctx.fillText("ENTRY", ex, y(spec.entry[1]) + 40);
+  }
+  if (showExit) {
+    // exit marker
+    const xx = spec.exit * bw + bw / 2;
+    const exitPrice = mode === "win" ? spec.target : spec.stop;
+    ctx.fillStyle = mode === "win" ? "#4dffab" : "#ff5f57";
+    ctx.beginPath(); ctx.arc(xx, y(exitPrice), 5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#06120c"; ctx.lineWidth = 1.6; ctx.stroke();
+    ctx.textAlign = "center";
+    ctx.fillText(mode === "win" ? "TARGET HIT" : "STOPPED −1R", xx, y(exitPrice) - 10);
+  }
   ctx.textAlign = "left";
 }
 
@@ -326,8 +334,8 @@ function renderStrategies() {
     <div class="st-head">
       <div>
         <p class="arcade-kicker">// STRATEGY LIBRARY</p>
-        <h2>No strategy? Pick one. <span class="ds-green">Steal ours.</span></h2>
-        <p class="arcade-sub">Nine proven playbooks organized by the kind of trader you want to be — each with an annotated A+ winner <b>and an honest loss</b>, because knowing how a strategy loses is what keeps you funded.</p>
+        <h2>No strategy? Pick one. <span class="ds-green">Learn to spot it live.</span></h2>
+        <p class="arcade-sub">Nine proven playbooks by trader type. Each one shows you the annotated A+ winner, the honest loss, and then drops you into the <b>Setup Hunter</b> — a live chart that plays out and makes you call it: real setup, or trap? Spot the winners, dodge the false signals.</p>
       </div>
     </div>
     <div class="st-filters">
@@ -343,7 +351,7 @@ function renderStrategies() {
           <h3>${s.name}</h3>
           <p>${s.idea.slice(0, 92)}…</p>
           <div class="st-chips"><span>${s.tf}</span><span>WR ${s.stats.wr}</span><span>${s.stats.rr}</span><span>${s.difficulty}</span></div>
-          <em>${locked ? "Unlock with any plan →" : "View A+ setup & the loss →"}</em>
+          <em>${locked ? "Unlock with any plan →" : "Learn it + hunt setups live →"}</em>
         </button>`;
       }).join("")}
     </div>
@@ -366,6 +374,7 @@ function renderStrategies() {
 function stratRenderDetail(root, id) {
   const s = STRATEGY_LIB.find((item) => item.id === id);
   if (!s || !stratUnlocked(s)) { stratState.open = null; renderStrategies(); return; }
+  const trapTell = (s.loss.lesson.split(". ")[0] || s.loss.lesson).replace(/\.$/, "") + ".";
   root.innerHTML = `
     <button class="arcade-btn ghost st-back" type="button" id="st-back">← All strategies</button>
     <div class="st-detail-head">
@@ -376,6 +385,16 @@ function stratRenderDetail(root, id) {
       </div>
     </div>
     <p class="st-idea">${s.idea}</p>
+
+    <div class="st-hunt-banner">
+      <div class="st-hunt-copy">
+        <span class="st-hunt-eyebrow">🎯 THE MAIN EVENT</span>
+        <b>Hunt live ${s.name} setups</b>
+        <p>A chart plays out in real time. When a setup forms, you make the call — is it the <b>real thing</b> to take, or a <b>trap</b> to skip? Real setups pay in R; false signals cost you, just like the market. Graded live.</p>
+      </div>
+      <button class="primary-button st-hunt-go" type="button" id="st-hunt">▶ Start Setup Hunter</button>
+    </div>
+
     <div class="st-rules">
       <div><b>📍 ENTRY</b><p>${s.rules.entry}</p></div>
       <div><b>🛑 STOP</b><p>${s.rules.stop}</p></div>
@@ -388,17 +407,23 @@ function stratRenderDetail(root, id) {
       <div><span>FREQUENCY</span><b>${s.stats.freq}</b></div>
     </div>
     <div class="st-example win">
-      <div class="st-example-head"><b>✅ THE A+ SETUP</b><span>this is what you're waiting for</span></div>
+      <div class="st-example-head"><b>✅ THE A+ SETUP</b><button class="st-play" type="button" id="st-play-win">▶ Watch it form live</button></div>
       <canvas id="st-win" width="720" height="270"></canvas>
       <p class="st-caption">${s.win.caption}</p>
     </div>
     <div class="st-example loss">
-      <div class="st-example-head"><b>❌ WHEN IT LOSES</b><span>every strategy loses — this is how this one does it</span></div>
+      <div class="st-example-head"><b>❌ WHEN IT LOSES</b><button class="st-play" type="button" id="st-play-loss">▶ Watch the trap</button></div>
       <canvas id="st-loss" width="720" height="270"></canvas>
       <p class="st-caption lesson">${s.loss.lesson}</p>
     </div>
+
+    <div class="st-tell">
+      <div class="st-tell-col real"><span>✅ THE TELL THAT CONFIRMS IT</span><p>${s.win.caption}</p></div>
+      <div class="st-tell-col trap"><span>⚠️ THE TRAP THAT FAKES IT</span><p>${trapTell}</p></div>
+    </div>
+
     <div class="st-ctas">
-      <button class="primary-button" type="button" id="st-practice">⏪ Practice this in Chart Replay</button>
+      <button class="primary-button" type="button" id="st-hunt2">🎯 Practice in the Setup Hunter</button>
       <button class="arcade-btn ghost" type="button" id="st-journal">📓 Add to my Playbook</button>
     </div>
     <p class="fp-foot">Charts are illustrative recreations of the pattern — not real quotes, signals, or advice.</p>
@@ -406,7 +431,10 @@ function stratRenderDetail(root, id) {
   stratDraw(root.querySelector("#st-win"), s.win, "win", s.id);
   stratDraw(root.querySelector("#st-loss"), s.loss, "loss", s.id);
   root.querySelector("#st-back").addEventListener("click", () => { stratState.open = null; renderStrategies(); });
-  root.querySelector("#st-practice").addEventListener("click", () => navigateTo("replay"));
+  root.querySelector("#st-play-win").addEventListener("click", (e) => stratAnimate(root.querySelector("#st-win"), s.win, "win", s.id, e.currentTarget));
+  root.querySelector("#st-play-loss").addEventListener("click", (e) => stratAnimate(root.querySelector("#st-loss"), s.loss, "loss", s.id, e.currentTarget));
+  root.querySelector("#st-hunt").addEventListener("click", () => stratLaunchHunter(s));
+  root.querySelector("#st-hunt2").addEventListener("click", () => stratLaunchHunter(s));
   root.querySelector("#st-journal").addEventListener("click", () => {
     if (typeof hasAccess === "function" && !hasAccess("playbook")) { openUpgradeModal("playbook"); return; }
     const setups = typeof toolkitPlaybook === "function" ? toolkitPlaybook() : null;
@@ -417,4 +445,269 @@ function stratRenderDetail(root, id) {
     saveProgress();
     showToast(`"${s.name}" added to your Trading Playbook. 📖`, "success");
   });
+}
+
+/* ---------- animated "watch it form" (still chart, played live) ---------- */
+
+function stratAnimate(canvas, spec, mode, seedStr, btn) {
+  if (!canvas) return;
+  if (canvas._stratTimer) { clearTimeout(canvas._stratTimer); canvas._stratTimer = null; }
+  const total = 46;
+  let visible = Math.max(6, spec.entry[0] - 12);
+  if (btn) { btn.dataset.label = btn.dataset.label || btn.textContent; btn.textContent = "● Playing…"; btn.disabled = true; }
+  const step = () => {
+    stratDraw(canvas, spec, mode, seedStr, { visible });
+    if (visible >= total) {
+      canvas._stratTimer = null;
+      if (btn) { btn.textContent = "↻ Replay it"; btn.disabled = false; }
+      return;
+    }
+    // slow down through the decisive bars around entry/exit so the eye catches them
+    const near = Math.abs(visible - spec.entry[0]) < 3 || Math.abs(visible - spec.exit) < 3;
+    visible += 1;
+    canvas._stratTimer = setTimeout(step, near ? 150 : 62);
+  };
+  step();
+}
+
+/* ============================================================
+   SETUP HUNTER — a live chart that plays out and makes the user
+   call each opportunity: real setup (take it) or false signal
+   (skip it). Renders into the Chart Replay view.
+   ============================================================ */
+
+const stratHunter = {
+  active: null, rounds: [], i: 0, phase: "play", vis: 0, timer: null, taken: null,
+  score: { r: 0, correct: 0, spotted: 0, avoided: 0 }
+};
+
+function stratHunterBuild(s) {
+  // 5 opportunities: real A+ setups and look-alike traps, shuffled and
+  // seed-varied so every session reads differently.
+  const kinds = ["real", "trap", "real", "trap", "real"];
+  for (let i = kinds.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [kinds[i], kinds[j]] = [kinds[j], kinds[i]];
+  }
+  const base = Date.now();
+  return kinds.map((kind, idx) => {
+    const spec = kind === "real" ? s.win : s.loss;
+    const rMult = Math.round((Math.abs(spec.target - spec.entry[1]) / Math.max(0.05, Math.abs(spec.entry[1] - spec.stop))) * 10) / 10;
+    return { kind, spec, mode: kind === "real" ? "win" : "loss", seedStr: `${s.id}-${idx}-${base}`, entry: spec.entry[0], exit: spec.exit, rMult };
+  });
+}
+
+function stratLaunchHunter(s) {
+  if (!stratUnlocked(s)) { openUpgradeModal("strategies"); return; }
+  stratHunter.active = s;
+  stratHunter.rounds = stratHunterBuild(s);
+  stratHunter.i = 0;
+  stratHunter.score = { r: 0, correct: 0, spotted: 0, avoided: 0 };
+  if (typeof navigateTo === "function") navigateTo("replay");
+  else stratHunterRender();
+}
+
+function stratHunterStop() {
+  if (stratHunter.timer) { clearTimeout(stratHunter.timer); stratHunter.timer = null; }
+}
+
+function stratHunterExit() {
+  stratHunterStop();
+  stratHunter.active = null;
+  if (stratState.open) { navigateTo("strategies"); return; }
+  renderReplay();
+}
+
+function stratHunterAlive() {
+  return stratHunter.active && (typeof state === "undefined" || state.currentView === "replay");
+}
+
+function stratHunterRender() {
+  const root = document.getElementById("replay-root");
+  if (!root) return;
+  stratHunterStop();
+  if (stratHunter.i >= stratHunter.rounds.length) { stratHunterScorecard(root); return; }
+  const round = stratHunter.rounds[stratHunter.i];
+  stratHunter.phase = "play";
+  stratHunter.taken = null;
+  stratHunter.vis = Math.max(6, round.entry - 16);
+  stratHunterFrame();
+  stratHunter.timer = setTimeout(stratHunterPlayStep, 420);
+}
+
+function stratHunterFrame() {
+  const root = document.getElementById("replay-root");
+  if (!root) return;
+  const s = stratHunter.active;
+  const sc = stratHunter.score;
+  const done = stratHunter.i + (stratHunter.phase === "reveal" ? 1 : 0);
+  root.innerHTML = `
+    <div class="sth">
+      <div class="sth-top">
+        <div>
+          <p class="arcade-kicker">// SETUP HUNTER · <span class="ds-green">${s.name}</span></p>
+          <h2>Setup ${stratHunter.i + 1}<small>/${stratHunter.rounds.length}</small></h2>
+        </div>
+        <div class="sth-score">
+          <div><span>SCORE</span><b class="${sc.r >= 0 ? "up" : "down"}">${sc.r >= 0 ? "+" : ""}${sc.r.toFixed(1)}R</b></div>
+          <div><span>RIGHT CALLS</span><b>${sc.correct}<small>/${done}</small></b></div>
+        </div>
+      </div>
+      <canvas id="sth-canvas" width="920" height="360"></canvas>
+      <div class="sth-coach" id="sth-coach"></div>
+      <div class="sth-action" id="sth-action"></div>
+      <button class="arcade-btn ghost sth-exit" type="button" id="sth-exit">✕ Exit hunter</button>
+    </div>`;
+  root.querySelector("#sth-exit").addEventListener("click", stratHunterExit);
+  stratHunterPaint();
+  stratHunterPhaseUi();
+}
+
+function stratHunterPaint() {
+  const canvas = document.getElementById("sth-canvas");
+  if (!canvas) return;
+  const round = stratHunter.rounds[stratHunter.i];
+  stratDraw(canvas, round.spec, round.mode, round.seedStr, {
+    visible: stratHunter.vis,
+    hideMarkers: stratHunter.phase !== "reveal"
+  });
+}
+
+function stratHunterPlayStep() {
+  if (!stratHunterAlive()) { stratHunterStop(); return; }
+  const round = stratHunter.rounds[stratHunter.i];
+  if (stratHunter.vis >= round.entry) {
+    // trigger bar is printing — freeze and make them call it
+    stratHunter.vis = round.entry + 1;
+    stratHunter.phase = "decide";
+    stratHunterFrame();
+    return;
+  }
+  stratHunter.vis += 1;
+  stratHunterPaint();
+  stratHunterPhaseUi();
+  stratHunter.timer = setTimeout(stratHunterPlayStep, 300);
+}
+
+function stratHunterPhaseUi() {
+  const coach = document.getElementById("sth-coach");
+  const action = document.getElementById("sth-action");
+  if (!coach || !action) return;
+  const s = stratHunter.active;
+  const round = stratHunter.rounds[stratHunter.i];
+  if (stratHunter.phase === "play") {
+    const forming = stratHunter.vis >= round.entry - 6;
+    coach.className = "sth-coach" + (forming ? " warn" : "");
+    coach.innerHTML = forming
+      ? `⚑ <b>Something's forming.</b> Get ready — is this a real ${s.name} setup, or a trap?`
+      : `🔍 Reading the tape… watching for a ${s.name} trigger.`;
+    action.innerHTML = `<span class="sth-hint">Chart is playing live…</span>`;
+  } else if (stratHunter.phase === "decide") {
+    coach.className = "sth-coach decide";
+    coach.innerHTML = `⚑ <b>Your call.</b> The trigger is: <i>${s.rules.entry}</i> — is it really there?`;
+    action.innerHTML = `
+      <button class="sth-btn take" type="button" id="sth-take">✅ TAKE IT</button>
+      <button class="sth-btn skip" type="button" id="sth-skip">⏭ SKIP IT</button>`;
+    action.querySelector("#sth-take").addEventListener("click", () => stratHunterDecide(true));
+    action.querySelector("#sth-skip").addEventListener("click", () => stratHunterDecide(false));
+  } else if (stratHunter.phase === "reveal") {
+    const isReal = round.kind === "real";
+    const take = stratHunter.taken;
+    const correct = (isReal && take) || (!isReal && !take);
+    let msg;
+    if (isReal && take) msg = `✅ <b>Nailed it.</b> Real ${s.name} — it held the trigger and ran to target. <b class="up">+${round.rMult}R</b>. ${round.spec.caption}`;
+    else if (isReal && !take) msg = `🟡 <b>That was the real one.</b> You skipped a clean <b class="up">+${round.rMult}R</b> A+ setup. Missing winners is how you stay flat. ${round.spec.caption}`;
+    else if (!isReal && take) msg = `❌ <b>Trap.</b> It looked like the setup, but the trigger never truly confirmed — <b class="down">−1R</b>. ${round.spec.lesson}`;
+    else msg = `✅ <b>Great skip.</b> That was a false signal — taking it costs <b class="down">−1R</b>. Skipping traps IS the edge. ${round.spec.lesson}`;
+    coach.className = "sth-coach " + (correct ? "good" : "bad");
+    coach.innerHTML = msg;
+    const last = stratHunter.i >= stratHunter.rounds.length - 1;
+    action.innerHTML = `<button class="sth-btn next" type="button" id="sth-next">${last ? "See results →" : "Next setup →"}</button>`;
+    action.querySelector("#sth-next").addEventListener("click", () => { stratHunter.i += 1; stratHunterRender(); });
+  }
+}
+
+function stratHunterDecide(take) {
+  stratHunterStop();
+  const round = stratHunter.rounds[stratHunter.i];
+  const isReal = round.kind === "real";
+  const correct = (isReal && take) || (!isReal && !take);
+  const sc = stratHunter.score;
+  if (correct) sc.correct += 1;
+  if (isReal && take) { sc.r += round.rMult; sc.spotted += 1; }
+  else if (!isReal && take) { sc.r -= 1; }
+  else if (!isReal && !take) { sc.avoided += 1; }
+  sc.r = Math.round(sc.r * 10) / 10;
+  stratHunter.taken = take;
+  stratHunter.phase = "reveal";
+  if (typeof arcadeSound === "function") arcadeSound(correct ? "win" : "flip");
+  stratHunterFrame();
+  stratHunterRevealAnim();
+}
+
+function stratHunterRevealAnim() {
+  if (!stratHunterAlive()) { stratHunterStop(); return; }
+  const round = stratHunter.rounds[stratHunter.i];
+  const end = Math.min(46, round.exit + 3);
+  if (stratHunter.vis >= end) { stratHunterStop(); return; }
+  stratHunter.vis += 1;
+  stratHunterPaint();
+  stratHunter.timer = setTimeout(stratHunterRevealAnim, 95);
+}
+
+function stratHunterScorecard(root) {
+  const s = stratHunter.active;
+  const sc = stratHunter.score;
+  const total = stratHunter.rounds.length;
+  const acc = Math.round((sc.correct / total) * 100);
+  const grade = acc >= 90 ? "A" : acc >= 70 ? "B" : acc >= 50 ? "C" : acc >= 30 ? "D" : "F";
+  const p = typeof progress === "function" ? progress() : null;
+  const xp = Math.max(12, sc.correct * 9 + Math.max(0, Math.round(sc.r)) * 6);
+  if (p) {
+    p.xp = (p.xp || 0) + xp;
+    if (typeof dailyBump === "function") dailyBump("runs");
+    if (typeof saveProgress === "function") saveProgress();
+    if (typeof updateProgressUi === "function") updateProgressUi();
+  }
+  const verdict = acc >= 70
+    ? "That's a hunter's eye — you're taking winners and dodging traps."
+    : acc >= 50
+      ? "Getting there. The tells are starting to click — run it again."
+      : "The traps got you. Study the tell vs the trap, then hunt again.";
+  root.innerHTML = `
+    <div class="sth sth-done">
+      <p class="arcade-kicker">// HUNT COMPLETE · <span class="ds-green">${s.name}</span></p>
+      <div class="sth-summary">
+        <div class="ai-grade grade-${grade}">${grade}</div>
+        <div>
+          <h2>${acc}% correct · <span class="${sc.r >= 0 ? "up" : "down"}">${sc.r >= 0 ? "+" : ""}${sc.r.toFixed(1)}R</span></h2>
+          <p class="arcade-sub">${verdict} · +${xp} XP</p>
+        </div>
+      </div>
+      <div class="sth-stats">
+        <div><span>A+ SETUPS TAKEN</span><b>${sc.spotted}</b></div>
+        <div><span>TRAPS AVOIDED</span><b>${sc.avoided}</b></div>
+        <div><span>RIGHT CALLS</span><b>${sc.correct}/${total}</b></div>
+        <div><span>NET R</span><b class="${sc.r >= 0 ? "up" : "down"}">${sc.r >= 0 ? "+" : ""}${sc.r.toFixed(1)}</b></div>
+      </div>
+      <div class="sth-done-ctas">
+        <button class="primary-button" type="button" id="sth-again">🎯 Hunt again</button>
+        <button class="arcade-btn ghost" type="button" id="sth-strat">← Back to strategy</button>
+        <button class="arcade-btn ghost" type="button" id="sth-free">Free Chart Replay →</button>
+      </div>
+    </div>`;
+  root.querySelector("#sth-again").addEventListener("click", () => stratLaunchHunter(s));
+  root.querySelector("#sth-strat").addEventListener("click", () => { stratHunter.active = null; stratState.open = s.id; navigateTo("strategies"); });
+  root.querySelector("#sth-free").addEventListener("click", () => { stratHunter.active = null; renderReplay(); });
+}
+
+/* ---------- route the Setup Hunter through the Chart Replay view ---------- */
+
+if (typeof renderReplay === "function") {
+  const _stratReplayBase = renderReplay;
+  renderReplay = function () {
+    if (stratHunter.active) { stratHunterRender(); return; }
+    return _stratReplayBase.apply(this, arguments);
+  };
+  window.renderReplay = renderReplay;
 }

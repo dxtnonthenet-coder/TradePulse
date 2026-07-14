@@ -6201,10 +6201,10 @@ function profileAccess() {
     return {
       title: `${p.plan} Plan`,
       detail: p.plan === "Elite"
-        ? "Launch deal: $69.99/month active access, normally $139.99"
+        ? "$11.99/month active access"
         : p.plan === "Coach"
-          ? "Launch deal: $44.99/month active access, normally $74.99"
-          : "$24.99/month active access"
+          ? "$6.99/month active access"
+          : "$3.99/month active access"
     };
   }
 
@@ -7382,7 +7382,7 @@ document.getElementById("invite-form").addEventListener("submit", async (event) 
     details: {
       trialStartedAt: p.trialStartedAt,
       trialEndsAt: p.trialEndsAt,
-      autoBillingAmount: "$24.99/month"
+      autoBillingAmount: "$3.99/month"
     }
   });
   updateProgressUi();

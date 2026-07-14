@@ -237,6 +237,7 @@ const pfSim = {
   instId: "ES",
   price: 0, shown: 0, anchor: 0,
   vol: 1, mom: 0,
+  regime: "range", drift: 0, volRegime: 1, // fresh per-session character
   candles: [], candle: null,
   candleMs: 2600, tickMs: 130, speed: 1,
   timer: null, raf: null, lastFrame: 0,
@@ -252,13 +253,28 @@ function pfInstrument() {
 function pfSimSeed(instId) {
   const inst = PF_INSTRUMENTS[instId] || PF_INSTRUMENTS.ES;
   pfSim.instId = inst.id;
-  // wander the session open a little so every session feels like a new day
-  pfSim.price = inst.start * (1 + (Math.random() - 0.5) * 0.012);
+
+  // Every session is a brand-new, freshly generated day — different open level,
+  // a randomized market regime (trend up / trend down / range), and its own
+  // volatility character so no two loads look or trade alike.
+  pfSim.price = inst.start * (1 + (Math.random() - 0.5) * 0.06); // open wanders up to ±3%
   pfSim.price = Math.round(pfSim.price / inst.tick) * inst.tick;
   pfSim.shown = pfSim.price;
   pfSim.anchor = pfSim.price;
-  pfSim.vol = inst.vol;
-  pfSim.mom = 0;
+
+  // pick this session's regime
+  const roll = Math.random();
+  const regime = roll < 0.38 ? "up" : roll < 0.76 ? "down" : "range";
+  const trendDir = regime === "up" ? 1 : regime === "down" ? -1 : 0;
+  const trendStrength = regime === "range" ? 0 : 0.6 + Math.random() * 1.6;
+  pfSim.regime = regime;
+  // per-tick anchor bias that carries the session's trend (0 for range days)
+  pfSim.drift = trendDir * trendStrength * inst.vol * inst.tick * 0.05;
+  // calm day vs wild day — scales the whole session's volatility
+  pfSim.volRegime = 0.7 + Math.random() * 1.7; // 0.7x .. 2.4x
+  pfSim.vol = inst.vol * pfSim.volRegime;
+  pfSim.mom = (Math.random() - 0.5) * inst.vol * 2.2; // random opening momentum
+
   pfSim.candles = [];
   pfSim.candle = null;
   pfSim.position = null;
@@ -282,15 +298,16 @@ function pfSimTick(warmup = false) {
   const inst = pfInstrument();
   // regime shocks: occasional momentum bursts create real-looking runs
   if (Math.random() < 0.018) pfSim.mom += (Math.random() - 0.5) * pfSim.vol * 2.4;
-  // slow anchor drift = larger structure / trend
-  pfSim.anchor += pfGauss() * inst.vol * inst.tick * 0.18;
+  // slow anchor drift = larger structure / trend (session drift carries the regime)
+  pfSim.anchor += pfSim.drift + pfGauss() * inst.vol * inst.tick * 0.18;
   const meanRev = (pfSim.anchor - pfSim.price) * 0.004;
   const shock = pfGauss() * pfSim.vol * inst.tick * 0.55;
   const move = pfSim.mom * inst.tick * 0.12 + meanRev + shock;
   pfSim.price = Math.max(inst.tick * 40, pfSim.price + move);
   pfSim.price = Math.round(pfSim.price / inst.tick) * inst.tick;
-  // volatility clustering
-  pfSim.vol = Math.min(inst.vol * 3.2, Math.max(inst.vol * 0.45, pfSim.vol * 0.988 + Math.abs(pfGauss()) * inst.vol * 0.045));
+  // volatility clustering around this session's volatility regime
+  const volBase = inst.vol * (pfSim.volRegime || 1);
+  pfSim.vol = Math.min(volBase * 3.2, Math.max(volBase * 0.45, pfSim.vol * 0.988 + Math.abs(pfGauss()) * volBase * 0.045));
   pfSim.mom *= 0.955;
 
   if (!pfSim.candle) {
@@ -454,7 +471,7 @@ function renderPropfirm() {
           <div>🎖 <b>Get Funded</b><span>Pass the eval, keep the same discipline, earn payouts</span></div>
           <div>🏆 <b>Prize Shop</b><span>Spend winnings on avatar frames, badges, and desk themes</span></div>
         </div>
-        <button class="primary-button" type="button" id="prop-unlock-cta">Unlock with any plan — from $24.99/mo</button>
+        <button class="primary-button" type="button" id="prop-unlock-cta">Unlock with any plan — from $3.99/mo</button>
         <small>Included in Player, Coach, and Elite. Simulated dollars only — no real money is ever traded.</small>
       </div>
     `;

@@ -80,7 +80,7 @@ function renderReplay() {
           <div>📏 <b>Graded in R</b><span>Every trade scored against a volatility stop, like a real desk</span></div>
           <div>♾ <b>Unlimited sessions</b><span>A decade of screen time in weeks — without risking a dollar</span></div>
         </div>
-        <button class="primary-button" type="button" id="replay-unlock-cta">Unlock with any plan — from $24.99/mo</button>
+        <button class="primary-button" type="button" id="replay-unlock-cta">Unlock with any plan — from $3.99/mo</button>
         <small>Included in Player, Coach, and Elite.</small>
       </div>`;
     root.querySelector("#replay-unlock-cta")?.addEventListener("click", () => openUpgradeModal("replay"));

@@ -415,7 +415,7 @@ function renderEliteDashboard() {
           <div>🧠 <b>AI Trade Review</b><span>Grade real trade ideas before you ever risk a dollar</span></div>
           <div>📚 <b>Study Plan</b><span>A fresh weekly curriculum aimed at your weakest tiers</span></div>
         </div>
-        <button class="primary-button" type="button" id="elite-unlock-cta">Unlock Elite — $69.99/mo</button>
+        <button class="primary-button" type="button" id="elite-unlock-cta">Unlock Elite — $11.99/mo</button>
         <small>Also includes +50% XP on every run, streak freeze bank, and gold leaderboard identity.</small>
       </div>
     `;

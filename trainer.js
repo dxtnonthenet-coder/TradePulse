@@ -182,7 +182,7 @@ function assistantBrain(rawText) {
     return `You're currently on the <b>${track.label}</b> track. Switch anytime with the market chips at the top of the <b>Academy</b> or <b>Arcade</b> — progress in every track is saved separately, so nothing is ever lost.`;
   }
   if (has("plan", "price", "pricing", "cost", "subscribe", "upgrade", "coach", "elite")) {
-    return `Three plans: <b>Player $24.99/mo</b> (every market, every game, unlimited), <b>Coach $44.99/mo</b> (adds the Trader Toolkit — risk calculator, mistake journal, Weakness Radar — plus a permanent +25% XP boost), and <b>Elite $69.99/mo</b> (AI Trade Review, weekly Study Plan, +50% XP). Annual saves up to $141/year, and there's a 3-day free trial with everything unlocked. See <b>Plans</b> in the sidebar.`;
+    return `Three plans: <b>Player $3.99/mo</b> (every market, every game, unlimited), <b>Coach $6.99/mo</b> (adds the Trader Toolkit — risk calculator, mistake journal, Weakness Radar — plus a permanent +25% XP boost), and <b>Elite $11.99/mo</b> (AI Trade Review, weekly Study Plan, +50% XP). Annual saves up to $24/year (2 months free), and there's a 3-day free trial with everything unlocked. See <b>Plans</b> in the sidebar.`;
   }
   if (has("friend", "follow", "cheer", "quest", "social")) {
     const code = p.compete?.code || "shown on the Friends page";
