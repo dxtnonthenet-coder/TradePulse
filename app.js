@@ -1152,6 +1152,26 @@ function saveProgress() {
   localStorage.setItem("tradePulseProgress", JSON.stringify(progress()));
   updateLogoutButtons();
   if (typeof progressSyncSchedulePush === "function") progressSyncSchedulePush();
+  maybeNudgeGuestSignin();
+}
+
+// Guests' progress only lives on this one browser — it can't follow them to a
+// phone until they have an account. Once a signed-out player has earned real
+// progress, remind them (once per session) to log in so it syncs everywhere.
+function maybeNudgeGuestSignin() {
+  try {
+    const p = progress();
+    const signedIn = Boolean(p.signup?.email || p.inviteEmail || p.googleUser?.email);
+    if (signedIn) return;
+    const lessonsDone = p.academy?.lessons ? Object.keys(p.academy.lessons).length : 0;
+    const meaningful = Number(p.xp || 0) >= 60 || lessonsDone > 0;
+    if (!meaningful) return;
+    if (sessionStorage.getItem("guestSyncNudged")) return;
+    sessionStorage.setItem("guestSyncNudged", "1");
+    if (typeof showToast === "function") {
+      showToast("You're playing as a guest — log in (top-right) so your XP and progress save to every device.", "info");
+    }
+  } catch { /* non-critical */ }
 }
 
 async function saveLead(type, payload) {
