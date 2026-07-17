@@ -1905,7 +1905,7 @@ function updateProgressUi() {
       chipWrap.classList.toggle("streak-zero", streakCount === 0);
     }
   }
-  if (els.topbarXp) els.topbarXp.textContent = getUserPlan() === "free" ? "XP locked" : `${p.xp.toLocaleString()} XP`;
+  if (els.topbarXp) els.topbarXp.textContent = `${p.xp.toLocaleString()} XP`;
   if (els.topbarPlan) els.topbarPlan.textContent = getUserPlan() === "free" ? "Free Plan" : `${planDisplayName()} Plan`;
   renderTopbarRankPill();
   renderLeaderboard();
@@ -2174,7 +2174,7 @@ async function syncReferralSignup() {
 
 function updateGrowthSurfaces() {
   const p = progress();
-  const rank = getUserPlan() === "free" ? "Guest · Free Plan" : `${rankFromXp(p.xp)} · ${planDisplayName()}`;
+  const rank = `${rankFromXp(p.xp)} · ${getUserPlan() === "free" ? "Free Plan" : planDisplayName()}`;
   if (els.referralCode) els.referralCode.textContent = referralCode();
   if (els.shareCardRank) els.shareCardRank.textContent = rank;
   if (els.shareCardAccuracy) els.shareCardAccuracy.textContent = `${accuracy()}%`;
@@ -3634,7 +3634,7 @@ function scenarioTrustStrip(scenario) {
 
 function resultShareText(scenario, correct, earned) {
   const p = progress();
-  const rank = getUserPlan() === "free" ? "Guest" : rankFromXp(p.xp);
+  const rank = rankFromXp(p.xp);
   const site = location.protocol === "file:" ? "replayedge.io" : location.origin;
   return `ReplayEdge replay result: ${correct ? "correct read" : "lesson logged"} on ${scenario.market} ${scenario.pattern}. ${correct ? `+${earned} XP` : "Missed clue added to review"}. Rank: ${rank}. Train blind replays: ${site}`;
 }
@@ -4467,7 +4467,10 @@ function finishAttempt({ answer, correct, earned, correctAnswer, metadata = {} }
   const scenario = getScenario(state.scenarioIndex);
   const p = progress();
   const paid = hasPaidPlan();
-  const xpAwarded = getUserPlan() === "free" ? 0 : earned;
+  // XP is a progress metric, not a gated feature — award it to every plan so
+  // progression feels real. Feature gates (Tier 1 only, daily play cap, premium
+  // tools) still limit free accounts; the daily cap below is unchanged.
+  const xpAwarded = earned;
   const previousStreak = Number(p.streak || 0);
   playAnswerSound(correct);
   stopReplay();
